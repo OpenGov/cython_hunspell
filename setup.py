@@ -6,17 +6,17 @@ import imp
 from setuptools import setup, find_packages, Extension
 from distutils.command.install import install
 from subprocess import check_call
-from scripts.find_library import pkgconfig
+from find_library import pkgconfig
 
 VERSION = '1.0.1'
 
 requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
 
-skip_pip_call = '--no-pre-pip'
-if skip_pip_call not in sys.argv:
-    check_call('pip install -r {}'.format(requirements_file), stdout=sys.stdout, stderr=sys.stderr, shell=True)
-else:
-    sys.argv = [arg for arg in sys.argv if arg != skip_pip_call]
+# skip_pip_call = '--no-pre-pip'
+# if skip_pip_call not in sys.argv:
+#     check_call('pip install -r {}'.format(requirements_file), stdout=sys.stdout, stderr=sys.stderr, shell=True)
+# else:
+#     sys.argv = [arg for arg in sys.argv if arg != skip_pip_call]
 
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
@@ -38,7 +38,7 @@ def readMD(fname):
     else:
         return read(fname)
 
-datatypes = ['*.aff', '*.dic', '*.txt']
+datatypes = ['*.aff', '*.dic']
 packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.append('dictionaries')
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
@@ -64,7 +64,7 @@ setup(
     cmdclass={ 'build_ext': build_ext },
     license='New BSD',
     packages=packages,
-    include_package_data=True,
+    scripts=['find_library.py'],
     test_suite='tests',
     zip_safe=False,
     url='https://github.com/OpenGov/cython_hunspell',
