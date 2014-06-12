@@ -5,6 +5,7 @@ import shutil
 import imp
 from setuptools import setup, find_packages, Extension
 from distutils.command.install import install
+from setuptools.command.egg_info import egg_info
 from subprocess import check_call
 from find_library import pkgconfig
 
@@ -12,14 +13,13 @@ VERSION = '1.0.1'
 
 requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
 
-# skip_pip_call = '--no-pre-pip'
-# if skip_pip_call not in sys.argv:
-#     check_call('pip install -r {}'.format(requirements_file), stdout=sys.stdout, stderr=sys.stderr, shell=True)
-# else:
-#     sys.argv = [arg for arg in sys.argv if arg != skip_pip_call]
-
-from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+try:
+    from Cython.Build import cythonize
+    from Cython.Distutils import build_ext
+except ImportError:
+    check_call('pip install -r {}'.format(requirements_file), stdout=sys.stdout, stderr=sys.stderr, shell=True)
+    from Cython.Build import cythonize
+    from Cython.Distutils import build_ext
 
 def read(fname):
     # Utility function to read the README file.
@@ -38,19 +38,28 @@ def readMD(fname):
     else:
         return read(fname)
 
-datatypes = ['*.aff', '*.dic']
+datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.so']
 packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.append('dictionaries')
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
 
 ext_modules = cythonize([
     Extension(
-        os.path.join(os.path.dirname(__file__), 'hunspell', 'hunspell'),
-        [os.path.join(os.path.dirname(__file__), 'hunspell', 'hunspell.pyx')],
+        os.path.join('hunspell', 'hunspell'),
+        [os.path.join('hunspell', 'hunspell.pyx')],
         extra_compile_args=['-O3', '-g0'],
         **pkgconfig('hunspell', language='c++')
     )
 ])
+
+class egg_build(egg_info):
+    def run(self):
+        # Hack to only build on pip install
+        if '--egg-base' in sys.argv:
+            # Only build on non-windows machines
+            check_call([sys.executable, __file__, 'build_ext', '--inplace'],
+                shell=False, stdout=sys.stdout, stderr=sys.stderr)
+        egg_info.run(self)
 
 setup(
     name='CyHunspell',
@@ -61,7 +70,7 @@ setup(
     long_description=readMD('README.md'),
     ext_modules=ext_modules,
     install_requires=required,
-    cmdclass={ 'build_ext': build_ext },
+    cmdclass={ 'build_ext': build_ext, 'egg_info': egg_build },
     license='New BSD',
     packages=packages,
     scripts=['find_library.py'],

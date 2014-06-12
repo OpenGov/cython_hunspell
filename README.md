@@ -35,6 +35,7 @@ All unit tests for the repo.
 ## TODO
 * Add mthreads alongside pthreads for bulk operations
 * Fix blocking issues for Windows usage (see above)
+* Remove cacheman dependency
 
 ## Author
 Author(s): Tim Rodriguez and Matthew Seal
