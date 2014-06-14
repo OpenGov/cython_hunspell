@@ -173,7 +173,6 @@ def append_links(pkg, kw):
 
 def pkgconfig(*packages, **kw):
     try:
-        raise Exception("SKIP!")
         flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
         status, response = commands.getstatusoutput("pkg-config --libs --cflags {}".format(' '.join(packages)))
         if status != 0:
