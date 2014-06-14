@@ -1,10 +1,7 @@
 import os
 import sys
-import glob
-import shutil
-import imp
+import platform
 from setuptools import setup, find_packages, Extension
-from distutils.command.install import install
 from setuptools.command.egg_info import egg_info
 from subprocess import check_call
 from find_library import pkgconfig
@@ -38,16 +35,17 @@ def readMD(fname):
     else:
         return read(fname)
 
-datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.so']
+datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.pyd', '*.so']
 packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.append('dictionaries')
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
 
+build_args = ['-O3', '-g0'] if platform.system() != 'Windows' else ['/EHsc', '/DHUNSPELL_STATIC']
 ext_modules = cythonize([
     Extension(
-        os.path.join('hunspell', 'hunspell'),
+        'hunspell.hunspell',
         [os.path.join('hunspell', 'hunspell.pyx')],
-        extra_compile_args=['-O3', '-g0'],
+        extra_compile_args=build_args,
         **pkgconfig('hunspell', language='c++')
     )
 ])
@@ -73,7 +71,7 @@ setup(
     cmdclass={ 'build_ext': build_ext, 'egg_info': egg_build },
     license='New BSD',
     packages=packages,
-    scripts=['find_library.py'],
+    scripts=['find_library.py', 'tar_download.py'],
     test_suite='tests',
     zip_safe=False,
     url='https://github.com/OpenGov/cython_hunspell',
