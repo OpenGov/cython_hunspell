@@ -79,7 +79,7 @@ def library_dirs():
         dirs = [os.path.abspath(path) for path in dirs]
     else:
         dirs.extend([
-            os.path.join(os.path.dirname(__file__), 'libs', 'gcc'),
+            os.path.join(os.path.dirname(__file__), 'libs', 'unix'),
             '/usr/local/lib64',
             '/usr/local/lib',
             '/usr/local/libdata',
@@ -153,7 +153,7 @@ def build_package(package, directory):
     finally:
         os.chdir(olddir)
 
-    lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'libs', 'gcc'))
+    lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'libs', 'unix'))
     if not os.path.exists(lib_path):
         os.makedirs(lib_path)
 

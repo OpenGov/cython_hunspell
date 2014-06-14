@@ -37,7 +37,7 @@ def readMD(fname):
 
 datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.pyd', '*.so', '*.lib', '*hpp']
 packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
-packages.append('dictionaries')
+packages.extend(['dictionaries', 'libs.msvc'])
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
 
 build_args = ['-O3', '-g0'] if platform.system() != 'Windows' else ['/EHsc', '/DHUNSPELL_STATIC']

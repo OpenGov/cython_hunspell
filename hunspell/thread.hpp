@@ -1,10 +1,3 @@
-/*
- * singleton.h
- * Defines a singleton class which has can be inherited,
- * or simple used by Singleton<classname>::instance() to
- * retrieve any arbitrary singleton object.
- */
-
 #ifndef AGNOSTIC_THREAD_HPP_
 #define AGNOSTIC_THREAD_HPP_
 
