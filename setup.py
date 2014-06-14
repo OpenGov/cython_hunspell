@@ -6,7 +6,7 @@ from setuptools.command.egg_info import egg_info
 from subprocess import check_call
 from find_library import pkgconfig
 
-VERSION = '1.0.1'
+VERSION = '1.1.0'
 
 requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
 
@@ -35,7 +35,7 @@ def readMD(fname):
     else:
         return read(fname)
 
-datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.pyd', '*.so']
+datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.pyd', '*.so', '*.lib', '*hpp']
 packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.append('dictionaries')
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
