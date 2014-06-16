@@ -9,7 +9,7 @@ from libc.stdio cimport *
 from cython.operator cimport dereference as deref
 
 # Use full path for cimport ONLY!
-from hunspell.pthread cimport *
+from hunspell.thread cimport *
 
 #//////////////////////////////////////////////////////////////////////////////
 # General Utilities
@@ -80,7 +80,7 @@ cdef struct ThreadWorkerArgs:
 # Thread Worker Functions
 #//////////////////////////////////////////////////////////////////////////////
 
-cdef void *hunspell_suggest_worker(void *argument):
+cdef void *hunspell_suggest_worker(void *argument) nogil:
     cdef ThreadWorkerArgs args
     cdef int i
     args = deref(<ThreadWorkerArgs *>argument)
@@ -90,7 +90,7 @@ cdef void *hunspell_suggest_worker(void *argument):
 
     return NULL
 
-cdef void *hunspell_stem_worker(void *argument):
+cdef void *hunspell_stem_worker(void *argument) nogil:
     cdef ThreadWorkerArgs args
     cdef int i
     args = deref(<ThreadWorkerArgs *>argument)
@@ -249,13 +249,11 @@ cdef class HunspellWrap(object):
     # C realm thread dispatcher
     #
     cdef int _c_bulk_action(self, basestring action, char **word_array, char ***output_array, int n_words, int *output_counts) except +:
-        cdef pthread_t *threads
-        cdef ThreadWorkerArgs *thread_args
+        # Allocate all memory per thread
+        cdef thread_t **threads = <thread_t **>calloc(self.n_cpus, sizeof(thread_t *))
+        cdef ThreadWorkerArgs *thread_args = <ThreadWorkerArgs *>calloc(self.n_cpus, sizeof(ThreadWorkerArgs))
         cdef int rc, i, stride
 
-        # Allocate all memory per thread
-        thread_args = <ThreadWorkerArgs *>calloc(self.n_cpus, sizeof(ThreadWorkerArgs))
-        threads = <pthread_t *>calloc(self.n_cpus, sizeof(pthread_t))
         if thread_args is NULL or threads is NULL:
             raise MemoryError()
 
@@ -288,18 +286,18 @@ cdef class HunspellWrap(object):
 
                 # Create thread
                 if action == "stem":
-                    rc = pthread_create(&threads[i], NULL, hunspell_stem_worker, <void *> &thread_args[i])
+                    threads[i] = thread_create(&hunspell_stem_worker, <void *> &thread_args[i])
                 else: # suggest
-                    rc = pthread_create(&threads[i], NULL, hunspell_suggest_worker, <void *> &thread_args[i])
-                if rc:
-                    raise OSError(rc, "Could not create pthread")
+                    threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])
+                if threads[i] is NULL:
+                    raise OSError("Could not create thread")
 
             # wait for each thread to complete
             for i from 0 <= i < self.n_cpus:
                 # block until thread i completes
-                rc = pthread_join(threads[i], NULL)
+                rc = thread_join(threads[i])
                 if rc:
-                    raise OSError(rc, "Could not join pthread")
+                    raise OSError(rc, "Could not join thread")
 
                 # Free Hunspell Dict
                 del thread_args[i].hspell
@@ -307,7 +305,7 @@ cdef class HunspellWrap(object):
         finally:
             # Free top level stuff
             free(thread_args)
-            free(threads)
+            dealloc_threads(threads, self.n_cpus)
 
     # Parse the return of a bulk action
     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except +:

@@ -54,3 +54,9 @@ docs/_build/
 
 # Cython-generated
 hunspell.c*
+
+# Downloaded content
+external
+libs/gcc
+libs/unix
+libs/tmp
