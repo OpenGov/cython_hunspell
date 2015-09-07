@@ -12,6 +12,8 @@ import shutil
 from subprocess import check_call
 from tar_download import download_and_extract
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 if __name__ == '__main__':
     download_and_extract('http://downloads.sourceforge.net/hunspell/hunspell-1.3.3.tar.gz', 'external')
 
@@ -49,12 +51,14 @@ def is_library(filepath, acceptable_exts):
 def is_header(filepath):
     return os.path.isfile(filepath)
 
-def include_dirs():
-    dirs = [
-        os.path.abspath(os.path.join(os.curdir, 'hunspell')),
-        # Download path for windows if missing
-        os.path.abspath(os.path.join(os.curdir, 'external', 'hunspell-1.3.3', 'src')),
-    ]
+def include_dirs(*packages):
+    dirs = []
+    if 'hunspell' in packages:
+        dirs = [
+            os.path.abspath(os.path.join(BASE_DIR, 'hunspell')),
+            # Download path for windows if missing
+            os.path.abspath(os.path.join(BASE_DIR, 'external', 'hunspell-1.3.3', 'src')),
+        ]
     if platform.system() != 'Windows':
         dirs.extend([
             '/usr/local/include',
@@ -64,11 +68,11 @@ def include_dirs():
     return [path for path in dirs if os.path.isdir(path)]
 
 def library_dirs():
-    dirs = [os.path.abspath(os.curdir)]
+    dirs = [os.path.abspath(BASE_DIR)]
     if platform.system() == 'Windows':
         dirs.extend([
             os.path.dirname(__file__),
-            os.path.abspath(os.curdir),
+            os.path.abspath(BASE_DIR),
             os.path.join(os.environ.get('SystemRoot'), 'system'),
             os.path.join(os.environ.get('SystemRoot'), 'system32'),
             os.environ.get('SystemRoot'),
@@ -160,6 +164,9 @@ def build_package(package, directory):
     if package == 'hunspell':
         shutil.copyfile(
             os.path.join(tmp_lib_path, 'lib', 'libhunspell-1.3.so.0.0.0'),
+            os.path.join(lib_path, 'libhunspell-1.3.so.0'))
+        os.symlink(
+            os.path.join(lib_path, 'libhunspell-1.3.so.0'),
             os.path.join(lib_path, 'libhunspell.so'))
         shutil.rmtree(tmp_lib_path)
 
@@ -173,6 +180,7 @@ def append_links(pkg, kw):
 
 def pkgconfig(*packages, **kw):
     try:
+        raise "TEST"
         flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
         status, response = commands.getstatusoutput("pkg-config --libs --cflags {}".format(' '.join(packages)))
         if status != 0:
@@ -187,13 +195,14 @@ def pkgconfig(*packages, **kw):
                 kw.setdefault('extra_link_args', []).append(token)
                 kw['extra_link_args'] = list(set(kw['extra_link_args']))
     except:
-        kw['include_dirs'] = include_dirs()
+        kw['include_dirs'] = include_dirs(*packages)
         kw['library_dirs'] = []
         kw['libraries'] = []
 
         if 'hunspell' in packages and not package_found('hunspell', kw['include_dirs']):
             # Prepare for hunspell if it's missing
             download_and_extract('http://downloads.sourceforge.net/hunspell/hunspell-1.3.3.tar.gz', 'external')
+            kw['include_dirs'] = include_dirs(*packages)
 
         for pkg in packages:
             if not append_links(pkg, kw):

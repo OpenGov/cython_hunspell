@@ -1,10 +1,6 @@
 import os
 import sys
-import glob
-import shutil
 from setuptools import setup, find_packages, Extension
-from setuptools.command.egg_info import egg_info
-from subprocess import check_call
 from find_library import pkgconfig
 from collections import defaultdict
 
@@ -13,7 +9,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
 for compiler, args in [
         ('msvc', ['/EHsc', '/DHUNSPELL_STATIC']),
-        ('gcc', ['-O3', '-g0'])]:
+        ('gcc', ['-O3', '-g0', '-DHUNSPELL_STATIC'])]:
     BUILD_ARGS[compiler] = args
 
 def cleanup_pycs():
