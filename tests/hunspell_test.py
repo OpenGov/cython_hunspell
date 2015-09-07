@@ -3,40 +3,44 @@ import parentpath
 
 import os
 import unittest
-import hunspell
 from hunspell import Hunspell
 
 DICT_DIR = os.path.join(os.path.dirname(__file__), '..', 'dictionaries')
 
 class HunspellTest(unittest.TestCase):
+    def setUp(self):
+        self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
+
+    def tearDown(self):
+        try:
+            del self.h
+        except AttributeError:
+            pass
+
     def test_hunspell_create_destroy(self):
-        d = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        del d
+        del self.h
 
     def test_hunspell_spell(self):
-        d = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        self.assertFalse(d.spell('dpg'))
-        self.assertTrue(d.spell('dog'))
-        del d
+        self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
+        self.assertFalse(self.h.spell('dpg'))
+        self.assertTrue(self.h.spell('dog'))
 
     def test_hunspell_suggest(self):
-        d = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        self.assertListEqual(d.suggest('dpg'), ['dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'])
-        del d
+        self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
+        self.assertListEqual(self.h.suggest('dpg'), ['dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'])
 
     def test_hunspell_stem(self):
-        d = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        self.assertListEqual(d.stem('dog'), ['dog'])
-        self.assertListEqual(d.stem('permanently'), ['permanent'])
-        del d
+        self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
+        self.assertListEqual(self.h.stem('dog'), ['dog'])
+        self.assertListEqual(self.h.stem('permanently'), ['permanent'])
 
     def test_hunspell_bulk_suggest(self):
-        d = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        self.assertDictEqual(d.bulk_action("suggest", ['dog', 'dpg']), {
+        self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
+        self.assertDictEqual(self.h.bulk_action("suggest", ['dog', 'dpg']), {
             'dpg': ['dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'],
             'dog': ['dog']
         })
-        self.assertDictEqual(d.bulk_action("suggest", ['dog', 'dpg', 'pgg', 'opg', 'dyg', 'frg', 'twg', 'bjn', 'foo', 'qre']), {
+        self.assertDictEqual(self.h.bulk_action("suggest", ['dog', 'dpg', 'pgg', 'opg', 'dyg', 'frg', 'twg', 'bjn', 'foo', 'qre']), {
             'pgg': ['pg', 'peg', 'egg', 'pig', 'pug', 'pkg', 'pg g', 'PG'],
             'foo': ['few', 'goo', 'fop', 'foot', 'fool', 'food', 'foe', 'for', 'fro', 'too', 'fol', 'coo', 'fog', 'moo', 'fob'],
             'frg': ['fr', 'frig', 'frog', 'erg', 'fig', 'fag', 'fro', 'fog', 'fry', 'fr g'],
@@ -48,21 +52,19 @@ class HunspellTest(unittest.TestCase):
             'dyg': ['dug', 'dye', 'deg', 'dig', 'dog', 'dying'],
             'qre': ['qr', 're', 'ere', 'ire', 'are', 'ore', 'Ore', 'Dre', 'q re', 'qr e']
         })
-        del d
 
     def test_hunspell_bulk_stem(self):
-        d = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        self.assertDictEqual(d.bulk_action("stem", ['dog', 'permanently']), {
+        self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
+        self.assertDictEqual(self.h.bulk_action("stem", ['dog', 'permanently']), {
             'permanently': ['permanent'],
             'dog': ['dog']
         })
-        self.assertDictEqual(d.bulk_action("stem", ['dog', 'twigs', 'permanently', 'unrecorded']), {
+        self.assertDictEqual(self.h.bulk_action("stem", ['dog', 'twigs', 'permanently', 'unrecorded']), {
             'unrecorded': ['recorded'],
             'permanently': ['permanent'],
             'twigs': ['twig'],
             'dog': ['dog']
         })
-        del d
 
 if __name__ == '__main__':
     unittest.main()

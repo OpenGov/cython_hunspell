@@ -1,22 +1,34 @@
 import os
 import sys
-import platform
+import glob
+import shutil
 from setuptools import setup, find_packages, Extension
 from setuptools.command.egg_info import egg_info
 from subprocess import check_call
 from find_library import pkgconfig
+from collections import defaultdict
 
-VERSION = '1.1.0'
+VERSION = '1.1.2'
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
+for compiler, args in [
+        ('msvc', ['/EHsc', '/DHUNSPELL_STATIC']),
+        ('gcc', ['-O3', '-g0'])]:
+    BUILD_ARGS[compiler] = args
 
-requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
-
-try:
-    from Cython.Build import cythonize
-    from Cython.Distutils import build_ext
-except ImportError:
-    check_call('pip install -r {}'.format(requirements_file), stdout=sys.stdout, stderr=sys.stderr, shell=True)
-    from Cython.Build import cythonize
-    from Cython.Distutils import build_ext
+def cleanup_pycs():
+    file_tree = os.walk(os.path.join(BASE_DIR, 'hunspell'))
+    to_delete = []
+    for root, directory, file_list in file_tree:
+        if len(file_list):
+            for file_name in file_list:
+                if file_name.endswith(".pyc"):
+                    to_delete.append(os.path.join(root, file_name))
+    for file_path in to_delete:
+        try:
+            os.remove(file_path)
+        except:
+            pass
 
 def read(fname):
     # Utility function to read the README file.
@@ -35,29 +47,52 @@ def readMD(fname):
     else:
         return read(fname)
 
-datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.pyd', '*.so', '*.lib', '*hpp']
+profiling = '--profile' in sys.argv or '-p' in sys.argv
+linetrace = '--linetrace' in sys.argv or '-l' in sys.argv
+building = 'build_ext' in sys.argv
+force_rebuild = '--force' in sys.argv or '-f' in sys.argv and building
+
+datatypes = ['*.aff', '*.dic', '*.pxd', '*.pyx', '*.pyd', '*.pxd', '*.so', '*.lib', '*hpp']
 packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.extend(['dictionaries', 'libs.msvc'])
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
+package_data = {'' : datatypes}
 
-build_args = ['-O3', '-g0'] if platform.system() != 'Windows' else ['/EHsc', '/DHUNSPELL_STATIC']
-ext_modules = cythonize([
-    Extension(
-        'hunspell.hunspell',
-        [os.path.join('hunspell', 'hunspell.pyx')],
-        extra_compile_args=build_args,
-        **pkgconfig('hunspell', language='c++')
-    )
-])
+if building:
+    if (profiling or linetrace) and not force_rebuild:
+        print "WARNING: profiling or linetracing specified without forced rebuild"
+    from Cython.Build import cythonize
+    from Cython.Distutils import build_ext
 
-class egg_build(egg_info):
+    ext_modules = cythonize([
+        Extension(
+            'hunspell.hunspell',
+            [os.path.join('hunspell', 'hunspell.pyx')],
+            **pkgconfig('hunspell', language='c++')
+        )
+    ], force=force_rebuild)
+else:
+    from distutils.command.build_ext import build_ext
+    ext_modules = [
+        Extension(
+            'hunspell.hunspell',
+            [os.path.join('hunspell', 'hunspell.cpp')],
+            **pkgconfig('hunspell', language='c++')
+        )
+    ]
+    package_data["hunspell"] = ["*.pxd"]
+
+class build_ext_compiler_check(build_ext):
+    def build_extensions(self):
+        compiler = self.compiler.compiler_type
+        args = BUILD_ARGS[compiler]
+        for ext in self.extensions:
+            ext.extra_compile_args = args
+        build_ext.build_extensions(self)
+
     def run(self):
-        # Hack to only build on pip install
-        if '--egg-base' in sys.argv:
-            # Only build on non-windows machines
-            check_call([sys.executable, __file__, 'build_ext', '--inplace'],
-                shell=False, stdout=sys.stdout, stderr=sys.stderr)
-        egg_info.run(self)
+        cleanup_pycs()
+        build_ext.run(self)
 
 setup(
     name='CyHunspell',
@@ -68,7 +103,7 @@ setup(
     long_description=readMD('README.md'),
     ext_modules=ext_modules,
     install_requires=required,
-    cmdclass={ 'build_ext': build_ext, 'egg_info': egg_build },
+    cmdclass={ 'build_ext': build_ext_compiler_check },
     license='New BSD',
     packages=packages,
     scripts=['find_library.py', 'tar_download.py'],
@@ -76,7 +111,7 @@ setup(
     zip_safe=False,
     url='https://github.com/OpenGov/cython_hunspell',
     download_url='https://github.com/OpenGov/cython_hunspell/tarball/v' + VERSION,
-    package_data={'' : datatypes},
+    package_data=package_data,
     keywords=['hunspell', 'spelling', 'correction'],
     classifiers=[
         'Development Status :: 4 - Beta',

@@ -35,4 +35,7 @@ All unit tests for the repo.
 ## Author
 Author(s): Tim Rodriguez and Matthew Seal
 
-&copy; Copyright 2014, [OpenGov](http://opengov.com)
+## License
+MIT
+
+&copy; Copyright 2015, [OpenGov](http://opengov.com)

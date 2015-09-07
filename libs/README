@@ -2,4 +2,4 @@ The compiled libraries for Microsoft Visual Studio are included, because they ar
 
 For other platforms besides windows, if Hunspell is not already installed then the source code is downloaded and built.
 
-The hunspell license is included for the two compiled binaries -- its compatible with tihs repositories license.
+The hunspell license is included for the two compiled binaries -- its compatible with this repositories license.

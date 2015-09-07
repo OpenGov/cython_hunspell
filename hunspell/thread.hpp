@@ -56,7 +56,8 @@ thread_t *thread_create(void *(*worker)(void *), void *data) {
 }
 
 int thread_join(thread_t *thread) {
-    return pthread_join((pthread_t)*thread, NULL);
+    pthread_t *pt = (pthread_t *)thread;
+    return pthread_join(*pt, NULL);
 }
 #endif
 

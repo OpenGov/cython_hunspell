@@ -135,12 +135,12 @@ cdef class HunspellWrap(object):
         holder = new Hunspell(self.affpath, self.dpath)
         if holder is NULL:
             raise MemoryError()
-            
+
         return holder
 
     # C-realm Constructor
-    def __init__(self, basestring lang, basestring cache_manager="hunspell", basestring disk_cache_dir=None,
-                basestring hunspell_data_dir=None):
+    def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",
+            basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
         # TODO - make these LRU caches so that you don't destroy your memory!
         if hunspell_data_dir is None:
             hunspell_data_dir = os.environ.get("HUNSPELL_DATA")
