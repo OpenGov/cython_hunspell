@@ -241,6 +241,9 @@ cdef class HunspellWrap(object):
     def save_cache(self):
         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
 
+    def set_concurrency(self, n_cpus):
+        self.n_cpus = n_cpus
+
     ###################
     # Bulk Operations #
     ###################

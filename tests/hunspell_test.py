@@ -55,16 +55,18 @@ class HunspellTest(unittest.TestCase):
 
     def test_hunspell_bulk_stem(self):
         self.h = Hunspell('en_US', hunspell_data_dir=DICT_DIR)
-        self.assertDictEqual(self.h.bulk_action("stem", ['dog', 'permanently']), {
-            'permanently': ['permanent'],
-            'dog': ['dog']
-        })
-        self.assertDictEqual(self.h.bulk_action("stem", ['dog', 'twigs', 'permanently', 'unrecorded']), {
-            'unrecorded': ['recorded'],
-            'permanently': ['permanent'],
-            'twigs': ['twig'],
-            'dog': ['dog']
-        })
+        for thread_count in [1, 4]:
+            self.h.set_concurrency(thread_count)
+            self.assertDictEqual(self.h.bulk_action("stem", ['dog', 'permanently']), {
+                'permanently': ['permanent'],
+                'dog': ['dog']
+            })
+            self.assertDictEqual(self.h.bulk_action("stem", ['dog', 'twigs', 'permanently', 'unrecorded']), {
+                'unrecorded': ['recorded'],
+                'permanently': ['permanent'],
+                'twigs': ['twig'],
+                'dog': ['dog']
+            })
 
 if __name__ == '__main__':
     unittest.main()
