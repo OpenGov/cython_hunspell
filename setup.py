@@ -4,7 +4,7 @@ from setuptools import setup, find_packages, Extension
 from find_library import pkgconfig
 from collections import defaultdict
 
-VERSION = '1.1.2'
+VERSION = '1.1.3'
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
 for compiler, args in [
