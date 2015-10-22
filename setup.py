@@ -68,7 +68,7 @@ if building:
         )
     ], force=force_rebuild)
 else:
-    from distutils.command.build_ext import build_ext
+    from setuptools.command.build_ext import build_ext
     ext_modules = [
         Extension(
             'hunspell.hunspell',
@@ -100,7 +100,7 @@ setup(
     ext_modules=ext_modules,
     install_requires=required,
     cmdclass={ 'build_ext': build_ext_compiler_check },
-    license='New BSD',
+    license='MIT',
     packages=packages,
     scripts=['find_library.py', 'tar_download.py'],
     test_suite='tests',
@@ -112,7 +112,7 @@ setup(
     classifiers=[
         'Development Status :: 4 - Beta',
         'Topic :: Utilities',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 2 :: Only'
     ]
