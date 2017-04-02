@@ -1,5 +1,5 @@
 # This import fixes sys.path issues
-import parentpath
+from . import parentpath
 
 import os
 import unittest

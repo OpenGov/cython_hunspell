@@ -4,7 +4,7 @@ from setuptools import setup, find_packages, Extension
 from find_library import pkgconfig
 from collections import defaultdict
 
-VERSION = '1.1.3'
+VERSION = '1.1.4'
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
 for compiler, args in [
@@ -26,20 +26,36 @@ def cleanup_pycs():
         except:
             pass
 
+python_2 = sys.version_info[0] == 2
 def read(fname):
-    # Utility function to read the README file.
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    with open(fname, 'rU' if python_2 else 'r') as fhandle:
+        return fhandle.read()
 
-def readMD(fname):
+def pandoc_read_md(fname):
+    if 'PANDOC_PATH' not in os.environ:
+        raise ImportError("No pandoc path to use")
+    import pandoc
+    pandoc.core.PANDOC_PATH = os.environ['PANDOC_PATH']
+    doc = pandoc.Document()
+    doc.markdown = read(fname)
+    return doc.rst
+
+def pypandoc_read_md(fname):
+    import pypandoc
+    os.environ.setdefault('PYPANDOC_PANDOC', os.environ['PANDOC_PATH'])
+    return pypandoc.convert_text(read(fname), 'rst', format='md')
+
+def read_md(fname):
     # Utility function to read the README file.
     full_fname = os.path.join(os.path.dirname(__file__), fname)
-    if 'PANDOC_PATH' in os.environ:
-        import pandoc
-        pandoc.core.PANDOC_PATH = os.environ['PANDOC_PATH']
-        doc = pandoc.Document()
-        with open(full_fname) as fhandle:
-            doc.markdown = fhandle.read()
-        return doc.rst
+
+    try:
+        return pandoc_read_md(full_fname)
+    except (ImportError, AttributeError):
+        try:
+            return pypandoc_read_md(full_fname)
+        except (ImportError, AttributeError):
+            return read(fname)
     else:
         return read(fname)
 
@@ -56,7 +72,7 @@ package_data = {'' : datatypes}
 
 if building:
     if (profiling or linetrace) and not force_rebuild:
-        print "WARNING: profiling or linetracing specified without forced rebuild"
+        print("WARNING: profiling or linetracing specified without forced rebuild")
     from Cython.Build import cythonize
     from Cython.Distutils import build_ext
 
@@ -96,7 +112,7 @@ setup(
     author='Matthew Seal',
     author_email='mseal@opengov.us',
     description='A wrapper on hunspell for use in Python',
-    long_description=readMD('README.md'),
+    long_description=read_md('README.md'),
     ext_modules=ext_modules,
     install_requires=required,
     cmdclass={ 'build_ext': build_ext_compiler_check },
@@ -114,6 +130,7 @@ setup(
         'Topic :: Utilities',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2 :: Only'
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3'
     ]
 )

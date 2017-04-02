@@ -6,11 +6,14 @@ import os
 import glob
 import platform
 import re
-import commands
 import sys
 import shutil
 from subprocess import check_call
 from tar_download import download_and_extract
+try:
+    from subprocess import getstatusoutput
+except ImportError:
+    from commands import getstatusoutput
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -20,12 +23,36 @@ if __name__ == '__main__':
 def get_architecture():
     return 'x64' if sys.maxsize > 2**32 else 'x86'
 
-def form_possible_names(lib, exts):
+def get_prefered_msvc():
+    if sys.version_info[0] > 3 or sys.version_info[0] < 2:
+        raise RuntimeError('Unknown python version')
+    # Python 2.6-3.2
+    if sys.version_info[0] < 3 or sys.version_info[1] < 3:
+        # We should return this, but the 11 build works and we provide it
+        #return 'msvc9'
+        return 'msvc11'
+    # Python 3.3-3.4
+    elif sys.version_info[1] < 5:
+        # We should return this, but the 11 build works and we provide it
+        #return 'msvc10'
+        return 'msvc11'
+    # Python 3.5+
+    else:
+        # These versions need msvc14+ compilations
+        return 'msvc14'
+
+def form_possible_names(lib, exts, extact=False):
     ret = []
     for ext in exts:
-        ret.append('%s*%s' % (lib, ext))
+        if not extact:
+            ret.append('{}*{}'.format(lib, ext))
+        else:
+            ret.append('{}{}'.format(lib, ext))
     for ext in exts:
-        ret.append('lib%s*%s' % (lib, ext))
+        if not extact:
+            ret.append('lib{}*{}'.format(lib, ext))
+        else:
+            ret.append('lib{}{}'.format(lib, ext))
     return ret
 
 def do_search(paths, names=[], test_fn=None):
@@ -67,7 +94,7 @@ def include_dirs(*packages):
         ])
     return [path for path in dirs if os.path.isdir(path)]
 
-def library_dirs():
+def library_dirs(check_local=False):
     dirs = [os.path.abspath(BASE_DIR)]
     if platform.system() == 'Windows':
         dirs.extend([
@@ -75,10 +102,10 @@ def library_dirs():
             os.path.abspath(BASE_DIR),
             os.path.join(os.environ.get('SystemRoot'), 'system'),
             os.path.join(os.environ.get('SystemRoot'), 'system32'),
-            os.environ.get('SystemRoot'),
-            # Built binaries home
-            os.path.join(os.path.dirname(__file__), 'libs', 'msvc')
+            os.environ.get('SystemRoot')
         ])
+        if check_local:
+            dirs.append(os.path.join(os.path.dirname(__file__), 'libs', 'msvc'))
         dirs.extend(list(set(os.environ.get('PATH').split(os.path.pathsep))))
         dirs = [os.path.abspath(path) for path in dirs]
     else:
@@ -102,8 +129,8 @@ def library_dirs():
         pass
     return [path for path in dirs if os.path.isdir(path)]
 
-def get_library_path(lib):
-    paths = library_dirs()
+def get_library_path(lib, check_local=False):
+    paths = library_dirs(check_local)
     acceptable_exts = [
         '',
         '.so'
@@ -111,13 +138,12 @@ def get_library_path(lib):
 
     if platform.system() == 'Windows':
         acceptable_exts = [
-            '',
             '.lib'
         ]
     elif platform.system() == 'Darwin':
         acceptable_exts.append('.dylib')
 
-    names = form_possible_names(lib, acceptable_exts)
+    names = form_possible_names(lib, acceptable_exts, check_local)
     found_lib, found_path = do_search(paths, names, lambda filepath: is_library(filepath, acceptable_exts))
     if found_lib and platform.system() == 'Windows':
         found_lib = os.path.splitext(found_lib)[0]
@@ -127,7 +153,10 @@ def get_library_linker_name(lib):
     found_lib, found_path = get_library_path(lib)
     if not found_lib:
         # Try x86 or x64
-        found_lib, found_path = get_library_path(lib + get_architecture())
+        found_lib, found_path = get_library_path(lib + get_architecture(), True)
+        if not found_lib:
+            found_lib, found_path = get_library_path('-'.join(
+                [lib, get_prefered_msvc(), get_architecture()]), True)
 
     if found_lib:
         found_lib = re.sub(r'.dylib$|.so$|.dll$|.dll.a$|.a$', '', found_lib.split(os.path.sep)[-1])
@@ -181,7 +210,7 @@ def append_links(pkg, kw):
 def pkgconfig(*packages, **kw):
     try:
         flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
-        status, response = commands.getstatusoutput("pkg-config --libs --cflags {}".format(' '.join(packages)))
+        status, response = getstatusoutput("pkg-config --libs --cflags {}".format(' '.join(packages)))
         if status != 0:
             raise Exception(response)
         for token in response.split():
@@ -208,8 +237,7 @@ def pkgconfig(*packages, **kw):
                 if pkg == 'hunspell' and platform.system() != 'Windows':
                     build_package(pkg, os.path.join('external', 'hunspell-1.3.3'))
                     if not append_links(pkg, kw):
-                        print "Couldn't find lib dependency after building: {}".format(pkg)
+                        print("Couldn't find lib dependency after building: {}".format(pkg))
                 else:
-                    print "Couldn't find lib dependency: {}".format(pkg)
-
+                    print("Couldn't find lib dependency: {}".format(pkg))
     return kw

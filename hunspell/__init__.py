@@ -1,3 +1,3 @@
 __all__ = ['hunspell']
 
-from hunspell import HunspellWrap as Hunspell
+from .hunspell import HunspellWrap as Hunspell

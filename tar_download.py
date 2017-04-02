@@ -14,7 +14,7 @@ def download_tar(url, directory=None):
         os.makedirs(directory)
 
     file_name = file_name_from_url(url, directory)
-    print "Downloading {} to {}".format(url, file_name)
+    print("Downloading {} to {}".format(url, file_name))
     sys.stdout.flush()
     urllib.urlretrieve(url, file_name)
 
@@ -22,7 +22,7 @@ def extract_contents(file_name, destination='.'):
     if not os.path.exists(destination):
         os.makedirs(destination)
 
-    print "Extracting {} to {}".format(file_name, destination)
+    print("Extracting {} to {}".format(file_name, destination))
     sys.stdout.flush()
     tar = tarfile.open(file_name)
     tar.extractall(destination)
