@@ -1,7 +1,10 @@
 import os
 import sys
-import urllib
 import tarfile
+try:
+    from urllib import urlretrieve
+except ImportError:
+    from urllib.request import urlretrieve
 
 def file_name_from_url(url, directory=None):
     file_name = url.split('/')[-1]
@@ -16,7 +19,7 @@ def download_tar(url, directory=None):
     file_name = file_name_from_url(url, directory)
     print("Downloading {} to {}".format(url, file_name))
     sys.stdout.flush()
-    urllib.urlretrieve(url, file_name)
+    urlretrieve(url, file_name)
 
 def extract_contents(file_name, destination='.'):
     if not os.path.exists(destination):
