@@ -38,7 +38,8 @@ class HunspellTest(unittest.TestCase):
         self.assertEqual(self.h.suggest('dpg'), ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'))
 
     def test_hunspell_suggest_utf8(self):
-        self.assertEqual(self.h.suggest(u'cofé'), (u'café', 'Coffey'))
+        self.assertEqual(self.h.suggest('cofé'), (u'café', 'coffer'))
+        self.assertEqual(self.h.suggest(u'cofé'), (u'café', 'coffer'))
 
     def test_hunspell_stem(self):
         self.assertEqual(self.h.stem('dog'), ('dog',))

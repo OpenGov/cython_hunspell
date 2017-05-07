@@ -1,4 +1,5 @@
 import os
+from .platform import detect_cpus
 from cacheman.cachewrap import NonPersistentCache
 from cacheman.cacher import get_cache_manager
 from cacheman.autosync import TimeCount, AutoSyncCache
@@ -6,14 +7,11 @@ from cacheman.autosync import TimeCount, AutoSyncCache
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.stdio cimport *
+import cython
 from cython.operator cimport dereference as deref
 
 # Use full path for cimport ONLY!
 from hunspell.thread cimport *
-
-#//////////////////////////////////////////////////////////////////////////////
-# General Utilities
-#//////////////////////////////////////////////////////////////////////////////
 
 def valid_encoding(basestring encoding):
     try:
@@ -22,33 +20,14 @@ def valid_encoding(basestring encoding):
     except LookupError:
         return 'ascii'
 
-def int_or_zero(value):
-    try:
-        return int(value)
-    except TypeError:
-        return 0
+cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:
+    cdef basestring py_byte_string
+    # fused types get confused here -- just use a runtime check
+    if isinstance(py_string, bytes):
+        py_byte_string = py_string
+    else:
+        py_byte_string = py_string.encode(encoding, 'strict')
 
-def detect_cpus():
-    '''Detects the number of CPUs on a system. Cribbed from pp.'''
-    # Linux, Unix and MacOS:
-    if hasattr(os, "sysconf"):
-        if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
-            # Linux & Unix:
-            ncpus = int_or_zero(os.sysconf("SC_NPROCESSORS_ONLN"))
-        else:
-            # OSX:
-            ncpus = int_or_zero(os.popen2("sysctl -n hw.ncpu")[1].read())
-    # Windows:
-    if "NUMBER_OF_PROCESSORS" in os.environ:
-        ncpus = int_or_zero(os.environ["NUMBER_OF_PROCESSORS"])
-    if ncpus > 0:
-        return ncpus
-    return 1 # Default
-
-#//////////////////////////////////////////////////////////////////////////////
-
-cdef int copy_to_c_string(basestring py_unicode_string, char **holder, basestring encoding='UTF-8') except -1:
-    cdef bytes py_byte_string = py_unicode_string.encode(encoding, 'strict')
     cdef size_t str_len = len(py_byte_string)
     cdef char *c_raw_string = py_byte_string
     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
