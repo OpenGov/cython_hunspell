@@ -34,7 +34,7 @@ def detect_cpus():
     if hasattr(os, "sysconf"):
         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
             # Linux & Unix:
-            ncpus = int_or_zero(os.sysconf["SC_NPROCESSORS_ONLN"])
+            ncpus = int_or_zero(os.sysconf("SC_NPROCESSORS_ONLN"))
         else:
             # OSX:
             ncpus = int_or_zero(os.popen2("sysctl -n hw.ncpu")[1].read())
