@@ -1,5 +1,5 @@
 import os
-from .platform import detect_cpus, BYTES_TYPE
+from .platform import detect_cpus
 from cacheman.cachewrap import NonPersistentCache
 from cacheman.cacher import get_cache_manager
 from cacheman.autosync import TimeCount, AutoSyncCache
