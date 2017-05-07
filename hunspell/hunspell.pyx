@@ -1,5 +1,5 @@
 import os
-from .platform import detect_cpus
+from .platform import detect_cpus, BYTES_TYPE
 from cacheman.cachewrap import NonPersistentCache
 from cacheman.cacher import get_cache_manager
 from cacheman.autosync import TimeCount, AutoSyncCache
@@ -7,7 +7,6 @@ from cacheman.autosync import TimeCount, AutoSyncCache
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.stdio cimport *
-import cython
 from cython.operator cimport dereference as deref
 
 # Use full path for cimport ONLY!
@@ -21,13 +20,12 @@ def valid_encoding(basestring encoding):
         return 'ascii'
 
 cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:
-    cdef basestring py_byte_string
-    # fused types get confused here -- just use a runtime check
     if isinstance(py_string, bytes):
-        py_byte_string = py_string
+        return byte_to_c_string(<bytes>py_string, holder, encoding)
     else:
-        py_byte_string = py_string.encode(encoding, 'strict')
+        return byte_to_c_string(<bytes>py_string.encode(encoding, 'strict'), holder, encoding)
 
+cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:
     cdef size_t str_len = len(py_byte_string)
     cdef char *c_raw_string = py_byte_string
     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
@@ -35,13 +33,12 @@ cdef int copy_to_c_string(basestring py_string, char **holder, basestring encodi
         raise MemoryError()
     strncpy(deref(holder), c_raw_string, str_len)
     holder[0][str_len] = 0
-    del py_byte_string
-    return 1
+    return str_len
 
 cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):
     # Convert c_string to python unicode
     try:
-        return unicode(s.decode(encoding, 'strict'))
+        return s.decode(encoding, 'strict')
     except UnicodeDecodeError:
         return u""
 
@@ -183,6 +180,8 @@ cdef class HunspellWrap(object):
 
         cdef char **s_list = NULL
         cdef char *c_word = NULL
+        cdef list stem_list
+        cdef tuple stem_result
         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
             raise MemoryError()
 
@@ -197,9 +196,9 @@ cdef class HunspellWrap(object):
                 for i from 0 <= i < count:
                     stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))
 
-                stem_list = tuple(stem_list)
-                cache[word] = stem_list
-                return stem_list
+                stem_result = tuple(stem_list)
+                cache[word] = stem_result
+                return stem_result
             finally:
                 self._cxx_hunspell.free_list(&s_list, count)
         finally:
@@ -226,6 +225,7 @@ cdef class HunspellWrap(object):
             elif word in cache:
                 ret_dict[word] = cache[word]
             else:
+                # This will turn into a tuple when completed
                 ret_dict[word] = []
                 unknown_words.append(word)
 
