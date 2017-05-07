@@ -61,9 +61,9 @@ You can also request bulk actions against Hunspell. This will trigger a threaded
 (without a gil) request to perform the action requested. Currently just 'suggest'
 and 'stem' are bulk requestable.
 
-    h.bulk_action('suggest', ['correct', 'incorect'])
+    h.bulk_suggest(['correct', 'incorect'])
     # {'incorect': (u'incorrect', u'correction', u'corrector', u'correct', u'injector'), 'correct': ['correct']}
-    h.bulk_action('stem', ['stems', 'currencies'])
+    h.bulk_stem(['stems', 'currencies'])
     # {'currencies': [u'currency'], 'stems': [u'stem']}
 
 By default it spawns number of CPUs threads to perform the operation. You can
@@ -112,7 +112,7 @@ distributions.
 
 ### Windows
 The base library comes with MSVC built Hunspell libraries and will link
-against those during runtime. These were tested on Windows 7 and 8 and
+against those during runtime. These were tested on Windows 7, 8, 10 and
 some on older systems. It's possible that a Python build with a newer
 (or much older) version of MSVC will fail to load these pre-built libraries.
 
