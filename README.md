@@ -121,6 +121,9 @@ So far the library has been tested against 10.9 (Mavericks) and up. There
 shoudn't be any reason it would fail to run on any particular version of
 OSX.
 
+## Building source libraries
+See libs/README
+
 ## Navigating the Repo
 ### hunspell
 Package wrapper for the repo.

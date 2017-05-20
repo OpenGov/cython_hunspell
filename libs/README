@@ -3,3 +3,50 @@ The compiled libraries for Microsoft Visual Studio are included, because they ar
 For other platforms besides windows, if Hunspell is not already installed then the source code is downloaded and built.
 
 The hunspell license is included for the two compiled binaries -- its compatible with this repositories license.
+
+
+
+
+
+Steps to reproduce the msvc files:
+
+
+Install Visual Studios 2015 and 2012 (yes you need both).
+
+Run find_library.py to download windows usuable version of hunspell. This will
+populate the 'external' directory.
+
+Copy the 'external\hunspell-1.3.3' directroy twice to two distinct folers. One
+will be used with VS2015 and one with VS2012
+
+With respective versions of Visual Studio, open 'src/win_api/Hunspell.sln'.
+Allow visual studio to upgrade the solution when prompted.
+
+Then right click on libhunspell from the solution explorer and choose 'properties'.
+Under 'C/C++ -> All Options' make the following changes:
+* Runtime Library -> Multi-Threaded DLL (/MD)
+* Whole program Optimization -> No
+
+Then click on Configuration Manager in upper right corner.
+Uncheck 'Build' checkboxes for 'hunspell' and 'testparser'
+Under 'libhunspell -> platform' select '<New>'
+Change New platform dropdown select 'x64' and click 'Ok'
+
+From top navigation bar, select Release and Win32. Then from the menu select
+'Build -> Build Solution'.
+
+Change 'Win32' to 'x64' in top navigation bar. Rerun 'Build -> Build Solution'.
+
+Go to 'src/win_api/Release/libhunspell' copy 'libhunspell.lib' to
+'cython_hunspell/libs/msvc'.
+
+Rename lib file based on bit and vs version as such:
+'libhunspell-msvc[vs-version]-[bitness].lib'
+
+Repeat lib copy and rename for 'src/win_api/x64/Release/libhunspell'
+
+You should now have 4 new files:
+libhunspell-msvc11-x86.lib
+libhunspell-msvc11-x64.lib
+libhunspell-msvc14-x86.lib
+libhunspell-msvc14-x64.lib

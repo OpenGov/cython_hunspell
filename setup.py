@@ -116,7 +116,7 @@ setup(
     ext_modules=ext_modules,
     install_requires=required,
     cmdclass={ 'build_ext': build_ext_compiler_check },
-    license='MIT',
+    license='MIT + MPL 1.1/GPL 2.0/LGPL 2.1',
     packages=packages,
     scripts=['find_library.py', 'tar_download.py'],
     test_suite='tests',
