@@ -141,6 +141,12 @@ All unit tests for the repo.
 ## Known Issues
 - Exact spelling suggestions on different OS's differs slightly with identical
 inputs. This appears to be an issue with Hunspell 1.3 and not this library.
+- Older versions of pip and setuptools will build with incorrect windows DLL bindings
+and complain about "ImportError: DLL load failed: %1 is not a valid Win32 application."
+- Sometimes windows machines won't find the build tools appropiately. You may need
+to 'SET VS100COMNTOOLS=%VSxxxCOMNTOOLS%' before installing. Python 3 usually wants the
+xxx as '140' and python 2 as '90'. There's not a lot the library can do to fix this,
+though pip and setuptools upgrades oftentimes resolve the issue by being smarter.
 
 ## Author
 Author(s): Tim Rodriguez and Matthew Seal
