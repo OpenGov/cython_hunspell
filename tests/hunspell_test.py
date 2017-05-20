@@ -19,6 +19,10 @@ class HunspellTest(unittest.TestCase):
         except AttributeError:
             pass
 
+    def assertAllIn(self, checked, expected):
+        self.assertTrue(all(x in expected for x in checked),
+            u"{} not all found in {}".format(checked, expected))
+
     def test_hunspell_create_destroy(self):
         del self.h
 
@@ -35,11 +39,17 @@ class HunspellTest(unittest.TestCase):
         self.assertFalse(self.h.spell(u'uncafé'))
 
     def test_hunspell_suggest(self):
-        self.assertEqual(self.h.suggest('dpg'), ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'))
+        required = ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg')
+        suggest = self.h.suggest('dpg')
+        self.assertIsInstance(suggest, tuple)
+        self.assertAllIn(required, suggest)
 
     def test_hunspell_suggest_utf8(self):
-        self.assertEqual(self.h.suggest('cefé'), (u'café', u'Cerf'))
-        self.assertEqual(self.h.suggest(u'cefé'), (u'café', u'Cerf'))
+        required = (u'café', u'Cerf')
+        for variant in ('cefé', u'cefé'):
+            suggest = self.h.suggest(variant)
+            self.assertIsInstance(suggest, tuple)
+            self.assertAllIn(required, suggest)
 
     def test_hunspell_stem(self):
         self.assertEqual(self.h.stem('dog'), ('dog',))
@@ -47,22 +57,18 @@ class HunspellTest(unittest.TestCase):
 
     def test_hunspell_bulk_suggest(self):
         self.h.set_concurrency(3)
-        self.assertDictEqual(self.h.bulk_suggest(['dog', 'dpg']), {
-            'dpg': ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'),
-            'dog': ('dog',)
-        })
-        self.assertDictEqual(self.h.bulk_suggest(['dog', 'dpg', 'pgg', 'opg', 'dyg', 'frg', 'twg', 'bjn', 'foo', 'qre']), {
-            'pgg': ('pg', 'peg', 'egg', 'pig', 'pug', 'pkg', 'pg g', 'PG'),
-            'foo': ('few', 'goo', 'fop', 'foot', 'fool', 'food', 'foe', 'for', 'fro', 'too', 'fol', 'coo', 'fog', 'moo', 'fob'),
-            'frg': ('fr', 'frig', 'frog', 'erg', 'fig', 'fag', 'fro', 'fog', 'fry', 'fr g'),
-            'twg': ('twig', 'tag', 'two', 'tog', 'tug', 'twp'),
-            'bjn': ('bin', 'ban', 'bun', 'Bjorn'),
-            'dog': ('dog',),
-            'dpg': ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg', 'GDP'),
-            'opg': ('op', 'pg', 'ope', 'ops', 'opt', 'mpg', 'opp', 'o pg', 'op g', 'GPO'),
-            'dyg': ('dug', 'dye', 'deg', 'dig', 'dog', 'dying'),
-            'qre': ('qr', 're', 'ere', 'ire', 'are', 'ore', 'Ore', 'Dre', 'q re', 'qr e')
-        })
+        suggest = self.h.bulk_suggest(['dog', 'dpg'])
+        self.assertEqual(sorted(suggest.keys()), ['dog', 'dpg'])
+        self.assertIsInstance(suggest['dog'], tuple)
+        self.assertAllIn(('dog',), suggest['dog'])
+
+        required = ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg')
+        self.assertIsInstance(suggest['dpg'], tuple)
+        self.assertAllIn(required, suggest['dpg'])
+
+        checked = ['bjn', 'dog', 'dpg', 'dyg', 'foo', 'frg', 'opg', 'pgg', 'qre', 'twg']
+        suggest = self.h.bulk_suggest(checked)
+        self.assertEqual(sorted(suggest.keys()), checked)
 
     def test_hunspell_bulk_stem(self):
         self.h.set_concurrency(3)

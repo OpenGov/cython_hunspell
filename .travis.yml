@@ -6,39 +6,44 @@ matrix:
       python: 2.7
     - os: osx
       python: 2.7
+      env: PY2=true
       sudo: required
       language: generic
     - os: linux
       python: 3.3
     - os: osx
       python: 3.3
+      env: PY2=false
       sudo: required
       language: generic
     - os: linux
       python: 3.4
     - os: osx
       python: 3.4
+      env: PY2=false
       sudo: required
       language: generic
     - os: linux
       python: 3.5
     - os: osx
       python: 3.5
+      env: PY2=false
       sudo: required
       language: generic
     - os: linux
       python: 3.6
     - os: osx
       python: 3.6
+      env: PY2=false
       sudo: required
       language: generic
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then brew install python; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" == "2.7"  ]]; then virtualenv venv -p python; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" != "2.7" ]]; then brew install python3; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" != "2.7"  ]]; then virtualenv venv -p python3; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "true" ]]; then brew install python; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "true"  ]]; then virtualenv venv -p python; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "false" ]]; then brew install python3; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "false"  ]]; then virtualenv venv -p python3; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate; fi
 install: "python setup.py install"
 script: "python setup.py test"

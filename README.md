@@ -135,6 +135,10 @@ All unit tests for the repo.
 ## TODO
 * Convert cacheman dependency to be optional
 
+## Known Issues
+- Exact spelling suggestions on different OS's differs slightly with identical
+inputs. This appears to be an issue with Hunspell 1.3 and not this library.
+
 ## Author
 Author(s): Tim Rodriguez and Matthew Seal
 
