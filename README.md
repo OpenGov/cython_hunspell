@@ -61,9 +61,9 @@ You can also request bulk actions against Hunspell. This will trigger a threaded
 (without a gil) request to perform the action requested. Currently just 'suggest'
 and 'stem' are bulk requestable.
 
-    h.bulk_action('suggest', ['correct', 'incorect'])
+    h.bulk_suggest(['correct', 'incorect'])
     # {'incorect': (u'incorrect', u'correction', u'corrector', u'correct', u'injector'), 'correct': ['correct']}
-    h.bulk_action('stem', ['stems', 'currencies'])
+    h.bulk_stem(['stems', 'currencies'])
     # {'currencies': [u'currency'], 'stems': [u'stem']}
 
 By default it spawns number of CPUs threads to perform the operation. You can
@@ -112,7 +112,7 @@ distributions.
 
 ### Windows
 The base library comes with MSVC built Hunspell libraries and will link
-against those during runtime. These were tested on Windows 7 and 8 and
+against those during runtime. These were tested on Windows 7, 8, 10 and
 some on older systems. It's possible that a Python build with a newer
 (or much older) version of MSVC will fail to load these pre-built libraries.
 
@@ -120,6 +120,9 @@ some on older systems. It's possible that a Python build with a newer
 So far the library has been tested against 10.9 (Mavericks) and up. There
 shoudn't be any reason it would fail to run on any particular version of
 OSX.
+
+## Building source libraries
+See libs/README
 
 ## Navigating the Repo
 ### hunspell
@@ -134,6 +137,16 @@ All unit tests for the repo.
 
 ## TODO
 * Convert cacheman dependency to be optional
+
+## Known Issues
+- Exact spelling suggestions on different OS's differs slightly with identical
+inputs. This appears to be an issue with Hunspell 1.3 and not this library.
+- Older versions of pip and setuptools will build with incorrect windows DLL bindings
+and complain about "ImportError: DLL load failed: %1 is not a valid Win32 application."
+- Sometimes windows machines won't find the build tools appropiately. You may need
+to 'SET VS100COMNTOOLS=%VSxxxCOMNTOOLS%' before installing. Python 3 usually wants the
+xxx as '140' and python 2 as '90'. There's not a lot the library can do to fix this,
+though pip and setuptools upgrades oftentimes resolve the issue by being smarter.
 
 ## Author
 Author(s): Tim Rodriguez and Matthew Seal

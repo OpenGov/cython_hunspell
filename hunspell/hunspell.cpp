@@ -471,10 +471,6 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include <stdlib.h>
 #include <stdio.h>
 #include "thread.hpp"
-#include "ios"
-#include "new"
-#include "stdexcept"
-#include "typeinfo"
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -675,14 +671,53 @@ static const char *__pyx_f[] = {
 
 /*--- Type declarations ---*/
 struct __pyx_obj_8hunspell_8hunspell_HunspellWrap;
+struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string;
+struct __pyx_opt_args_8hunspell_8hunspell_byte_to_c_string;
+struct __pyx_opt_args_8hunspell_8hunspell_c_string_to_unicode_no_except;
 struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs;
 
-/* "hunspell/hunspell.pyx":60
- * # Structure for defining worker args
- * #
+/* "hunspell/hunspell.pyx":22
+ *         return 'ascii'
+ *
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:             # <<<<<<<<<<<<<<
+ *     if isinstance(py_string, bytes):
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)
+ */
+struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string {
+  int __pyx_n;
+  PyObject *encoding;
+};
+
+/* "hunspell/hunspell.pyx":28
+ *         return byte_to_c_string(<bytes>py_string.encode(encoding, 'strict'), holder, encoding)
+ *
+ * cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:             # <<<<<<<<<<<<<<
+ *     cdef size_t str_len = len(py_byte_string)
+ *     cdef char *c_raw_string = py_byte_string
+ */
+struct __pyx_opt_args_8hunspell_8hunspell_byte_to_c_string {
+  int __pyx_n;
+  PyObject *encoding;
+};
+
+/* "hunspell/hunspell.pyx":38
+ *     return str_len
+ *
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):             # <<<<<<<<<<<<<<
+ *     # Convert c_string to python unicode
+ *     try:
+ */
+struct __pyx_opt_args_8hunspell_8hunspell_c_string_to_unicode_no_except {
+  int __pyx_n;
+  PyObject *encoding;
+};
+
+/* "hunspell/hunspell.pyx":49
+ * #//////////////////////////////////////////////////////////////////////////////
+ *
  * cdef struct ThreadWorkerArgs:             # <<<<<<<<<<<<<<
- *     # Thread ID
- *     int tid
+ *     # Structure for defining worker args
+ *
  */
 struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs {
   int tid;
@@ -691,10 +726,11 @@ struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs {
   char **word_list;
   char ***output_array_ptr;
   int *output_counts;
+  int stem_action;
 };
 
-/* "hunspell/hunspell.pyx":104
- * 
+/* "hunspell/hunspell.pyx":81
+ *
  * #//////////////////////////////////////////////////////////////////////////////
  * cdef class HunspellWrap(object):             # <<<<<<<<<<<<<<
  *     # C-realm properties
@@ -704,10 +740,11 @@ struct __pyx_obj_8hunspell_8hunspell_HunspellWrap {
   PyObject_HEAD
   struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *__pyx_vtab;
   Hunspell *_cxx_hunspell;
-  int n_cpus;
+  int max_threads;
   PyObject *lang;
   PyObject *_cache_manager_name;
   PyObject *_hunspell_dir;
+  PyObject *_dic_encoding;
   PyObject *_suggest_cache;
   PyObject *_stem_cache;
   char *affpath;
@@ -718,8 +755,9 @@ struct __pyx_obj_8hunspell_8hunspell_HunspellWrap {
 
 struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap {
   Hunspell *(*_create_hspell_inst)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *);
-  int (*_c_bulk_action)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *, char **, char ***, int, int *);
+  int (*_c_bulk_action)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, char **, char ***, int, int, int *);
   void (*_parse_bulk_results)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *, PyObject *, int *, char ***);
+  void (*_bulk_unknown_words)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *, int, PyObject *);
 };
 static struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *__pyx_vtabptr_8hunspell_8hunspell_HunspellWrap;
 
@@ -806,50 +844,9 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_GetAttrStr(PyObject* obj, PyObject
 /* GetBuiltinName.proto */
 static PyObject *__Pyx_GetBuiltinName(PyObject *name);
 
-/* GetModuleGlobalName.proto */
-static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name);
-
-/* PySequenceContains.proto */
-static CYTHON_INLINE int __Pyx_PySequence_ContainsTF(PyObject* item, PyObject* seq, int eq) {
-    int result = PySequence_Contains(seq, item);
-    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
-}
-
-/* PyObjectCall.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
-#else
-#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
-#endif
-
-/* GetItemInt.proto */
-#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck) :\
-    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
-               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
-#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
-    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck);
-#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
-    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck);
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
-                                                     int is_list, int wraparound, int boundscheck);
-
-/* PyCFunctionFastCall.proto */
-#if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
-#else
-#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
-#endif
+/* ArgTypeTest.proto */
+static CYTHON_INLINE int __Pyx_ArgTypeTest(PyObject *obj, PyTypeObject *type, int none_allowed,
+    const char *name, int exact);
 
 /* PyFunctionFastCall.proto */
 #if CYTHON_FAST_PYCALL
@@ -862,29 +859,19 @@ static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, 
 #endif
 #endif
 
-/* PyObjectCallMethO.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg);
-#endif
-
-/* PyObjectCallOneArg.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
-
-/* PyObjectCallNoArg.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
+/* PyCFunctionFastCall.proto */
+#if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
 #else
-#define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
+#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
 #endif
 
-/* IncludeStringH.proto */
-#include <string.h>
-
-/* decode_c_string.proto */
-static CYTHON_INLINE PyObject* __Pyx_decode_c_string(
-         const char* cstring, Py_ssize_t start, Py_ssize_t stop,
-         const char* encoding, const char* errors,
-         PyObject* (*decode_func)(const char *s, Py_ssize_t size, const char *errors));
+/* PyObjectCall.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
+#else
+#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
+#endif
 
 /* PyThreadStateGet.proto */
 #if CYTHON_FAST_THREAD_STATE
@@ -922,6 +909,17 @@ static int __Pyx__GetException(PyThreadState *tstate, PyObject **type, PyObject 
 static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb);
 #endif
 
+/* GetModuleGlobalName.proto */
+static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name);
+
+/* PyObjectCallMethO.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg);
+#endif
+
+/* PyObjectCallOneArg.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
+
 /* PyErrFetchRestore.proto */
 #if CYTHON_FAST_THREAD_STATE
 #define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
@@ -952,9 +950,12 @@ static int __Pyx_ParseOptionalKeywords(PyObject *kwds, PyObject **argnames[],\
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
 
-/* ArgTypeTest.proto */
-static CYTHON_INLINE int __Pyx_ArgTypeTest(PyObject *obj, PyTypeObject *type, int none_allowed,
-    const char *name, int exact);
+/* PyObjectCallNoArg.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
+#else
+#define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
+#endif
 
 /* PyObjectSetAttrStr.proto */
 #if CYTHON_USE_TYPE_SLOTS
@@ -982,6 +983,21 @@ static CYTHON_INLINE void __Pyx__ExceptionSwap(PyThreadState *tstate, PyObject *
 static CYTHON_INLINE void __Pyx_ExceptionSwap(PyObject **type, PyObject **value, PyObject **tb);
 #endif
 
+/* IncludeStringH.proto */
+#include <string.h>
+
+/* BytesEquals.proto */
+static CYTHON_INLINE int __Pyx_PyBytes_Equals(PyObject* s1, PyObject* s2, int equals);
+
+/* UnicodeEquals.proto */
+static CYTHON_INLINE int __Pyx_PyUnicode_Equals(PyObject* s1, PyObject* s2, int equals);
+
+/* PySequenceContains.proto */
+static CYTHON_INLINE int __Pyx_PySequence_ContainsTF(PyObject* item, PyObject* seq, int eq) {
+    int result = PySequence_Contains(seq, item);
+    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
+}
+
 /* ListAppend.proto */
 #if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
 static CYTHON_INLINE int __Pyx_PyList_Append(PyObject* list, PyObject* x) {
@@ -999,12 +1015,6 @@ static CYTHON_INLINE int __Pyx_PyList_Append(PyObject* list, PyObject* x) {
 #define __Pyx_PyList_Append(L,x) PyList_Append(L,x)
 #endif
 
-/* PyObjectCallMethod1.proto */
-static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg);
-
-/* append.proto */
-static CYTHON_INLINE int __Pyx_PyObject_Append(PyObject* L, PyObject* x);
-
 /* None.proto */
 static CYTHON_INLINE int __Pyx_div_int(int, int);
 
@@ -1015,11 +1025,33 @@ static CYTHON_INLINE int __Pyx_div_int(int, int);
 /* None.proto */
 static CYTHON_INLINE int __Pyx_mod_int(int, int);
 
-/* BytesEquals.proto */
-static CYTHON_INLINE int __Pyx_PyBytes_Equals(PyObject* s1, PyObject* s2, int equals);
+/* PyObjectCallMethod1.proto */
+static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg);
 
-/* UnicodeEquals.proto */
-static CYTHON_INLINE int __Pyx_PyUnicode_Equals(PyObject* s1, PyObject* s2, int equals);
+/* append.proto */
+static CYTHON_INLINE int __Pyx_PyObject_Append(PyObject* L, PyObject* x);
+
+/* GetItemInt.proto */
+#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck) :\
+    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
+               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
+#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
+    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck);
+#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
+    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
+    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
+    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              int wraparound, int boundscheck);
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
+                                                     int is_list, int wraparound, int boundscheck);
 
 /* DictGetItem.proto */
 #if PY_MAJOR_VERSION >= 3 && !CYTHON_COMPILING_IN_PYPY
@@ -1042,8 +1074,10 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
     #define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
 #endif
 
-/* None.proto */
-static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname);
+/* WriteUnraisableException.proto */
+static void __Pyx_WriteUnraisable(const char *name, int clineno,
+                                  int lineno, const char *filename,
+                                  int full_traceback, int nogil);
 
 /* SetVTable.proto */
 static int __Pyx_SetVtable(PyObject *dict, void *vtable);
@@ -1074,55 +1108,13 @@ static void __Pyx_AddTraceback(const char *funcname, int c_line,
                                int py_line, const char *filename);
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
-
-/* CppExceptionConversion.proto */
-#ifndef __Pyx_CppExn2PyErr
-#include <new>
-#include <typeinfo>
-#include <stdexcept>
-#include <ios>
-static void __Pyx_CppExn2PyErr() {
-  try {
-    if (PyErr_Occurred())
-      ; // let the latest Python exn pass through and ignore the current one
-    else
-      throw;
-  } catch (const std::bad_alloc& exn) {
-    PyErr_SetString(PyExc_MemoryError, exn.what());
-  } catch (const std::bad_cast& exn) {
-    PyErr_SetString(PyExc_TypeError, exn.what());
-  } catch (const std::bad_typeid& exn) {
-    PyErr_SetString(PyExc_TypeError, exn.what());
-  } catch (const std::domain_error& exn) {
-    PyErr_SetString(PyExc_ValueError, exn.what());
-  } catch (const std::invalid_argument& exn) {
-    PyErr_SetString(PyExc_ValueError, exn.what());
-  } catch (const std::ios_base::failure& exn) {
-    PyErr_SetString(PyExc_IOError, exn.what());
-  } catch (const std::out_of_range& exn) {
-    PyErr_SetString(PyExc_IndexError, exn.what());
-  } catch (const std::overflow_error& exn) {
-    PyErr_SetString(PyExc_OverflowError, exn.what());
-  } catch (const std::range_error& exn) {
-    PyErr_SetString(PyExc_ArithmeticError, exn.what());
-  } catch (const std::underflow_error& exn) {
-    PyErr_SetString(PyExc_ArithmeticError, exn.what());
-  } catch (const std::exception& exn) {
-    PyErr_SetString(PyExc_RuntimeError, exn.what());
-  }
-  catch (...)
-  {
-    PyErr_SetString(PyExc_RuntimeError, "Unknown exception");
-  }
-}
-#endif
-
-/* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
+
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
 
 /* CIntFromPy.proto */
 static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
@@ -1134,8 +1126,9 @@ static int __Pyx_check_binary_version(void);
 static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_lang); /* proto*/
-static int __pyx_f_8hunspell_8hunspell_12HunspellWrap__c_bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, char **__pyx_v_word_array, char ***__pyx_v_output_array, int __pyx_v_n_words, int *__pyx_v_output_counts); /* proto*/
+static int __pyx_f_8hunspell_8hunspell_12HunspellWrap__c_bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, char **__pyx_v_word_array, char ***__pyx_v_output_array, int __pyx_v_n_words, int __pyx_v_stem_action, int *__pyx_v_output_counts); /* proto*/
 static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_ret_dict, PyObject *__pyx_v_unknown_words, int *__pyx_v_output_counts, char ***__pyx_v_output_array); /* proto*/
+static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__bulk_unknown_words(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_unknown_words, int __pyx_v_stem_action, PyObject *__pyx_v_ret_dict); /* proto*/
 
 /* Module declarations from 'libc.string' */
 
@@ -1147,22 +1140,22 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struc
 
 /* Module declarations from 'hunspell.hunspell' */
 static PyTypeObject *__pyx_ptype_8hunspell_8hunspell_HunspellWrap = 0;
-static int __pyx_f_8hunspell_8hunspell_copy_to_c_string(PyObject *, char **); /*proto*/
-static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char *); /*proto*/
-static void *__pyx_f_8hunspell_8hunspell_hunspell_suggest_worker(void *); /*proto*/
-static void *__pyx_f_8hunspell_8hunspell_hunspell_stem_worker(void *); /*proto*/
+static int __pyx_f_8hunspell_8hunspell_copy_to_c_string(PyObject *, char **, struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string *__pyx_optional_args); /*proto*/
+static int __pyx_f_8hunspell_8hunspell_byte_to_c_string(PyObject *, char **, struct __pyx_opt_args_8hunspell_8hunspell_byte_to_c_string *__pyx_optional_args); /*proto*/
+static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char *, struct __pyx_opt_args_8hunspell_8hunspell_c_string_to_unicode_no_except *__pyx_optional_args); /*proto*/
+static void *__pyx_f_8hunspell_8hunspell_hunspell_worker(void *); /*proto*/
 #define __Pyx_MODULE_NAME "hunspell.hunspell"
 int __pyx_module_is_main_hunspell__hunspell = 0;
 
 /* Implementation of 'hunspell.hunspell' */
+static PyObject *__pyx_builtin_LookupError;
 static PyObject *__pyx_builtin_MemoryError;
 static PyObject *__pyx_builtin_UnicodeDecodeError;
 static PyObject *__pyx_builtin_IOError;
 static PyObject *__pyx_builtin_OSError;
-static PyObject *__pyx_builtin_TypeError;
 static PyObject *__pyx_builtin_enumerate;
-static const char __pyx_k__4[] = "";
-static const char __pyx_k__6[] = "..";
+static const char __pyx_k_[] = "";
+static const char __pyx_k__3[] = "..";
 static const char __pyx_k_os[] = "os";
 static const char __pyx_k_aff[] = "{}.aff";
 static const char __pyx_k_dic[] = "{}.dic";
@@ -1173,50 +1166,53 @@ static const char __pyx_k_join[] = "join";
 static const char __pyx_k_lang[] = "lang";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_path[] = "path";
-static const char __pyx_k_read[] = "read";
 static const char __pyx_k_stem[] = "stem";
 static const char __pyx_k_test[] = "__test__";
+static const char __pyx_k_word[] = "word";
 static const char __pyx_k_UTF_8[] = "UTF-8";
+static const char __pyx_k_ascii[] = "ascii";
 static const char __pyx_k_en_US[] = "en_US";
-static const char __pyx_k_ncpus[] = "ncpus";
 static const char __pyx_k_spell[] = "spell";
 static const char __pyx_k_words[] = "words";
 static const char __pyx_k_access[] = "access";
 static const char __pyx_k_action[] = "action";
 static const char __pyx_k_append[] = "append";
+static const char __pyx_k_decode[] = "decode";
 static const char __pyx_k_encode[] = "encode";
 static const char __pyx_k_format[] = "format";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_isfile[] = "isfile";
-static const char __pyx_k_popen2[] = "popen2";
 static const char __pyx_k_strict[] = "strict";
 static const char __pyx_k_IOError[] = "IOError";
 static const char __pyx_k_OSError[] = "OSError";
 static const char __pyx_k_abspath[] = "abspath";
 static const char __pyx_k_dirname[] = "dirname";
 static const char __pyx_k_environ[] = "environ";
-static const char __pyx_k_sysconf[] = "sysconf";
+static const char __pyx_k_suggest[] = "suggest";
+static const char __pyx_k_encoding[] = "encoding";
 static const char __pyx_k_hunspell[] = "hunspell";
+static const char __pyx_k_platform[] = "platform";
 static const char __pyx_k_TimeCount[] = "TimeCount";
-static const char __pyx_k_TypeError[] = "TypeError";
 static const char __pyx_k_enumerate[] = "enumerate";
-static const char __pyx_k_detectCPUs[] = "detectCPUs";
+static const char __pyx_k_BYTES_TYPE[] = "BYTES_TYPE";
 static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
+static const char __pyx_k_LookupError[] = "LookupError";
 static const char __pyx_k_MemoryError[] = "MemoryError";
+static const char __pyx_k_bulk_action[] = "bulk_action";
+static const char __pyx_k_detect_cpus[] = "detect_cpus";
 static const char __pyx_k_time_checks[] = "time_checks";
 static const char __pyx_k_dictionaries[] = "dictionaries";
 static const char __pyx_k_AutoSyncCache[] = "AutoSyncCache";
 static const char __pyx_k_HUNSPELL_DATA[] = "HUNSPELL_DATA";
 static const char __pyx_k_cache_manager[] = "cache_manager";
 static const char __pyx_k_hunspell_stem[] = "hunspell_stem";
-static const char __pyx_k_sysconf_names[] = "sysconf_names";
 static const char __pyx_k_disk_cache_dir[] = "disk_cache_dir";
 static const char __pyx_k_retrieve_cache[] = "retrieve_cache";
+static const char __pyx_k_valid_encoding[] = "valid_encoding";
 static const char __pyx_k_cache_directory[] = "cache_directory";
 static const char __pyx_k_cacheman_cacher[] = "cacheman.cacher";
 static const char __pyx_k_cache_registered[] = "cache_registered";
 static const char __pyx_k_hunspell_suggest[] = "hunspell_suggest";
-static const char __pyx_k_sysctl_n_hw_ncpu[] = "sysctl -n hw.ncpu";
 static const char __pyx_k_cacheman_autosync[] = "cacheman.autosync";
 static const char __pyx_k_get_cache_manager[] = "get_cache_manager";
 static const char __pyx_k_hunspell_data_dir[] = "hunspell_data_dir";
@@ -1224,50 +1220,52 @@ static const char __pyx_k_hunspell_hunspell[] = "hunspell.hunspell";
 static const char __pyx_k_NonPersistentCache[] = "NonPersistentCache";
 static const char __pyx_k_UnicodeDecodeError[] = "UnicodeDecodeError";
 static const char __pyx_k_cacheman_cachewrap[] = "cacheman.cachewrap";
-static const char __pyx_k_SC_NPROCESSORS_ONLN[] = "SC_NPROCESSORS_ONLN";
-static const char __pyx_k_NUMBER_OF_PROCESSORS[] = "NUMBER_OF_PROCESSORS";
 static const char __pyx_k_Could_not_join_thread[] = "Could not join thread";
 static const char __pyx_k_Could_not_create_thread[] = "Could not create thread";
 static const char __pyx_k_save_all_cache_contents[] = "save_all_cache_contents";
 static const char __pyx_k_File_not_found_or_accessible[] = "File '{}' not found or accessible";
 static const char __pyx_k_C_Users_Matthew_Workspace_cython[] = "C:\\Users\\Matthew\\Workspace\\cython_hunspell\\hunspell\\hunspell.pyx";
+static PyObject *__pyx_kp_s_;
+static PyObject *__pyx_kp_u_;
 static PyObject *__pyx_n_s_AutoSyncCache;
+static PyObject *__pyx_n_s_BYTES_TYPE;
 static PyObject *__pyx_kp_s_C_Users_Matthew_Workspace_cython;
 static PyObject *__pyx_kp_s_Could_not_create_thread;
 static PyObject *__pyx_kp_s_Could_not_join_thread;
 static PyObject *__pyx_kp_s_File_not_found_or_accessible;
 static PyObject *__pyx_n_s_HUNSPELL_DATA;
 static PyObject *__pyx_n_s_IOError;
+static PyObject *__pyx_n_s_LookupError;
 static PyObject *__pyx_n_s_MemoryError;
-static PyObject *__pyx_n_s_NUMBER_OF_PROCESSORS;
 static PyObject *__pyx_n_s_NonPersistentCache;
 static PyObject *__pyx_n_s_OSError;
 static PyObject *__pyx_n_s_R_OK;
-static PyObject *__pyx_n_s_SC_NPROCESSORS_ONLN;
 static PyObject *__pyx_n_s_TimeCount;
-static PyObject *__pyx_n_s_TypeError;
 static PyObject *__pyx_kp_s_UTF_8;
 static PyObject *__pyx_n_s_UnicodeDecodeError;
-static PyObject *__pyx_kp_u__4;
-static PyObject *__pyx_kp_s__6;
+static PyObject *__pyx_kp_s__3;
 static PyObject *__pyx_n_s_abspath;
 static PyObject *__pyx_n_s_access;
 static PyObject *__pyx_n_s_action;
 static PyObject *__pyx_kp_s_aff;
 static PyObject *__pyx_n_s_append;
+static PyObject *__pyx_n_s_ascii;
+static PyObject *__pyx_n_s_bulk_action;
 static PyObject *__pyx_n_s_cache_directory;
 static PyObject *__pyx_n_s_cache_manager;
 static PyObject *__pyx_n_s_cache_registered;
 static PyObject *__pyx_n_s_cacheman_autosync;
 static PyObject *__pyx_n_s_cacheman_cacher;
 static PyObject *__pyx_n_s_cacheman_cachewrap;
-static PyObject *__pyx_n_s_detectCPUs;
+static PyObject *__pyx_n_s_decode;
+static PyObject *__pyx_n_s_detect_cpus;
 static PyObject *__pyx_kp_s_dic;
 static PyObject *__pyx_n_s_dictionaries;
 static PyObject *__pyx_n_s_dirname;
 static PyObject *__pyx_n_s_disk_cache_dir;
 static PyObject *__pyx_n_s_en_US;
 static PyObject *__pyx_n_s_encode;
+static PyObject *__pyx_n_s_encoding;
 static PyObject *__pyx_n_s_enumerate;
 static PyObject *__pyx_n_s_environ;
 static PyObject *__pyx_n_s_file;
@@ -1284,34 +1282,35 @@ static PyObject *__pyx_n_s_isfile;
 static PyObject *__pyx_n_s_join;
 static PyObject *__pyx_n_s_lang;
 static PyObject *__pyx_n_s_main;
-static PyObject *__pyx_n_s_ncpus;
 static PyObject *__pyx_n_s_os;
 static PyObject *__pyx_n_s_path;
-static PyObject *__pyx_n_s_popen2;
+static PyObject *__pyx_n_s_platform;
 static PyObject *__pyx_n_s_pyx_vtable;
-static PyObject *__pyx_n_s_read;
 static PyObject *__pyx_n_s_retrieve_cache;
 static PyObject *__pyx_n_s_save_all_cache_contents;
 static PyObject *__pyx_n_s_spell;
 static PyObject *__pyx_n_s_stem;
 static PyObject *__pyx_n_s_strict;
-static PyObject *__pyx_n_s_sysconf;
-static PyObject *__pyx_n_s_sysconf_names;
-static PyObject *__pyx_kp_s_sysctl_n_hw_ncpu;
+static PyObject *__pyx_n_s_suggest;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_time_checks;
+static PyObject *__pyx_n_s_valid_encoding;
+static PyObject *__pyx_n_s_word;
 static PyObject *__pyx_n_s_words;
-static PyObject *__pyx_pf_8hunspell_8hunspell_detectCPUs(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_valid_encoding(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_encoding); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_lang, PyObject *__pyx_v_cache_manager, PyObject *__pyx_v_disk_cache_dir, PyObject *__pyx_v_hunspell_data_dir); /* proto */
 static void __pyx_pf_8hunspell_8hunspell_12HunspellWrap_2__dealloc__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_4spell(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_word); /* proto */
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_6suggest(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_word); /* proto */
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_8stem(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_word); /* proto */
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_10save_cache(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_12set_concurrency(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_n_cpus); /* proto */
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, PyObject *__pyx_v_words); /* proto */
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
-static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_10action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, PyObject *__pyx_v_word); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_12bulk_suggest(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_words); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_stem(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_words); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_16bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, PyObject *__pyx_v_words); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_18save_cache(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_20set_concurrency(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_max_threads); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_11max_threads___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
+static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_11max_threads_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_4lang___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_4lang_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_4lang_4__del__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
@@ -1321,6 +1320,9 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_19_cache_manager_name_4__
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_hunspell_dir___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_hunspell_dir_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_hunspell_dir_4__del__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
+static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_4__del__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_14_suggest_cache___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_14_suggest_cache_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_14_suggest_cache_4__del__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self); /* proto */
@@ -1335,10 +1337,10 @@ static PyObject *__pyx_int_300;
 static PyObject *__pyx_int_900;
 static PyObject *__pyx_int_10000;
 static PyObject *__pyx_int_1000000;
-static PyObject *__pyx_tuple_;
 static PyObject *__pyx_tuple__2;
-static PyObject *__pyx_tuple__3;
+static PyObject *__pyx_tuple__4;
 static PyObject *__pyx_tuple__5;
+static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__8;
 static PyObject *__pyx_tuple__9;
@@ -1352,377 +1354,421 @@ static PyObject *__pyx_tuple__16;
 static PyObject *__pyx_tuple__17;
 static PyObject *__pyx_tuple__18;
 static PyObject *__pyx_tuple__19;
-static PyObject *__pyx_tuple__20;
-static PyObject *__pyx_tuple__21;
-static PyObject *__pyx_tuple__22;
-static PyObject *__pyx_codeobj__23;
+static PyObject *__pyx_codeobj__20;
 
-/* "hunspell/hunspell.pyx":19
- * 
- * # Detects the number of CPUs on a system. Cribbed from pp.
- * def detectCPUs():             # <<<<<<<<<<<<<<
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):
+/* "hunspell/hunspell.pyx":15
+ * from hunspell.thread cimport *
+ *
+ * def valid_encoding(basestring encoding):             # <<<<<<<<<<<<<<
+ *     try:
+ *         "".encode(encoding, 'strict')
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8hunspell_8hunspell_1detectCPUs(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyMethodDef __pyx_mdef_8hunspell_8hunspell_1detectCPUs = {"detectCPUs", (PyCFunction)__pyx_pw_8hunspell_8hunspell_1detectCPUs, METH_NOARGS, 0};
-static PyObject *__pyx_pw_8hunspell_8hunspell_1detectCPUs(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_8hunspell_8hunspell_1valid_encoding(PyObject *__pyx_self, PyObject *__pyx_v_encoding); /*proto*/
+static PyMethodDef __pyx_mdef_8hunspell_8hunspell_1valid_encoding = {"valid_encoding", (PyCFunction)__pyx_pw_8hunspell_8hunspell_1valid_encoding, METH_O, 0};
+static PyObject *__pyx_pw_8hunspell_8hunspell_1valid_encoding(PyObject *__pyx_self, PyObject *__pyx_v_encoding) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("detectCPUs (wrapper)", 0);
-  __pyx_r = __pyx_pf_8hunspell_8hunspell_detectCPUs(__pyx_self);
+  __Pyx_RefNannySetupContext("valid_encoding (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_encoding), (&PyBaseString_Type), 1, "encoding", 1))) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_valid_encoding(__pyx_self, ((PyObject*)__pyx_v_encoding));
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8hunspell_8hunspell_detectCPUs(CYTHON_UNUSED PyObject *__pyx_self) {
-  PyObject *__pyx_v_ncpus = NULL;
+static PyObject *__pyx_pf_8hunspell_8hunspell_valid_encoding(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_encoding) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  int __pyx_t_2;
-  int __pyx_t_3;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
+  PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
-  __Pyx_RefNannySetupContext("detectCPUs", 0);
+  int __pyx_t_7;
+  PyObject *__pyx_t_8 = NULL;
+  __Pyx_RefNannySetupContext("valid_encoding", 0);
 
-  /* "hunspell/hunspell.pyx":21
- * def detectCPUs():
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):             # <<<<<<<<<<<<<<
- *         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
- *             # Linux & Unix:
+  /* "hunspell/hunspell.pyx":16
+ *
+ * def valid_encoding(basestring encoding):
+ *     try:             # <<<<<<<<<<<<<<
+ *         "".encode(encoding, 'strict')
+ *         return encoding
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_HasAttr(__pyx_t_1, __pyx_n_s_sysconf); if (unlikely(__pyx_t_2 == -1)) __PYX_ERR(0, 21, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_3 = (__pyx_t_2 != 0);
-  if (__pyx_t_3) {
+  {
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ExceptionSave(&__pyx_t_1, &__pyx_t_2, &__pyx_t_3);
+    __Pyx_XGOTREF(__pyx_t_1);
+    __Pyx_XGOTREF(__pyx_t_2);
+    __Pyx_XGOTREF(__pyx_t_3);
+    /*try:*/ {
 
-    /* "hunspell/hunspell.pyx":22
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):
- *         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:             # <<<<<<<<<<<<<<
- *             # Linux & Unix:
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
+      /* "hunspell/hunspell.pyx":17
+ * def valid_encoding(basestring encoding):
+ *     try:
+ *         "".encode(encoding, 'strict')             # <<<<<<<<<<<<<<
+ *         return encoding
+ *     except LookupError:
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sysconf_names); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_3 = (__Pyx_PySequence_ContainsTF(__pyx_n_s_SC_NPROCESSORS_ONLN, __pyx_t_4, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 22, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_2 = (__pyx_t_3 != 0);
-    if (__pyx_t_2) {
-
-      /* "hunspell/hunspell.pyx":24
- *         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
- *             # Linux & Unix:
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")             # <<<<<<<<<<<<<<
- *             if isinstance(ncpus, int) and ncpus > 0:
- *                 return ncpus
- */
-      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 24, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_sysconf); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 24, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __pyx_v_ncpus = __pyx_t_4;
-      __pyx_t_4 = 0;
-
-      /* "hunspell/hunspell.pyx":25
- *             # Linux & Unix:
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
- *             if isinstance(ncpus, int) and ncpus > 0:             # <<<<<<<<<<<<<<
- *                 return ncpus
- *         else: # OSX:
- */
-      __pyx_t_3 = PyInt_Check(__pyx_v_ncpus); 
-      __pyx_t_5 = (__pyx_t_3 != 0);
-      if (__pyx_t_5) {
-      } else {
-        __pyx_t_2 = __pyx_t_5;
-        goto __pyx_L6_bool_binop_done;
-      }
-      __pyx_t_4 = PyObject_RichCompare(__pyx_v_ncpus, __pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 25, __pyx_L1_error)
-      __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 25, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_2 = __pyx_t_5;
-      __pyx_L6_bool_binop_done:;
-      if (__pyx_t_2) {
-
-        /* "hunspell/hunspell.pyx":26
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
- *             if isinstance(ncpus, int) and ncpus > 0:
- *                 return ncpus             # <<<<<<<<<<<<<<
- *         else: # OSX:
- *             return int(os.popen2("sysctl -n hw.ncpu")[1].read())
- */
-        __Pyx_XDECREF(__pyx_r);
-        __Pyx_INCREF(__pyx_v_ncpus);
-        __pyx_r = __pyx_v_ncpus;
-        goto __pyx_L0;
-
-        /* "hunspell/hunspell.pyx":25
- *             # Linux & Unix:
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
- *             if isinstance(ncpus, int) and ncpus > 0:             # <<<<<<<<<<<<<<
- *                 return ncpus
- *         else: # OSX:
- */
-      }
-
-      /* "hunspell/hunspell.pyx":22
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):
- *         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:             # <<<<<<<<<<<<<<
- *             # Linux & Unix:
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
- */
-      goto __pyx_L4;
-    }
-
-    /* "hunspell/hunspell.pyx":28
- *                 return ncpus
- *         else: # OSX:
- *             return int(os.popen2("sysctl -n hw.ncpu")[1].read())             # <<<<<<<<<<<<<<
- *     # Windows:
- *     if "NUMBER_OF_PROCESSORS" in os.environ:
- */
-    /*else*/ {
-      __Pyx_XDECREF(__pyx_r);
-      __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_popen2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = __Pyx_GetItemInt(__pyx_t_1, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_read); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_, __pyx_n_s_encode); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 17, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_5);
       __pyx_t_6 = NULL;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
-        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_1);
+      __pyx_t_7 = 0;
+      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
+        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
         if (likely(__pyx_t_6)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
           __Pyx_INCREF(__pyx_t_6);
           __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_1, function);
+          __Pyx_DECREF_SET(__pyx_t_5, function);
+          __pyx_t_7 = 1;
         }
       }
-      if (__pyx_t_6) {
-        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 28, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      } else {
-        __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 28, __pyx_L1_error)
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_5)) {
+        PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_v_encoding, __pyx_n_s_strict};
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L3_error)
+        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+        PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_v_encoding, __pyx_n_s_strict};
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L3_error)
+        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else
+      #endif
+      {
+        __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 17, __pyx_L3_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        if (__pyx_t_6) {
+          __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
+        }
+        __Pyx_INCREF(__pyx_v_encoding);
+        __Pyx_GIVEREF(__pyx_v_encoding);
+        PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_7, __pyx_v_encoding);
+        __Pyx_INCREF(__pyx_n_s_strict);
+        __Pyx_GIVEREF(__pyx_n_s_strict);
+        PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_n_s_strict);
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L3_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_r = __pyx_t_1;
-      __pyx_t_1 = 0;
-      goto __pyx_L0;
-    }
-    __pyx_L4:;
 
-    /* "hunspell/hunspell.pyx":21
- * def detectCPUs():
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):             # <<<<<<<<<<<<<<
- *         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
- *             # Linux & Unix:
- */
-  }
-
-  /* "hunspell/hunspell.pyx":30
- *             return int(os.popen2("sysctl -n hw.ncpu")[1].read())
- *     # Windows:
- *     if "NUMBER_OF_PROCESSORS" in os.environ:             # <<<<<<<<<<<<<<
- *         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
- *         if ncpus > 0:
- */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 30, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_environ); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 30, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_n_s_NUMBER_OF_PROCESSORS, __pyx_t_4, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 30, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_5 = (__pyx_t_2 != 0);
-  if (__pyx_t_5) {
-
-    /* "hunspell/hunspell.pyx":31
- *     # Windows:
- *     if "NUMBER_OF_PROCESSORS" in os.environ:
- *         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])             # <<<<<<<<<<<<<<
- *         if ncpus > 0:
- *             return ncpus
- */
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_environ); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = PyObject_GetItem(__pyx_t_1, __pyx_n_s_NUMBER_OF_PROCESSORS); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyNumber_Int(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_ncpus, __pyx_t_1);
-    __pyx_t_1 = 0;
-
-    /* "hunspell/hunspell.pyx":32
- *     if "NUMBER_OF_PROCESSORS" in os.environ:
- *         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
- *         if ncpus > 0:             # <<<<<<<<<<<<<<
- *             return ncpus
- *     return 1 # Default
- */
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_ncpus, __pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__pyx_t_5) {
-
-      /* "hunspell/hunspell.pyx":33
- *         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
- *         if ncpus > 0:
- *             return ncpus             # <<<<<<<<<<<<<<
- *     return 1 # Default
- * 
+      /* "hunspell/hunspell.pyx":18
+ *     try:
+ *         "".encode(encoding, 'strict')
+ *         return encoding             # <<<<<<<<<<<<<<
+ *     except LookupError:
+ *         return 'ascii'
  */
       __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_v_ncpus);
-      __pyx_r = __pyx_v_ncpus;
-      goto __pyx_L0;
+      __Pyx_INCREF(__pyx_v_encoding);
+      __pyx_r = __pyx_v_encoding;
+      goto __pyx_L7_try_return;
 
-      /* "hunspell/hunspell.pyx":32
- *     if "NUMBER_OF_PROCESSORS" in os.environ:
- *         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
- *         if ncpus > 0:             # <<<<<<<<<<<<<<
- *             return ncpus
- *     return 1 # Default
+      /* "hunspell/hunspell.pyx":16
+ *
+ * def valid_encoding(basestring encoding):
+ *     try:             # <<<<<<<<<<<<<<
+ *         "".encode(encoding, 'strict')
+ *         return encoding
  */
     }
+    __pyx_L3_error:;
+    __Pyx_PyThreadState_assign
+    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "hunspell/hunspell.pyx":30
- *             return int(os.popen2("sysctl -n hw.ncpu")[1].read())
- *     # Windows:
- *     if "NUMBER_OF_PROCESSORS" in os.environ:             # <<<<<<<<<<<<<<
- *         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
- *         if ncpus > 0:
+    /* "hunspell/hunspell.pyx":19
+ *         "".encode(encoding, 'strict')
+ *         return encoding
+ *     except LookupError:             # <<<<<<<<<<<<<<
+ *         return 'ascii'
+ *
  */
+    __pyx_t_7 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_LookupError);
+    if (__pyx_t_7) {
+      __Pyx_AddTraceback("hunspell.hunspell.valid_encoding", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_5, &__pyx_t_8) < 0) __PYX_ERR(0, 19, __pyx_L5_except_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GOTREF(__pyx_t_8);
+
+      /* "hunspell/hunspell.pyx":20
+ *         return encoding
+ *     except LookupError:
+ *         return 'ascii'             # <<<<<<<<<<<<<<
+ *
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:
+ */
+      __Pyx_XDECREF(__pyx_r);
+      __Pyx_INCREF(__pyx_n_s_ascii);
+      __pyx_r = __pyx_n_s_ascii;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      goto __pyx_L6_except_return;
+    }
+    goto __pyx_L5_except_error;
+    __pyx_L5_except_error:;
+
+    /* "hunspell/hunspell.pyx":16
+ *
+ * def valid_encoding(basestring encoding):
+ *     try:             # <<<<<<<<<<<<<<
+ *         "".encode(encoding, 'strict')
+ *         return encoding
+ */
+    __Pyx_PyThreadState_assign
+    __Pyx_XGIVEREF(__pyx_t_1);
+    __Pyx_XGIVEREF(__pyx_t_2);
+    __Pyx_XGIVEREF(__pyx_t_3);
+    __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
+    goto __pyx_L1_error;
+    __pyx_L7_try_return:;
+    __Pyx_PyThreadState_assign
+    __Pyx_XGIVEREF(__pyx_t_1);
+    __Pyx_XGIVEREF(__pyx_t_2);
+    __Pyx_XGIVEREF(__pyx_t_3);
+    __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
+    goto __pyx_L0;
+    __pyx_L6_except_return:;
+    __Pyx_PyThreadState_assign
+    __Pyx_XGIVEREF(__pyx_t_1);
+    __Pyx_XGIVEREF(__pyx_t_2);
+    __Pyx_XGIVEREF(__pyx_t_3);
+    __Pyx_ExceptionReset(__pyx_t_1, __pyx_t_2, __pyx_t_3);
+    goto __pyx_L0;
   }
 
-  /* "hunspell/hunspell.pyx":34
- *         if ncpus > 0:
- *             return ncpus
- *     return 1 # Default             # <<<<<<<<<<<<<<
- * 
- * #//////////////////////////////////////////////////////////////////////////////
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_int_1);
-  __pyx_r = __pyx_int_1;
-  goto __pyx_L0;
-
-  /* "hunspell/hunspell.pyx":19
- * 
- * # Detects the number of CPUs on a system. Cribbed from pp.
- * def detectCPUs():             # <<<<<<<<<<<<<<
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):
+  /* "hunspell/hunspell.pyx":15
+ * from hunspell.thread cimport *
+ *
+ * def valid_encoding(basestring encoding):             # <<<<<<<<<<<<<<
+ *     try:
+ *         "".encode(encoding, 'strict')
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("hunspell.hunspell.detectCPUs", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_AddTraceback("hunspell.hunspell.valid_encoding", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_ncpus);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":38
- * #//////////////////////////////////////////////////////////////////////////////
- * 
- * cdef int copy_to_c_string(basestring py_unicode_string, char **holder) except -1:             # <<<<<<<<<<<<<<
- *     cdef size_t str_len = len(py_unicode_string)
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')
+/* "hunspell/hunspell.pyx":22
+ *         return 'ascii'
+ *
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:             # <<<<<<<<<<<<<<
+ *     if isinstance(py_string, bytes):
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)
  */
 
-static int __pyx_f_8hunspell_8hunspell_copy_to_c_string(PyObject *__pyx_v_py_unicode_string, char **__pyx_v_holder) {
+static int __pyx_f_8hunspell_8hunspell_copy_to_c_string(PyObject *__pyx_v_py_string, char **__pyx_v_holder, struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string *__pyx_optional_args) {
+  PyObject *__pyx_v_encoding = ((PyObject*)__pyx_kp_s_UTF_8);
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  struct __pyx_opt_args_8hunspell_8hunspell_byte_to_c_string __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  __Pyx_RefNannySetupContext("copy_to_c_string", 0);
+  if (__pyx_optional_args) {
+    if (__pyx_optional_args->__pyx_n > 0) {
+      __pyx_v_encoding = __pyx_optional_args->encoding;
+    }
+  }
+
+  /* "hunspell/hunspell.pyx":23
+ *
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:
+ *     if isinstance(py_string, bytes):             # <<<<<<<<<<<<<<
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)
+ *     else:
+ */
+  __pyx_t_1 = PyBytes_Check(__pyx_v_py_string);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+
+    /* "hunspell/hunspell.pyx":24
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:
+ *     if isinstance(py_string, bytes):
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)             # <<<<<<<<<<<<<<
+ *     else:
+ *         return byte_to_c_string(<bytes>py_string.encode(encoding, 'strict'), holder, encoding)
+ */
+    __pyx_t_4.__pyx_n = 1;
+    __pyx_t_4.encoding = __pyx_v_encoding;
+    __pyx_t_3 = __pyx_f_8hunspell_8hunspell_byte_to_c_string(((PyObject*)__pyx_v_py_string), __pyx_v_holder, &__pyx_t_4); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(0, 24, __pyx_L1_error)
+    __pyx_r = __pyx_t_3;
+    goto __pyx_L0;
+
+    /* "hunspell/hunspell.pyx":23
+ *
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:
+ *     if isinstance(py_string, bytes):             # <<<<<<<<<<<<<<
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)
+ *     else:
+ */
+  }
+
+  /* "hunspell/hunspell.pyx":26
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)
+ *     else:
+ *         return byte_to_c_string(<bytes>py_string.encode(encoding, 'strict'), holder, encoding)             # <<<<<<<<<<<<<<
+ *
+ * cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:
+ */
+  /*else*/ {
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_string, __pyx_n_s_encode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 26, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_7 = NULL;
+    __pyx_t_3 = 0;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
+      __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
+      if (likely(__pyx_t_7)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+        __Pyx_INCREF(__pyx_t_7);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_6, function);
+        __pyx_t_3 = 1;
+      }
+    }
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_6)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_7, __pyx_v_encoding, __pyx_n_s_strict};
+      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_3, 2+__pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_GOTREF(__pyx_t_5);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_7, __pyx_v_encoding, __pyx_n_s_strict};
+      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_3, 2+__pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_GOTREF(__pyx_t_5);
+    } else
+    #endif
+    {
+      __pyx_t_8 = PyTuple_New(2+__pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      if (__pyx_t_7) {
+        __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
+      }
+      __Pyx_INCREF(__pyx_v_encoding);
+      __Pyx_GIVEREF(__pyx_v_encoding);
+      PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_3, __pyx_v_encoding);
+      __Pyx_INCREF(__pyx_n_s_strict);
+      __Pyx_GIVEREF(__pyx_n_s_strict);
+      PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_3, __pyx_n_s_strict);
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 26, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_4.__pyx_n = 1;
+    __pyx_t_4.encoding = __pyx_v_encoding;
+    __pyx_t_3 = __pyx_f_8hunspell_8hunspell_byte_to_c_string(((PyObject*)__pyx_t_5), __pyx_v_holder, &__pyx_t_4); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(0, 26, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_r = __pyx_t_3;
+    goto __pyx_L0;
+  }
+
+  /* "hunspell/hunspell.pyx":22
+ *         return 'ascii'
+ *
+ * cdef int copy_to_c_string(basestring py_string, char **holder, basestring encoding='UTF-8') except -1:             # <<<<<<<<<<<<<<
+ *     if isinstance(py_string, bytes):
+ *         return byte_to_c_string(<bytes>py_string, holder, encoding)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_AddTraceback("hunspell.hunspell.copy_to_c_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":28
+ *         return byte_to_c_string(<bytes>py_string.encode(encoding, 'strict'), holder, encoding)
+ *
+ * cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:             # <<<<<<<<<<<<<<
+ *     cdef size_t str_len = len(py_byte_string)
+ *     cdef char *c_raw_string = py_byte_string
+ */
+
+static int __pyx_f_8hunspell_8hunspell_byte_to_c_string(PyObject *__pyx_v_py_byte_string, char **__pyx_v_holder, struct __pyx_opt_args_8hunspell_8hunspell_byte_to_c_string *__pyx_optional_args) {
   size_t __pyx_v_str_len;
-  PyObject *__pyx_v_py_byte_string = NULL;
   char *__pyx_v_c_raw_string;
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   Py_ssize_t __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  char *__pyx_t_4;
-  int __pyx_t_5;
-  __Pyx_RefNannySetupContext("copy_to_c_string", 0);
+  char *__pyx_t_2;
+  int __pyx_t_3;
+  __Pyx_RefNannySetupContext("byte_to_c_string", 0);
+  if (__pyx_optional_args) {
+  }
 
-  /* "hunspell/hunspell.pyx":39
- * 
- * cdef int copy_to_c_string(basestring py_unicode_string, char **holder) except -1:
- *     cdef size_t str_len = len(py_unicode_string)             # <<<<<<<<<<<<<<
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')
- *     cdef char *c_raw_string = py_byte_string
- */
-  __pyx_t_1 = PyObject_Length(__pyx_v_py_unicode_string); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_v_str_len = __pyx_t_1;
-
-  /* "hunspell/hunspell.pyx":40
- * cdef int copy_to_c_string(basestring py_unicode_string, char **holder) except -1:
- *     cdef size_t str_len = len(py_unicode_string)
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')             # <<<<<<<<<<<<<<
+  /* "hunspell/hunspell.pyx":29
+ *
+ * cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:
+ *     cdef size_t str_len = len(py_byte_string)             # <<<<<<<<<<<<<<
  *     cdef char *c_raw_string = py_byte_string
  *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_py_unicode_string, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_v_py_byte_string = __pyx_t_3;
-  __pyx_t_3 = 0;
+  if (unlikely(__pyx_v_py_byte_string == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(0, 29, __pyx_L1_error)
+  }
+  __pyx_t_1 = PyBytes_GET_SIZE(__pyx_v_py_byte_string); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_v_str_len = __pyx_t_1;
 
-  /* "hunspell/hunspell.pyx":41
- *     cdef size_t str_len = len(py_unicode_string)
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')
+  /* "hunspell/hunspell.pyx":30
+ * cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:
+ *     cdef size_t str_len = len(py_byte_string)
  *     cdef char *c_raw_string = py_byte_string             # <<<<<<<<<<<<<<
  *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
  *     if deref(holder) is NULL:
  */
-  __pyx_t_4 = __Pyx_PyObject_AsString(__pyx_v_py_byte_string); if (unlikely((!__pyx_t_4) && PyErr_Occurred())) __PYX_ERR(0, 41, __pyx_L1_error)
-  __pyx_v_c_raw_string = __pyx_t_4;
+  __pyx_t_2 = __Pyx_PyObject_AsString(__pyx_v_py_byte_string); if (unlikely((!__pyx_t_2) && PyErr_Occurred())) __PYX_ERR(0, 30, __pyx_L1_error)
+  __pyx_v_c_raw_string = __pyx_t_2;
 
-  /* "hunspell/hunspell.pyx":42
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')
+  /* "hunspell/hunspell.pyx":31
+ *     cdef size_t str_len = len(py_byte_string)
  *     cdef char *c_raw_string = py_byte_string
  *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment             # <<<<<<<<<<<<<<
  *     if deref(holder) is NULL:
@@ -1730,26 +1776,26 @@ static int __pyx_f_8hunspell_8hunspell_copy_to_c_string(PyObject *__pyx_v_py_uni
  */
   (__pyx_v_holder[0]) = ((char *)malloc(((__pyx_v_str_len + 1) * (sizeof(char)))));
 
-  /* "hunspell/hunspell.pyx":43
+  /* "hunspell/hunspell.pyx":32
  *     cdef char *c_raw_string = py_byte_string
  *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
  *     if deref(holder) is NULL:             # <<<<<<<<<<<<<<
  *         raise MemoryError()
  *     strncpy(deref(holder), c_raw_string, str_len)
  */
-  __pyx_t_5 = (((*__pyx_v_holder) == NULL) != 0);
-  if (__pyx_t_5) {
+  __pyx_t_3 = (((*__pyx_v_holder) == NULL) != 0);
+  if (__pyx_t_3) {
 
-    /* "hunspell/hunspell.pyx":44
+    /* "hunspell/hunspell.pyx":33
  *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
  *     if deref(holder) is NULL:
  *         raise MemoryError()             # <<<<<<<<<<<<<<
  *     strncpy(deref(holder), c_raw_string, str_len)
  *     holder[0][str_len] = 0
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 44, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 33, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":43
+    /* "hunspell/hunspell.pyx":32
  *     cdef char *c_raw_string = py_byte_string
  *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
  *     if deref(holder) is NULL:             # <<<<<<<<<<<<<<
@@ -1758,89 +1804,83 @@ static int __pyx_f_8hunspell_8hunspell_copy_to_c_string(PyObject *__pyx_v_py_uni
  */
   }
 
-  /* "hunspell/hunspell.pyx":45
+  /* "hunspell/hunspell.pyx":34
  *     if deref(holder) is NULL:
  *         raise MemoryError()
  *     strncpy(deref(holder), c_raw_string, str_len)             # <<<<<<<<<<<<<<
  *     holder[0][str_len] = 0
- *     del py_byte_string
+ *     return str_len
  */
   strncpy((*__pyx_v_holder), __pyx_v_c_raw_string, __pyx_v_str_len);
 
-  /* "hunspell/hunspell.pyx":46
+  /* "hunspell/hunspell.pyx":35
  *         raise MemoryError()
  *     strncpy(deref(holder), c_raw_string, str_len)
  *     holder[0][str_len] = 0             # <<<<<<<<<<<<<<
- *     del py_byte_string
- *     return 1
+ *     return str_len
+ *
  */
   ((__pyx_v_holder[0])[__pyx_v_str_len]) = 0;
 
-  /* "hunspell/hunspell.pyx":47
+  /* "hunspell/hunspell.pyx":36
  *     strncpy(deref(holder), c_raw_string, str_len)
  *     holder[0][str_len] = 0
- *     del py_byte_string             # <<<<<<<<<<<<<<
- *     return 1
- * 
+ *     return str_len             # <<<<<<<<<<<<<<
+ *
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):
  */
-  __Pyx_DECREF(__pyx_v_py_byte_string);
-  __pyx_v_py_byte_string = NULL;
-
-  /* "hunspell/hunspell.pyx":48
- *     holder[0][str_len] = 0
- *     del py_byte_string
- *     return 1             # <<<<<<<<<<<<<<
- * 
- * # Convert c_string to python unicode
- */
-  __pyx_r = 1;
+  __pyx_r = __pyx_v_str_len;
   goto __pyx_L0;
 
-  /* "hunspell/hunspell.pyx":38
- * #//////////////////////////////////////////////////////////////////////////////
- * 
- * cdef int copy_to_c_string(basestring py_unicode_string, char **holder) except -1:             # <<<<<<<<<<<<<<
- *     cdef size_t str_len = len(py_unicode_string)
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')
+  /* "hunspell/hunspell.pyx":28
+ *         return byte_to_c_string(<bytes>py_string.encode(encoding, 'strict'), holder, encoding)
+ *
+ * cdef int byte_to_c_string(bytes py_byte_string, char **holder, basestring encoding='UTF-8') except -1:             # <<<<<<<<<<<<<<
+ *     cdef size_t str_len = len(py_byte_string)
+ *     cdef char *c_raw_string = py_byte_string
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("hunspell.hunspell.copy_to_c_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("hunspell.hunspell.byte_to_c_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_py_byte_string);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":51
- * 
- * # Convert c_string to python unicode
- * cdef unicode c_string_to_unicode_no_except(char* s):             # <<<<<<<<<<<<<<
+/* "hunspell/hunspell.pyx":38
+ *     return str_len
+ *
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):             # <<<<<<<<<<<<<<
+ *     # Convert c_string to python unicode
  *     try:
- *         return s.decode('UTF-8', 'strict')
  */
 
-static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char *__pyx_v_s) {
+static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char *__pyx_v_s, struct __pyx_opt_args_8hunspell_8hunspell_c_string_to_unicode_no_except *__pyx_optional_args) {
+  PyObject *__pyx_v_encoding = ((PyObject*)__pyx_kp_s_UTF_8);
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
+  PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
+  int __pyx_t_7;
+  PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("c_string_to_unicode_no_except", 0);
+  if (__pyx_optional_args) {
+    if (__pyx_optional_args->__pyx_n > 0) {
+      __pyx_v_encoding = __pyx_optional_args->encoding;
+    }
+  }
 
-  /* "hunspell/hunspell.pyx":52
- * # Convert c_string to python unicode
- * cdef unicode c_string_to_unicode_no_except(char* s):
+  /* "hunspell/hunspell.pyx":40
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):
+ *     # Convert c_string to python unicode
  *     try:             # <<<<<<<<<<<<<<
- *         return s.decode('UTF-8', 'strict')
+ *         return s.decode(encoding, 'strict')
  *     except UnicodeDecodeError:
  */
   {
@@ -1852,71 +1892,122 @@ static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char 
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "hunspell/hunspell.pyx":53
- * cdef unicode c_string_to_unicode_no_except(char* s):
+      /* "hunspell/hunspell.pyx":41
+ *     # Convert c_string to python unicode
  *     try:
- *         return s.decode('UTF-8', 'strict')             # <<<<<<<<<<<<<<
+ *         return s.decode(encoding, 'strict')             # <<<<<<<<<<<<<<
  *     except UnicodeDecodeError:
  *         return u""
  */
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_4 = __Pyx_decode_c_string(__pyx_v_s, 0, strlen(__pyx_v_s), NULL, NULL, PyUnicode_DecodeUTF8); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L3_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "unicode", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 53, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_PyBytes_FromString(__pyx_v_s); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 41, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_decode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L3_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_5 = NULL;
+      __pyx_t_7 = 0;
+      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_6);
+        if (likely(__pyx_t_5)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
+          __Pyx_INCREF(__pyx_t_5);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_6, function);
+          __pyx_t_7 = 1;
+        }
+      }
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_6)) {
+        PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_encoding, __pyx_n_s_strict};
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 41, __pyx_L3_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
+        PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_encoding, __pyx_n_s_strict};
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 41, __pyx_L3_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_4);
+      } else
+      #endif
+      {
+        __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 41, __pyx_L3_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        if (__pyx_t_5) {
+          __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        }
+        __Pyx_INCREF(__pyx_v_encoding);
+        __Pyx_GIVEREF(__pyx_v_encoding);
+        PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_7, __pyx_v_encoding);
+        __Pyx_INCREF(__pyx_n_s_strict);
+        __Pyx_GIVEREF(__pyx_n_s_strict);
+        PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_n_s_strict);
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 41, __pyx_L3_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      }
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "unicode", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 41, __pyx_L3_error)
       __pyx_r = ((PyObject*)__pyx_t_4);
       __pyx_t_4 = 0;
       goto __pyx_L7_try_return;
 
-      /* "hunspell/hunspell.pyx":52
- * # Convert c_string to python unicode
- * cdef unicode c_string_to_unicode_no_except(char* s):
+      /* "hunspell/hunspell.pyx":40
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):
+ *     # Convert c_string to python unicode
  *     try:             # <<<<<<<<<<<<<<
- *         return s.decode('UTF-8', 'strict')
+ *         return s.decode(encoding, 'strict')
  *     except UnicodeDecodeError:
  */
     }
     __pyx_L3_error:;
     __Pyx_PyThreadState_assign
+    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "hunspell/hunspell.pyx":54
+    /* "hunspell/hunspell.pyx":42
  *     try:
- *         return s.decode('UTF-8', 'strict')
+ *         return s.decode(encoding, 'strict')
  *     except UnicodeDecodeError:             # <<<<<<<<<<<<<<
  *         return u""
- * 
+ *
  */
-    __pyx_t_5 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_UnicodeDecodeError);
-    if (__pyx_t_5) {
+    __pyx_t_7 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_UnicodeDecodeError);
+    if (__pyx_t_7) {
       __Pyx_AddTraceback("hunspell.hunspell.c_string_to_unicode_no_except", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_6, &__pyx_t_7) < 0) __PYX_ERR(0, 54, __pyx_L5_except_error)
+      if (__Pyx_GetException(&__pyx_t_4, &__pyx_t_6, &__pyx_t_8) < 0) __PYX_ERR(0, 42, __pyx_L5_except_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_GOTREF(__pyx_t_8);
 
-      /* "hunspell/hunspell.pyx":55
- *         return s.decode('UTF-8', 'strict')
+      /* "hunspell/hunspell.pyx":43
+ *         return s.decode(encoding, 'strict')
  *     except UnicodeDecodeError:
  *         return u""             # <<<<<<<<<<<<<<
- * 
- * #
+ *
+ * #//////////////////////////////////////////////////////////////////////////////
  */
       __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_kp_u__4);
-      __pyx_r = __pyx_kp_u__4;
+      __Pyx_INCREF(__pyx_kp_u_);
+      __pyx_r = __pyx_kp_u_;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       goto __pyx_L6_except_return;
     }
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "hunspell/hunspell.pyx":52
- * # Convert c_string to python unicode
- * cdef unicode c_string_to_unicode_no_except(char* s):
+    /* "hunspell/hunspell.pyx":40
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):
+ *     # Convert c_string to python unicode
  *     try:             # <<<<<<<<<<<<<<
- *         return s.decode('UTF-8', 'strict')
+ *         return s.decode(encoding, 'strict')
  *     except UnicodeDecodeError:
  */
     __Pyx_PyThreadState_assign
@@ -1941,19 +2032,20 @@ static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char 
     goto __pyx_L0;
   }
 
-  /* "hunspell/hunspell.pyx":51
- * 
- * # Convert c_string to python unicode
- * cdef unicode c_string_to_unicode_no_except(char* s):             # <<<<<<<<<<<<<<
+  /* "hunspell/hunspell.pyx":38
+ *     return str_len
+ *
+ * cdef unicode c_string_to_unicode_no_except(char* s, basestring encoding='UTF-8'):             # <<<<<<<<<<<<<<
+ *     # Convert c_string to python unicode
  *     try:
- *         return s.decode('UTF-8', 'strict')
  */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
   __Pyx_AddTraceback("hunspell.hunspell.c_string_to_unicode_no_except", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
@@ -1962,63 +2054,96 @@ static PyObject *__pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(char 
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":83
- * #//////////////////////////////////////////////////////////////////////////////
- * 
- * cdef void *hunspell_suggest_worker(void *argument) nogil:             # <<<<<<<<<<<<<<
+/* "hunspell/hunspell.pyx":67
+ *     bint stem_action
+ *
+ * cdef void *hunspell_worker(void *argument) nogil:             # <<<<<<<<<<<<<<
  *     cdef ThreadWorkerArgs args
  *     cdef int i
  */
 
-static void *__pyx_f_8hunspell_8hunspell_hunspell_suggest_worker(void *__pyx_v_argument) {
+static void *__pyx_f_8hunspell_8hunspell_hunspell_worker(void *__pyx_v_argument) {
   struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs __pyx_v_args;
   int __pyx_v_i;
   void *__pyx_r;
   int __pyx_t_1;
+  int __pyx_t_2;
 
-  /* "hunspell/hunspell.pyx":86
+  /* "hunspell/hunspell.pyx":70
  *     cdef ThreadWorkerArgs args
  *     cdef int i
  *     args = deref(<ThreadWorkerArgs *>argument)             # <<<<<<<<<<<<<<
- * 
+ *
  *     for i from 0 <= i < args.n_words:
  */
   __pyx_v_args = (*((struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs *)__pyx_v_argument));
 
-  /* "hunspell/hunspell.pyx":88
+  /* "hunspell/hunspell.pyx":72
  *     args = deref(<ThreadWorkerArgs *>argument)
- * 
+ *
  *     for i from 0 <= i < args.n_words:             # <<<<<<<<<<<<<<
- *         args.output_counts[i] = args.hspell.suggest(args.output_array_ptr + i, deref(args.word_list + i))
- * 
+ *         if args.stem_action:
+ *             args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))
  */
   __pyx_t_1 = __pyx_v_args.n_words;
   for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_1; __pyx_v_i++) {
 
-    /* "hunspell/hunspell.pyx":89
- * 
+    /* "hunspell/hunspell.pyx":73
+ *
  *     for i from 0 <= i < args.n_words:
- *         args.output_counts[i] = args.hspell.suggest(args.output_array_ptr + i, deref(args.word_list + i))             # <<<<<<<<<<<<<<
- * 
+ *         if args.stem_action:             # <<<<<<<<<<<<<<
+ *             args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))
+ *         else:
+ */
+    __pyx_t_2 = (__pyx_v_args.stem_action != 0);
+    if (__pyx_t_2) {
+
+      /* "hunspell/hunspell.pyx":74
+ *     for i from 0 <= i < args.n_words:
+ *         if args.stem_action:
+ *             args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))             # <<<<<<<<<<<<<<
+ *         else:
+ *             args.output_counts[i] = args.hspell.suggest(args.output_array_ptr + i, deref(args.word_list + i))
+ */
+      (__pyx_v_args.output_counts[__pyx_v_i]) = __pyx_v_args.hspell->stem((__pyx_v_args.output_array_ptr + __pyx_v_i), (*(__pyx_v_args.word_list + __pyx_v_i)));
+
+      /* "hunspell/hunspell.pyx":73
+ *
+ *     for i from 0 <= i < args.n_words:
+ *         if args.stem_action:             # <<<<<<<<<<<<<<
+ *             args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))
+ *         else:
+ */
+      goto __pyx_L5;
+    }
+
+    /* "hunspell/hunspell.pyx":76
+ *             args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))
+ *         else:
+ *             args.output_counts[i] = args.hspell.suggest(args.output_array_ptr + i, deref(args.word_list + i))             # <<<<<<<<<<<<<<
+ *
  *     return NULL
  */
-    (__pyx_v_args.output_counts[__pyx_v_i]) = __pyx_v_args.hspell->suggest((__pyx_v_args.output_array_ptr + __pyx_v_i), (*(__pyx_v_args.word_list + __pyx_v_i)));
+    /*else*/ {
+      (__pyx_v_args.output_counts[__pyx_v_i]) = __pyx_v_args.hspell->suggest((__pyx_v_args.output_array_ptr + __pyx_v_i), (*(__pyx_v_args.word_list + __pyx_v_i)));
+    }
+    __pyx_L5:;
   }
 
-  /* "hunspell/hunspell.pyx":91
- *         args.output_counts[i] = args.hspell.suggest(args.output_array_ptr + i, deref(args.word_list + i))
- * 
+  /* "hunspell/hunspell.pyx":78
+ *             args.output_counts[i] = args.hspell.suggest(args.output_array_ptr + i, deref(args.word_list + i))
+ *
  *     return NULL             # <<<<<<<<<<<<<<
- * 
- * cdef void *hunspell_stem_worker(void *argument) nogil:
+ *
+ * #//////////////////////////////////////////////////////////////////////////////
  */
   __pyx_r = NULL;
   goto __pyx_L0;
 
-  /* "hunspell/hunspell.pyx":83
- * #//////////////////////////////////////////////////////////////////////////////
- * 
- * cdef void *hunspell_suggest_worker(void *argument) nogil:             # <<<<<<<<<<<<<<
+  /* "hunspell/hunspell.pyx":67
+ *     bint stem_action
+ *
+ * cdef void *hunspell_worker(void *argument) nogil:             # <<<<<<<<<<<<<<
  *     cdef ThreadWorkerArgs args
  *     cdef int i
  */
@@ -2028,78 +2153,12 @@ static void *__pyx_f_8hunspell_8hunspell_hunspell_suggest_worker(void *__pyx_v_a
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":93
- *     return NULL
- * 
- * cdef void *hunspell_stem_worker(void *argument) nogil:             # <<<<<<<<<<<<<<
- *     cdef ThreadWorkerArgs args
- *     cdef int i
- */
-
-static void *__pyx_f_8hunspell_8hunspell_hunspell_stem_worker(void *__pyx_v_argument) {
-  struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs __pyx_v_args;
-  int __pyx_v_i;
-  void *__pyx_r;
-  int __pyx_t_1;
-
-  /* "hunspell/hunspell.pyx":96
- *     cdef ThreadWorkerArgs args
- *     cdef int i
- *     args = deref(<ThreadWorkerArgs *>argument)             # <<<<<<<<<<<<<<
- * 
- *     for i from 0 <= i < args.n_words:
- */
-  __pyx_v_args = (*((struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs *)__pyx_v_argument));
-
-  /* "hunspell/hunspell.pyx":98
- *     args = deref(<ThreadWorkerArgs *>argument)
- * 
- *     for i from 0 <= i < args.n_words:             # <<<<<<<<<<<<<<
- *         args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))
- * 
- */
-  __pyx_t_1 = __pyx_v_args.n_words;
-  for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_1; __pyx_v_i++) {
-
-    /* "hunspell/hunspell.pyx":99
- * 
- *     for i from 0 <= i < args.n_words:
- *         args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))             # <<<<<<<<<<<<<<
- * 
- *     return NULL
- */
-    (__pyx_v_args.output_counts[__pyx_v_i]) = __pyx_v_args.hspell->stem((__pyx_v_args.output_array_ptr + __pyx_v_i), (*(__pyx_v_args.word_list + __pyx_v_i)));
-  }
-
-  /* "hunspell/hunspell.pyx":101
- *         args.output_counts[i] = args.hspell.stem(args.output_array_ptr + i, deref(args.word_list + i))
- * 
- *     return NULL             # <<<<<<<<<<<<<<
- * 
- * #//////////////////////////////////////////////////////////////////////////////
- */
-  __pyx_r = NULL;
-  goto __pyx_L0;
-
-  /* "hunspell/hunspell.pyx":93
- *     return NULL
- * 
- * cdef void *hunspell_stem_worker(void *argument) nogil:             # <<<<<<<<<<<<<<
- *     cdef ThreadWorkerArgs args
- *     cdef int i
- */
-
-  /* function exit code */
-  __pyx_L0:;
-  return __pyx_r;
-}
-
-/* "hunspell/hunspell.pyx":117
- * 
- *     # C-realm Create Hunspell Instance
- *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except +:             # <<<<<<<<<<<<<<
+/* "hunspell/hunspell.pyx":94
+ *     cdef char *dpath
+ *
+ *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except *:             # <<<<<<<<<<<<<<
+ *         # C-realm Create Hunspell Instance
  *         if self.affpath:
- *             free(self.affpath)
  */
 
 static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_lang) {
@@ -2122,9 +2181,9 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   int __pyx_t_11;
   __Pyx_RefNannySetupContext("_create_hspell_inst", 0);
 
-  /* "hunspell/hunspell.pyx":118
- *     # C-realm Create Hunspell Instance
- *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except +:
+  /* "hunspell/hunspell.pyx":96
+ *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except *:
+ *         # C-realm Create Hunspell Instance
  *         if self.affpath:             # <<<<<<<<<<<<<<
  *             free(self.affpath)
  *         self.affpath = NULL
@@ -2132,8 +2191,8 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   __pyx_t_1 = (__pyx_v_self->affpath != 0);
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":119
- *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except +:
+    /* "hunspell/hunspell.pyx":97
+ *         # C-realm Create Hunspell Instance
  *         if self.affpath:
  *             free(self.affpath)             # <<<<<<<<<<<<<<
  *         self.affpath = NULL
@@ -2141,16 +2200,16 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
  */
     free(__pyx_v_self->affpath);
 
-    /* "hunspell/hunspell.pyx":118
- *     # C-realm Create Hunspell Instance
- *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except +:
+    /* "hunspell/hunspell.pyx":96
+ *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except *:
+ *         # C-realm Create Hunspell Instance
  *         if self.affpath:             # <<<<<<<<<<<<<<
  *             free(self.affpath)
  *         self.affpath = NULL
  */
   }
 
-  /* "hunspell/hunspell.pyx":120
+  /* "hunspell/hunspell.pyx":98
  *         if self.affpath:
  *             free(self.affpath)
  *         self.affpath = NULL             # <<<<<<<<<<<<<<
@@ -2159,7 +2218,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
  */
   __pyx_v_self->affpath = NULL;
 
-  /* "hunspell/hunspell.pyx":121
+  /* "hunspell/hunspell.pyx":99
  *             free(self.affpath)
  *         self.affpath = NULL
  *         if self.dpath:             # <<<<<<<<<<<<<<
@@ -2169,7 +2228,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   __pyx_t_1 = (__pyx_v_self->dpath != 0);
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":122
+    /* "hunspell/hunspell.pyx":100
  *         self.affpath = NULL
  *         if self.dpath:
  *             free(self.dpath)             # <<<<<<<<<<<<<<
@@ -2178,7 +2237,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
  */
     free(__pyx_v_self->dpath);
 
-    /* "hunspell/hunspell.pyx":121
+    /* "hunspell/hunspell.pyx":99
  *             free(self.affpath)
  *         self.affpath = NULL
  *         if self.dpath:             # <<<<<<<<<<<<<<
@@ -2187,40 +2246,40 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
  */
   }
 
-  /* "hunspell/hunspell.pyx":123
+  /* "hunspell/hunspell.pyx":101
  *         if self.dpath:
  *             free(self.dpath)
  *         self.dpath = NULL             # <<<<<<<<<<<<<<
  *         cdef Hunspell *holder = NULL
- * 
+ *
  */
   __pyx_v_self->dpath = NULL;
 
-  /* "hunspell/hunspell.pyx":124
+  /* "hunspell/hunspell.pyx":102
  *             free(self.dpath)
  *         self.dpath = NULL
  *         cdef Hunspell *holder = NULL             # <<<<<<<<<<<<<<
- * 
+ *
  *         pyaffpath = os.path.join(self._hunspell_dir, '{}.aff'.format(lang))
  */
   __pyx_v_holder = NULL;
 
-  /* "hunspell/hunspell.pyx":126
+  /* "hunspell/hunspell.pyx":104
  *         cdef Hunspell *holder = NULL
- * 
+ *
  *         pyaffpath = os.path.join(self._hunspell_dir, '{}.aff'.format(lang))             # <<<<<<<<<<<<<<
  *         pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(lang))
  *         for fpath in (pyaffpath, pydpath):
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_aff, __pyx_n_s_format); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_aff, __pyx_n_s_format); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 104, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_6 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
@@ -2233,13 +2292,13 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     }
   }
   if (!__pyx_t_6) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_lang); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_lang); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_lang};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
@@ -2247,19 +2306,19 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_lang};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     {
-      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 126, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 104, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
       __Pyx_INCREF(__pyx_v_lang);
       __Pyx_GIVEREF(__pyx_v_lang);
       PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_lang);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
@@ -2280,7 +2339,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_self->_hunspell_dir, __pyx_t_4};
-    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -2289,14 +2348,14 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_self->_hunspell_dir, __pyx_t_4};
-    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   } else
   #endif
   {
-    __pyx_t_7 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     if (__pyx_t_5) {
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
@@ -2307,7 +2366,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     __Pyx_GIVEREF(__pyx_t_4);
     PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_8, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   }
@@ -2315,22 +2374,22 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   __pyx_v_pyaffpath = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "hunspell/hunspell.pyx":127
- * 
+  /* "hunspell/hunspell.pyx":105
+ *
  *         pyaffpath = os.path.join(self._hunspell_dir, '{}.aff'.format(lang))
  *         pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(lang))             # <<<<<<<<<<<<<<
  *         for fpath in (pyaffpath, pydpath):
  *             if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 127, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 127, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 127, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_dic, __pyx_n_s_format); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 127, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_dic, __pyx_n_s_format); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -2343,13 +2402,13 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_lang); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_lang); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 105, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_lang};
-      __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 105, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_7);
     } else
@@ -2357,19 +2416,19 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_lang};
-      __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 105, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_7);
     } else
     #endif
     {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 105, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_lang);
       __Pyx_GIVEREF(__pyx_v_lang);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_lang);
-      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 105, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
@@ -2390,7 +2449,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_self->_hunspell_dir, __pyx_t_7};
-    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -2399,14 +2458,14 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_self->_hunspell_dir, __pyx_t_7};
-    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   } else
   #endif
   {
-    __pyx_t_6 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 105, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     if (__pyx_t_4) {
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -2417,7 +2476,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     __Pyx_GIVEREF(__pyx_t_7);
     PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_8, __pyx_t_7);
     __pyx_t_7 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
@@ -2425,14 +2484,14 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   __pyx_v_pydpath = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "hunspell/hunspell.pyx":128
+  /* "hunspell/hunspell.pyx":106
  *         pyaffpath = os.path.join(self._hunspell_dir, '{}.aff'.format(lang))
  *         pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(lang))
  *         for fpath in (pyaffpath, pydpath):             # <<<<<<<<<<<<<<
  *             if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):
  *                 raise IOError("File '{}' not found or accessible".format(fpath))
  */
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 106, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_v_pyaffpath);
   __Pyx_GIVEREF(__pyx_v_pyaffpath);
@@ -2445,27 +2504,27 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   for (;;) {
     if (__pyx_t_9 >= 2) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_2); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_2); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(0, 106, __pyx_L1_error)
     #else
-    __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 106, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     #endif
     __Pyx_XDECREF_SET(__pyx_v_fpath, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "hunspell/hunspell.pyx":129
+    /* "hunspell/hunspell.pyx":107
  *         pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(lang))
  *         for fpath in (pyaffpath, pydpath):
  *             if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):             # <<<<<<<<<<<<<<
  *                 raise IOError("File '{}' not found or accessible".format(fpath))
- * 
+ *
  */
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_isfile); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_isfile); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_7 = NULL;
@@ -2479,13 +2538,13 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
       }
     }
     if (!__pyx_t_7) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_fpath); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_fpath); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_fpath};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -2493,25 +2552,25 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_v_fpath};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 129, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 107, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_7); __pyx_t_7 = NULL;
         __Pyx_INCREF(__pyx_v_fpath);
         __Pyx_GIVEREF(__pyx_v_fpath);
         PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_fpath);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       }
     }
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_11 = ((!__pyx_t_10) != 0);
     if (!__pyx_t_11) {
@@ -2519,14 +2578,14 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
       __pyx_t_1 = __pyx_t_11;
       goto __pyx_L8_bool_binop_done;
     }
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_access); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_access); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_R_OK); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_R_OK); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_t_6 = NULL;
@@ -2544,7 +2603,7 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_v_fpath, __pyx_t_7};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -2553,14 +2612,14 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_v_fpath, __pyx_t_7};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     } else
     #endif
     {
-      __pyx_t_5 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 107, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       if (__pyx_t_6) {
         __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
@@ -2571,26 +2630,26 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
       __Pyx_GIVEREF(__pyx_t_7);
       PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_8, __pyx_t_7);
       __pyx_t_7 = 0;
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 129, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_10 = ((!__pyx_t_11) != 0);
     __pyx_t_1 = __pyx_t_10;
     __pyx_L8_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "hunspell/hunspell.pyx":130
+      /* "hunspell/hunspell.pyx":108
  *         for fpath in (pyaffpath, pydpath):
  *             if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):
  *                 raise IOError("File '{}' not found or accessible".format(fpath))             # <<<<<<<<<<<<<<
- * 
+ *
  *         if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or
  */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_File_not_found_or_accessible, __pyx_n_s_format); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_File_not_found_or_accessible, __pyx_n_s_format); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_5 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -2603,13 +2662,13 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
         }
       }
       if (!__pyx_t_5) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_fpath); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_fpath); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_4)) {
           PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_fpath};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -2617,46 +2676,46 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
           PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_fpath};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 108, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_7);
           __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
           __Pyx_INCREF(__pyx_v_fpath);
           __Pyx_GIVEREF(__pyx_v_fpath);
           PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_fpath);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
         }
       }
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_2);
       PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
       __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_IOError, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_IOError, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_Raise(__pyx_t_2, 0, 0, 0);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __PYX_ERR(0, 130, __pyx_L1_error)
+      __PYX_ERR(0, 108, __pyx_L1_error)
 
-      /* "hunspell/hunspell.pyx":129
+      /* "hunspell/hunspell.pyx":107
  *         pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(lang))
  *         for fpath in (pyaffpath, pydpath):
  *             if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):             # <<<<<<<<<<<<<<
  *                 raise IOError("File '{}' not found or accessible".format(fpath))
- * 
+ *
  */
     }
 
-    /* "hunspell/hunspell.pyx":128
+    /* "hunspell/hunspell.pyx":106
  *         pyaffpath = os.path.join(self._hunspell_dir, '{}.aff'.format(lang))
  *         pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(lang))
  *         for fpath in (pyaffpath, pydpath):             # <<<<<<<<<<<<<<
@@ -2666,15 +2725,15 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "hunspell/hunspell.pyx":132
+  /* "hunspell/hunspell.pyx":110
  *                 raise IOError("File '{}' not found or accessible".format(fpath))
- * 
+ *
  *         if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or             # <<<<<<<<<<<<<<
  *             copy_to_c_string(pydpath, &self.dpath) <= 0):
  *                 raise MemoryError()
  */
-  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_pyaffpath))||((__pyx_v_pyaffpath) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_pyaffpath)->tp_name), 0))) __PYX_ERR(0, 132, __pyx_L1_error)
-  __pyx_t_8 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(((PyObject*)__pyx_v_pyaffpath), (&__pyx_v_self->affpath)); if (unlikely(__pyx_t_8 == -1)) __PYX_ERR(0, 132, __pyx_L1_error)
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_pyaffpath))||((__pyx_v_pyaffpath) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_pyaffpath)->tp_name), 0))) __PYX_ERR(0, 110, __pyx_L1_error)
+  __pyx_t_8 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(((PyObject*)__pyx_v_pyaffpath), (&__pyx_v_self->affpath), NULL); if (unlikely(__pyx_t_8 == -1)) __PYX_ERR(0, 110, __pyx_L1_error)
   __pyx_t_10 = ((__pyx_t_8 <= 0) != 0);
   if (!__pyx_t_10) {
   } else {
@@ -2682,47 +2741,47 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
     goto __pyx_L11_bool_binop_done;
   }
 
-  /* "hunspell/hunspell.pyx":133
- * 
+  /* "hunspell/hunspell.pyx":111
+ *
  *         if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or
  *             copy_to_c_string(pydpath, &self.dpath) <= 0):             # <<<<<<<<<<<<<<
  *                 raise MemoryError()
  *         holder = new Hunspell(self.affpath, self.dpath)
  */
-  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_pydpath))||((__pyx_v_pydpath) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_pydpath)->tp_name), 0))) __PYX_ERR(0, 133, __pyx_L1_error)
-  __pyx_t_8 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(((PyObject*)__pyx_v_pydpath), (&__pyx_v_self->dpath)); if (unlikely(__pyx_t_8 == -1)) __PYX_ERR(0, 133, __pyx_L1_error)
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_pydpath))||((__pyx_v_pydpath) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_pydpath)->tp_name), 0))) __PYX_ERR(0, 111, __pyx_L1_error)
+  __pyx_t_8 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(((PyObject*)__pyx_v_pydpath), (&__pyx_v_self->dpath), NULL); if (unlikely(__pyx_t_8 == -1)) __PYX_ERR(0, 111, __pyx_L1_error)
   __pyx_t_10 = ((__pyx_t_8 <= 0) != 0);
   __pyx_t_1 = __pyx_t_10;
   __pyx_L11_bool_binop_done:;
 
-  /* "hunspell/hunspell.pyx":132
+  /* "hunspell/hunspell.pyx":110
  *                 raise IOError("File '{}' not found or accessible".format(fpath))
- * 
+ *
  *         if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or             # <<<<<<<<<<<<<<
  *             copy_to_c_string(pydpath, &self.dpath) <= 0):
  *                 raise MemoryError()
  */
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":134
+    /* "hunspell/hunspell.pyx":112
  *         if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or
  *             copy_to_c_string(pydpath, &self.dpath) <= 0):
  *                 raise MemoryError()             # <<<<<<<<<<<<<<
  *         holder = new Hunspell(self.affpath, self.dpath)
  *         if holder is NULL:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 134, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 112, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":132
+    /* "hunspell/hunspell.pyx":110
  *                 raise IOError("File '{}' not found or accessible".format(fpath))
- * 
+ *
  *         if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or             # <<<<<<<<<<<<<<
  *             copy_to_c_string(pydpath, &self.dpath) <= 0):
  *                 raise MemoryError()
  */
   }
 
-  /* "hunspell/hunspell.pyx":135
+  /* "hunspell/hunspell.pyx":113
  *             copy_to_c_string(pydpath, &self.dpath) <= 0):
  *                 raise MemoryError()
  *         holder = new Hunspell(self.affpath, self.dpath)             # <<<<<<<<<<<<<<
@@ -2731,50 +2790,50 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
  */
   __pyx_v_holder = new Hunspell(__pyx_v_self->affpath, __pyx_v_self->dpath, NULL);
 
-  /* "hunspell/hunspell.pyx":136
+  /* "hunspell/hunspell.pyx":114
  *                 raise MemoryError()
  *         holder = new Hunspell(self.affpath, self.dpath)
  *         if holder is NULL:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
- * 
+ *
  */
   __pyx_t_1 = ((__pyx_v_holder == NULL) != 0);
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":137
+    /* "hunspell/hunspell.pyx":115
  *         holder = new Hunspell(self.affpath, self.dpath)
  *         if holder is NULL:
  *             raise MemoryError()             # <<<<<<<<<<<<<<
- * 
+ *
  *         return holder
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 137, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 115, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":136
+    /* "hunspell/hunspell.pyx":114
  *                 raise MemoryError()
  *         holder = new Hunspell(self.affpath, self.dpath)
  *         if holder is NULL:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
- * 
+ *
  */
   }
 
-  /* "hunspell/hunspell.pyx":139
+  /* "hunspell/hunspell.pyx":117
  *             raise MemoryError()
- * 
+ *
  *         return holder             # <<<<<<<<<<<<<<
- * 
- *     # C-realm Constructor
+ *
+ *     def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",
  */
   __pyx_r = __pyx_v_holder;
   goto __pyx_L0;
 
-  /* "hunspell/hunspell.pyx":117
- * 
- *     # C-realm Create Hunspell Instance
- *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except +:             # <<<<<<<<<<<<<<
+  /* "hunspell/hunspell.pyx":94
+ *     cdef char *dpath
+ *
+ *     cdef Hunspell *_create_hspell_inst(self, basestring lang) except *:             # <<<<<<<<<<<<<<
+ *         # C-realm Create Hunspell Instance
  *         if self.affpath:
- *             free(self.affpath)
  */
 
   /* function exit code */
@@ -2795,9 +2854,9 @@ static Hunspell *__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst(
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":142
- * 
- *     # C-realm Constructor
+/* "hunspell/hunspell.pyx":119
+ *         return holder
+ *
  *     def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",             # <<<<<<<<<<<<<<
  *             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
  *         # TODO - make these LRU caches so that you don't destroy your memory!
@@ -2819,8 +2878,8 @@ static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_1__init__(PyObject *__pyx
     values[0] = ((PyObject*)__pyx_n_s_en_US);
     values[1] = ((PyObject*)__pyx_n_s_hunspell);
 
-    /* "hunspell/hunspell.pyx":143
- *     # C-realm Constructor
+    /* "hunspell/hunspell.pyx":120
+ *
  *     def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",
  *             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):             # <<<<<<<<<<<<<<
  *         # TODO - make these LRU caches so that you don't destroy your memory!
@@ -2863,7 +2922,7 @@ static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_1__init__(PyObject *__pyx
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 142, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 119, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2882,21 +2941,21 @@ static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_1__init__(PyObject *__pyx
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 0, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 142, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 0, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 119, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_lang), (&PyBaseString_Type), 1, "lang", 1))) __PYX_ERR(0, 142, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_cache_manager), (&PyBaseString_Type), 1, "cache_manager", 1))) __PYX_ERR(0, 142, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_disk_cache_dir), (&PyBaseString_Type), 1, "disk_cache_dir", 1))) __PYX_ERR(0, 143, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_hunspell_data_dir), (&PyBaseString_Type), 1, "hunspell_data_dir", 1))) __PYX_ERR(0, 143, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_lang), (&PyBaseString_Type), 1, "lang", 1))) __PYX_ERR(0, 119, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_cache_manager), (&PyBaseString_Type), 1, "cache_manager", 1))) __PYX_ERR(0, 119, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_disk_cache_dir), (&PyBaseString_Type), 1, "disk_cache_dir", 1))) __PYX_ERR(0, 120, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_hunspell_data_dir), (&PyBaseString_Type), 1, "hunspell_data_dir", 1))) __PYX_ERR(0, 120, __pyx_L1_error)
   __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), __pyx_v_lang, __pyx_v_cache_manager, __pyx_v_disk_cache_dir, __pyx_v_hunspell_data_dir);
 
-  /* "hunspell/hunspell.pyx":142
- * 
- *     # C-realm Constructor
+  /* "hunspell/hunspell.pyx":119
+ *         return holder
+ *
  *     def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",             # <<<<<<<<<<<<<<
  *             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
  *         # TODO - make these LRU caches so that you don't destroy your memory!
@@ -2930,7 +2989,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
   __Pyx_RefNannySetupContext("__init__", 0);
   __Pyx_INCREF(__pyx_v_hunspell_data_dir);
 
-  /* "hunspell/hunspell.pyx":145
+  /* "hunspell/hunspell.pyx":122
  *             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
  *         # TODO - make these LRU caches so that you don't destroy your memory!
  *         if hunspell_data_dir is None:             # <<<<<<<<<<<<<<
@@ -2941,29 +3000,29 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
 
-    /* "hunspell/hunspell.pyx":146
+    /* "hunspell/hunspell.pyx":123
  *         # TODO - make these LRU caches so that you don't destroy your memory!
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.environ.get("HUNSPELL_DATA")             # <<<<<<<<<<<<<<
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.path.join(os.path.dirname(__file__), '..', 'dictionaries')
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 146, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_environ); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 146, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_environ); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_get); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 146, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_get); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 146, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 146, __pyx_L1_error)
+    if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_DECREF_SET(__pyx_v_hunspell_data_dir, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "hunspell/hunspell.pyx":145
+    /* "hunspell/hunspell.pyx":122
  *             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
  *         # TODO - make these LRU caches so that you don't destroy your memory!
  *         if hunspell_data_dir is None:             # <<<<<<<<<<<<<<
@@ -2972,7 +3031,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  */
   }
 
-  /* "hunspell/hunspell.pyx":147
+  /* "hunspell/hunspell.pyx":124
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.environ.get("HUNSPELL_DATA")
  *         if hunspell_data_dir is None:             # <<<<<<<<<<<<<<
@@ -2983,30 +3042,30 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":148
+    /* "hunspell/hunspell.pyx":125
  *             hunspell_data_dir = os.environ.get("HUNSPELL_DATA")
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.path.join(os.path.dirname(__file__), '..', 'dictionaries')             # <<<<<<<<<<<<<<
  *         self._hunspell_dir = os.path.abspath(hunspell_data_dir)
- * 
+ *
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_dirname); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_dirname); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_file); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_file); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -3019,14 +3078,14 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
       }
     }
     if (!__pyx_t_8) {
-      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_GOTREF(__pyx_t_5);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_7};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -3035,20 +3094,20 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_7};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       } else
       #endif
       {
-        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 125, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
         __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
         __Pyx_GIVEREF(__pyx_t_7);
         PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_7);
         __pyx_t_7 = 0;
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 125, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
       }
@@ -3068,8 +3127,8 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
     }
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_t_5, __pyx_kp_s__6, __pyx_n_s_dictionaries};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_10, 3+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_t_5, __pyx_kp_s__3, __pyx_n_s_dictionaries};
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_10, 3+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -3077,38 +3136,38 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
     #endif
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_t_5, __pyx_kp_s__6, __pyx_n_s_dictionaries};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_10, 3+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+      PyObject *__pyx_temp[4] = {__pyx_t_6, __pyx_t_5, __pyx_kp_s__3, __pyx_n_s_dictionaries};
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_10, 3+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else
     #endif
     {
-      __pyx_t_9 = PyTuple_New(3+__pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_9 = PyTuple_New(3+__pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
       if (__pyx_t_6) {
         __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_6); __pyx_t_6 = NULL;
       }
       __Pyx_GIVEREF(__pyx_t_5);
       PyTuple_SET_ITEM(__pyx_t_9, 0+__pyx_t_10, __pyx_t_5);
-      __Pyx_INCREF(__pyx_kp_s__6);
-      __Pyx_GIVEREF(__pyx_kp_s__6);
-      PyTuple_SET_ITEM(__pyx_t_9, 1+__pyx_t_10, __pyx_kp_s__6);
+      __Pyx_INCREF(__pyx_kp_s__3);
+      __Pyx_GIVEREF(__pyx_kp_s__3);
+      PyTuple_SET_ITEM(__pyx_t_9, 1+__pyx_t_10, __pyx_kp_s__3);
       __Pyx_INCREF(__pyx_n_s_dictionaries);
       __Pyx_GIVEREF(__pyx_n_s_dictionaries);
       PyTuple_SET_ITEM(__pyx_t_9, 2+__pyx_t_10, __pyx_n_s_dictionaries);
       __pyx_t_5 = 0;
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 125, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 148, __pyx_L1_error)
+    if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 125, __pyx_L1_error)
     __Pyx_DECREF_SET(__pyx_v_hunspell_data_dir, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "hunspell/hunspell.pyx":147
+    /* "hunspell/hunspell.pyx":124
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.environ.get("HUNSPELL_DATA")
  *         if hunspell_data_dir is None:             # <<<<<<<<<<<<<<
@@ -3117,19 +3176,19 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  */
   }
 
-  /* "hunspell/hunspell.pyx":149
+  /* "hunspell/hunspell.pyx":126
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.path.join(os.path.dirname(__file__), '..', 'dictionaries')
  *         self._hunspell_dir = os.path.abspath(hunspell_data_dir)             # <<<<<<<<<<<<<<
- * 
+ *
  *         self.lang = lang
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_abspath); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_abspath); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __pyx_t_9 = NULL;
@@ -3143,13 +3202,13 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
     }
   }
   if (!__pyx_t_9) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_hunspell_data_dir); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 149, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_hunspell_data_dir); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_v_hunspell_data_dir};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
@@ -3157,37 +3216,37 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_v_hunspell_data_dir};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 126, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_9); __pyx_t_9 = NULL;
       __Pyx_INCREF(__pyx_v_hunspell_data_dir);
       __Pyx_GIVEREF(__pyx_v_hunspell_data_dir);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_hunspell_data_dir);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 149, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 149, __pyx_L1_error)
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GIVEREF(__pyx_t_4);
   __Pyx_GOTREF(__pyx_v_self->_hunspell_dir);
   __Pyx_DECREF(__pyx_v_self->_hunspell_dir);
   __pyx_v_self->_hunspell_dir = ((PyObject*)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "hunspell/hunspell.pyx":151
+  /* "hunspell/hunspell.pyx":128
  *         self._hunspell_dir = os.path.abspath(hunspell_data_dir)
- * 
+ *
  *         self.lang = lang             # <<<<<<<<<<<<<<
  *         self._cxx_hunspell = self._create_hspell_inst(lang)
- *         self.n_cpus = detectCPUs()
+ *         self._dic_encoding = valid_encoding(c_string_to_unicode_no_except(self._cxx_hunspell.get_dic_encoding()))
  */
   __Pyx_INCREF(__pyx_v_lang);
   __Pyx_GIVEREF(__pyx_v_lang);
@@ -3195,55 +3254,114 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
   __Pyx_DECREF(__pyx_v_self->lang);
   __pyx_v_self->lang = __pyx_v_lang;
 
-  /* "hunspell/hunspell.pyx":152
- * 
+  /* "hunspell/hunspell.pyx":129
+ *
  *         self.lang = lang
  *         self._cxx_hunspell = self._create_hspell_inst(lang)             # <<<<<<<<<<<<<<
- *         self.n_cpus = detectCPUs()
- * 
+ *         self._dic_encoding = valid_encoding(c_string_to_unicode_no_except(self._cxx_hunspell.get_dic_encoding()))
+ *         self.max_threads = detect_cpus()
  */
-  try {
-    __pyx_t_11 = ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_create_hspell_inst(__pyx_v_self, __pyx_v_lang);
-  } catch(...) {
-    __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 152, __pyx_L1_error)
-  }
+  __pyx_t_11 = ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_create_hspell_inst(__pyx_v_self, __pyx_v_lang); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 129, __pyx_L1_error)
   __pyx_v_self->_cxx_hunspell = __pyx_t_11;
 
-  /* "hunspell/hunspell.pyx":153
+  /* "hunspell/hunspell.pyx":130
  *         self.lang = lang
  *         self._cxx_hunspell = self._create_hspell_inst(lang)
- *         self.n_cpus = detectCPUs()             # <<<<<<<<<<<<<<
- * 
- *         self._cache_manager_name = cache_manager
+ *         self._dic_encoding = valid_encoding(c_string_to_unicode_no_except(self._cxx_hunspell.get_dic_encoding()))             # <<<<<<<<<<<<<<
+ *         self.max_threads = detect_cpus()
+ *
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_detectCPUs); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 153, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_valid_encoding); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = NULL;
+  __pyx_t_5 = __pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(__pyx_v_self->_cxx_hunspell->get_dic_encoding(), NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 130, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_9 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_5)) {
+    __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_9)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_9);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_3, function);
     }
   }
-  if (__pyx_t_5) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 153, __pyx_L1_error)
+  if (!__pyx_t_9) {
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 130, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_GOTREF(__pyx_t_4);
   } else {
-    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 153, __pyx_L1_error)
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_5};
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_5};
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_9); __pyx_t_9 = NULL;
+      __Pyx_GIVEREF(__pyx_t_5);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
+      __pyx_t_5 = 0;
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 130, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_4);
+  __Pyx_GOTREF(__pyx_v_self->_dic_encoding);
+  __Pyx_DECREF(__pyx_v_self->_dic_encoding);
+  __pyx_v_self->_dic_encoding = ((PyObject*)__pyx_t_4);
+  __pyx_t_4 = 0;
+
+  /* "hunspell/hunspell.pyx":131
+ *         self._cxx_hunspell = self._create_hspell_inst(lang)
+ *         self._dic_encoding = valid_encoding(c_string_to_unicode_no_except(self._cxx_hunspell.get_dic_encoding()))
+ *         self.max_threads = detect_cpus()             # <<<<<<<<<<<<<<
+ *
+ *         self._cache_manager_name = cache_manager
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_detect_cpus); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (__pyx_t_6) {
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 131, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  } else {
+    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 131, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 153, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 131, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_v_self->n_cpus = __pyx_t_10;
+  __pyx_v_self->max_threads = __pyx_t_10;
 
-  /* "hunspell/hunspell.pyx":155
- *         self.n_cpus = detectCPUs()
- * 
+  /* "hunspell/hunspell.pyx":133
+ *         self.max_threads = detect_cpus()
+ *
  *         self._cache_manager_name = cache_manager             # <<<<<<<<<<<<<<
  *         manager = get_cache_manager(self._cache_manager_name)
  *         if disk_cache_dir:
@@ -3254,81 +3372,81 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
   __Pyx_DECREF(__pyx_v_self->_cache_manager_name);
   __pyx_v_self->_cache_manager_name = __pyx_v_cache_manager;
 
-  /* "hunspell/hunspell.pyx":156
- * 
+  /* "hunspell/hunspell.pyx":134
+ *
  *         self._cache_manager_name = cache_manager
  *         manager = get_cache_manager(self._cache_manager_name)             # <<<<<<<<<<<<<<
  *         if disk_cache_dir:
  *             manager.cache_directory = disk_cache_dir
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_cache_manager); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 156, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_cache_manager); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 134, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = NULL;
+  __pyx_t_6 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_5)) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_6)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_6);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_3, function);
     }
   }
-  if (!__pyx_t_5) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_self->_cache_manager_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 156, __pyx_L1_error)
+  if (!__pyx_t_6) {
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_self->_cache_manager_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_self->_cache_manager_name};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 156, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_self->_cache_manager_name};
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_self->_cache_manager_name};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 156, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_self->_cache_manager_name};
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     {
-      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 156, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 134, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
       __Pyx_INCREF(__pyx_v_self->_cache_manager_name);
       __Pyx_GIVEREF(__pyx_v_self->_cache_manager_name);
-      PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_v_self->_cache_manager_name);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 156, __pyx_L1_error)
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_self->_cache_manager_name);
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_manager = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "hunspell/hunspell.pyx":157
+  /* "hunspell/hunspell.pyx":135
  *         self._cache_manager_name = cache_manager
  *         manager = get_cache_manager(self._cache_manager_name)
  *         if disk_cache_dir:             # <<<<<<<<<<<<<<
  *             manager.cache_directory = disk_cache_dir
  *         if not manager.cache_registered("hunspell_suggest"):
  */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_disk_cache_dir); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_disk_cache_dir); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 135, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":158
+    /* "hunspell/hunspell.pyx":136
  *         manager = get_cache_manager(self._cache_manager_name)
  *         if disk_cache_dir:
  *             manager.cache_directory = disk_cache_dir             # <<<<<<<<<<<<<<
  *         if not manager.cache_registered("hunspell_suggest"):
  *             if disk_cache_dir:
  */
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_manager, __pyx_n_s_cache_directory, __pyx_v_disk_cache_dir) < 0) __PYX_ERR(0, 158, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_manager, __pyx_n_s_cache_directory, __pyx_v_disk_cache_dir) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":157
+    /* "hunspell/hunspell.pyx":135
  *         self._cache_manager_name = cache_manager
  *         manager = get_cache_manager(self._cache_manager_name)
  *         if disk_cache_dir:             # <<<<<<<<<<<<<<
@@ -3337,89 +3455,89 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  */
   }
 
-  /* "hunspell/hunspell.pyx":159
+  /* "hunspell/hunspell.pyx":137
  *         if disk_cache_dir:
  *             manager.cache_directory = disk_cache_dir
  *         if not manager.cache_registered("hunspell_suggest"):             # <<<<<<<<<<<<<<
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_cache_registered); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 159, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_cache_registered); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 159, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 159, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 137, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_2 = ((!__pyx_t_1) != 0);
   if (__pyx_t_2) {
 
-    /* "hunspell/hunspell.pyx":160
+    /* "hunspell/hunspell.pyx":138
  *             manager.cache_directory = disk_cache_dir
  *         if not manager.cache_registered("hunspell_suggest"):
  *             if disk_cache_dir:             # <<<<<<<<<<<<<<
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)
  */
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_disk_cache_dir); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 160, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_disk_cache_dir); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 138, __pyx_L1_error)
     if (__pyx_t_2) {
 
-      /* "hunspell/hunspell.pyx":161
+      /* "hunspell/hunspell.pyx":139
  *         if not manager.cache_registered("hunspell_suggest"):
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]             # <<<<<<<<<<<<<<
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  */
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 161, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = PyList_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 139, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 139, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_3 = PyList_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_4);
       PyList_SET_ITEM(__pyx_t_3, 0, __pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_9);
-      PyList_SET_ITEM(__pyx_t_3, 1, __pyx_t_9);
       __Pyx_GIVEREF(__pyx_t_5);
-      PyList_SET_ITEM(__pyx_t_3, 2, __pyx_t_5);
+      PyList_SET_ITEM(__pyx_t_3, 1, __pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_6);
+      PyList_SET_ITEM(__pyx_t_3, 2, __pyx_t_6);
       __pyx_t_4 = 0;
-      __pyx_t_9 = 0;
       __pyx_t_5 = 0;
+      __pyx_t_6 = 0;
       __pyx_v_custom_time_checks = ((PyObject*)__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "hunspell/hunspell.pyx":162
+      /* "hunspell/hunspell.pyx":140
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)             # <<<<<<<<<<<<<<
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  */
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_AutoSyncCache); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_AutoSyncCache); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 140, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_6 = PyDict_New(); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 140, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 140, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_time_checks, __pyx_v_custom_time_checks) < 0) __PYX_ERR(0, 140, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__8, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 140, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_time_checks, __pyx_v_custom_time_checks) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
-      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__11, __pyx_t_5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 162, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-      /* "hunspell/hunspell.pyx":160
+      /* "hunspell/hunspell.pyx":138
  *             manager.cache_directory = disk_cache_dir
  *         if not manager.cache_registered("hunspell_suggest"):
  *             if disk_cache_dir:             # <<<<<<<<<<<<<<
@@ -3429,7 +3547,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
       goto __pyx_L7;
     }
 
-    /* "hunspell/hunspell.pyx":164
+    /* "hunspell/hunspell.pyx":142
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)             # <<<<<<<<<<<<<<
@@ -3437,20 +3555,20 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  *             if disk_cache_dir:
  */
     /*else*/ {
-      __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_NonPersistentCache); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 164, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 164, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_NonPersistentCache); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 142, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 164, __pyx_L1_error)
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_tuple__12, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 164, __pyx_L1_error)
+      __pyx_t_6 = PyDict_New(); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 142, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 142, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__9, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 142, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
     __pyx_L7:;
 
-    /* "hunspell/hunspell.pyx":159
+    /* "hunspell/hunspell.pyx":137
  *         if disk_cache_dir:
  *             manager.cache_directory = disk_cache_dir
  *         if not manager.cache_registered("hunspell_suggest"):             # <<<<<<<<<<<<<<
@@ -3459,89 +3577,89 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  */
   }
 
-  /* "hunspell/hunspell.pyx":165
+  /* "hunspell/hunspell.pyx":143
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  *         if not manager.cache_registered("hunspell_stem"):             # <<<<<<<<<<<<<<
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_cache_registered); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 165, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_cache_registered); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 143, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 165, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 143, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 165, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 143, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_t_1 = ((!__pyx_t_2) != 0);
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":166
+    /* "hunspell/hunspell.pyx":144
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  *         if not manager.cache_registered("hunspell_stem"):
  *             if disk_cache_dir:             # <<<<<<<<<<<<<<
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)
  */
-    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_disk_cache_dir); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_disk_cache_dir); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 144, __pyx_L1_error)
     if (__pyx_t_1) {
 
-      /* "hunspell/hunspell.pyx":167
+      /* "hunspell/hunspell.pyx":145
  *         if not manager.cache_registered("hunspell_stem"):
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]             # <<<<<<<<<<<<<<
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  */
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 167, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__14, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 167, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 145, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 145, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 167, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 145, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__12, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 145, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__15, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 167, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 167, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__16, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 167, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_TimeCount); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 145, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 145, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 167, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_6 = PyList_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 145, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_3);
-      PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_9);
-      PyList_SET_ITEM(__pyx_t_5, 1, __pyx_t_9);
+      PyList_SET_ITEM(__pyx_t_6, 0, __pyx_t_3);
+      __Pyx_GIVEREF(__pyx_t_5);
+      PyList_SET_ITEM(__pyx_t_6, 1, __pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_4);
-      PyList_SET_ITEM(__pyx_t_5, 2, __pyx_t_4);
+      PyList_SET_ITEM(__pyx_t_6, 2, __pyx_t_4);
       __pyx_t_3 = 0;
-      __pyx_t_9 = 0;
-      __pyx_t_4 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_custom_time_checks, ((PyObject*)__pyx_t_5));
       __pyx_t_5 = 0;
+      __pyx_t_4 = 0;
+      __Pyx_XDECREF_SET(__pyx_v_custom_time_checks, ((PyObject*)__pyx_t_6));
+      __pyx_t_6 = 0;
 
-      /* "hunspell/hunspell.pyx":168
+      /* "hunspell/hunspell.pyx":146
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)             # <<<<<<<<<<<<<<
  *             else:
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)
  */
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_AutoSyncCache); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 168, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 168, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_AutoSyncCache); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 146, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 146, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 168, __pyx_L1_error)
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_time_checks, __pyx_v_custom_time_checks) < 0) __PYX_ERR(0, 168, __pyx_L1_error)
-      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__17, __pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 168, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 146, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_time_checks, __pyx_v_custom_time_checks) < 0) __PYX_ERR(0, 146, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__14, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 146, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-      /* "hunspell/hunspell.pyx":166
+      /* "hunspell/hunspell.pyx":144
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  *         if not manager.cache_registered("hunspell_stem"):
  *             if disk_cache_dir:             # <<<<<<<<<<<<<<
@@ -3551,7 +3669,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
       goto __pyx_L9;
     }
 
-    /* "hunspell/hunspell.pyx":170
+    /* "hunspell/hunspell.pyx":148
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)             # <<<<<<<<<<<<<<
@@ -3559,20 +3677,20 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  *         self._stem_cache = manager.retrieve_cache("hunspell_stem")
  */
     /*else*/ {
-      __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_NonPersistentCache); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 170, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 170, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 170, __pyx_L1_error)
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_tuple__18, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 170, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_NonPersistentCache); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 148, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_cache_manager, __pyx_v_manager) < 0) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__15, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __pyx_L9:;
 
-    /* "hunspell/hunspell.pyx":165
+    /* "hunspell/hunspell.pyx":143
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  *         if not manager.cache_registered("hunspell_stem"):             # <<<<<<<<<<<<<<
@@ -3581,45 +3699,45 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
  */
   }
 
-  /* "hunspell/hunspell.pyx":171
+  /* "hunspell/hunspell.pyx":149
  *             else:
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)
  *         self._suggest_cache = manager.retrieve_cache("hunspell_suggest")             # <<<<<<<<<<<<<<
  *         self._stem_cache = manager.retrieve_cache("hunspell_stem")
- * 
+ *
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_retrieve_cache); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 171, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__19, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_retrieve_cache); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__16, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 149, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_GIVEREF(__pyx_t_4);
   __Pyx_GOTREF(__pyx_v_self->_suggest_cache);
   __Pyx_DECREF(__pyx_v_self->_suggest_cache);
   __pyx_v_self->_suggest_cache = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "hunspell/hunspell.pyx":172
+  /* "hunspell/hunspell.pyx":150
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)
  *         self._suggest_cache = manager.retrieve_cache("hunspell_suggest")
  *         self._stem_cache = manager.retrieve_cache("hunspell_stem")             # <<<<<<<<<<<<<<
- * 
- *     # Python Destructor
+ *
+ *     def __dealloc__(self):
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_retrieve_cache); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 172, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_manager, __pyx_n_s_retrieve_cache); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__20, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 172, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__17, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 150, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_GIVEREF(__pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_6);
   __Pyx_GOTREF(__pyx_v_self->_stem_cache);
   __Pyx_DECREF(__pyx_v_self->_stem_cache);
-  __pyx_v_self->_stem_cache = __pyx_t_5;
-  __pyx_t_5 = 0;
+  __pyx_v_self->_stem_cache = __pyx_t_6;
+  __pyx_t_6 = 0;
 
-  /* "hunspell/hunspell.pyx":142
- * 
- *     # C-realm Constructor
+  /* "hunspell/hunspell.pyx":119
+ *         return holder
+ *
  *     def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",             # <<<<<<<<<<<<<<
  *             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
  *         # TODO - make these LRU caches so that you don't destroy your memory!
@@ -3646,9 +3764,9 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap___init__(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":175
- * 
- *     # Python Destructor
+/* "hunspell/hunspell.pyx":152
+ *         self._stem_cache = manager.retrieve_cache("hunspell_stem")
+ *
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         del self._cxx_hunspell
  *         free(self.affpath)
@@ -3669,8 +3787,8 @@ static void __pyx_pf_8hunspell_8hunspell_12HunspellWrap_2__dealloc__(struct __py
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
-  /* "hunspell/hunspell.pyx":176
- *     # Python Destructor
+  /* "hunspell/hunspell.pyx":153
+ *
  *     def __dealloc__(self):
  *         del self._cxx_hunspell             # <<<<<<<<<<<<<<
  *         free(self.affpath)
@@ -3678,27 +3796,27 @@ static void __pyx_pf_8hunspell_8hunspell_12HunspellWrap_2__dealloc__(struct __py
  */
   delete __pyx_v_self->_cxx_hunspell;
 
-  /* "hunspell/hunspell.pyx":177
+  /* "hunspell/hunspell.pyx":154
  *     def __dealloc__(self):
  *         del self._cxx_hunspell
  *         free(self.affpath)             # <<<<<<<<<<<<<<
  *         free(self.dpath)
- * 
+ *
  */
   free(__pyx_v_self->affpath);
 
-  /* "hunspell/hunspell.pyx":178
+  /* "hunspell/hunspell.pyx":155
  *         del self._cxx_hunspell
  *         free(self.affpath)
  *         free(self.dpath)             # <<<<<<<<<<<<<<
- * 
- *     # Python individual word spellcheck
+ *
+ *     def spell(self, basestring word):
  */
   free(__pyx_v_self->dpath);
 
-  /* "hunspell/hunspell.pyx":175
- * 
- *     # Python Destructor
+  /* "hunspell/hunspell.pyx":152
+ *         self._stem_cache = manager.retrieve_cache("hunspell_stem")
+ *
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         del self._cxx_hunspell
  *         free(self.affpath)
@@ -3708,12 +3826,12 @@ static void __pyx_pf_8hunspell_8hunspell_12HunspellWrap_2__dealloc__(struct __py
   __Pyx_RefNannyFinishContext();
 }
 
-/* "hunspell/hunspell.pyx":181
- * 
- *     # Python individual word spellcheck
+/* "hunspell/hunspell.pyx":157
+ *         free(self.dpath)
+ *
  *     def spell(self, basestring word):             # <<<<<<<<<<<<<<
+ *         # Python individual word spellcheck
  *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
  */
 
 /* Python wrapper */
@@ -3722,7 +3840,7 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_5spell(PyObject *__
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("spell (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 181, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 157, __pyx_L1_error)
   __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_4spell(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject*)__pyx_v_word));
 
   /* function exit code */
@@ -3738,143 +3856,149 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_4spell(struct __pyx
   char *__pyx_v_c_word;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
+  PyObject *__pyx_t_1 = NULL;
   int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
+  struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string __pyx_t_3;
   int __pyx_t_4;
-  char const *__pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
+  int __pyx_t_5;
+  char const *__pyx_t_6;
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   PyObject *__pyx_t_9 = NULL;
   PyObject *__pyx_t_10 = NULL;
   PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
   __Pyx_RefNannySetupContext("spell", 0);
 
-  /* "hunspell/hunspell.pyx":182
- *     # Python individual word spellcheck
+  /* "hunspell/hunspell.pyx":159
  *     def spell(self, basestring word):
+ *         # Python individual word spellcheck
  *         cdef char *c_word = NULL             # <<<<<<<<<<<<<<
- *         if copy_to_c_string(word, &c_word) <= 0:
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
  *             raise MemoryError()
  */
   __pyx_v_c_word = NULL;
 
-  /* "hunspell/hunspell.pyx":183
- *     def spell(self, basestring word):
+  /* "hunspell/hunspell.pyx":160
+ *         # Python individual word spellcheck
  *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:             # <<<<<<<<<<<<<<
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
- * 
- */
-  __pyx_t_1 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(__pyx_v_word, (&__pyx_v_c_word)); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 183, __pyx_L1_error)
-  __pyx_t_2 = ((__pyx_t_1 <= 0) != 0);
-  if (__pyx_t_2) {
-
-    /* "hunspell/hunspell.pyx":184
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
- *             raise MemoryError()             # <<<<<<<<<<<<<<
- * 
  *         try:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 184, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_self->_dic_encoding;
+  __Pyx_INCREF(__pyx_t_1);
+  __pyx_t_3.__pyx_n = 1;
+  __pyx_t_3.encoding = ((PyObject*)__pyx_t_1);
+  __pyx_t_2 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(__pyx_v_word, (&__pyx_v_c_word), &__pyx_t_3); if (unlikely(__pyx_t_2 == -1)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_4 = ((__pyx_t_2 <= 0) != 0);
+  if (__pyx_t_4) {
 
-    /* "hunspell/hunspell.pyx":183
- *     def spell(self, basestring word):
+    /* "hunspell/hunspell.pyx":161
  *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:             # <<<<<<<<<<<<<<
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
+ *             raise MemoryError()             # <<<<<<<<<<<<<<
+ *         try:
+ *             return self._cxx_hunspell.spell(c_word) != 0
+ */
+    PyErr_NoMemory(); __PYX_ERR(0, 161, __pyx_L1_error)
+
+    /* "hunspell/hunspell.pyx":160
+ *         # Python individual word spellcheck
+ *         cdef char *c_word = NULL
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
- * 
+ *         try:
  */
   }
 
-  /* "hunspell/hunspell.pyx":186
+  /* "hunspell/hunspell.pyx":162
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
  *             raise MemoryError()
- * 
  *         try:             # <<<<<<<<<<<<<<
  *             return self._cxx_hunspell.spell(c_word) != 0
  *         finally:
  */
   /*try:*/ {
 
-    /* "hunspell/hunspell.pyx":187
- * 
+    /* "hunspell/hunspell.pyx":163
+ *             raise MemoryError()
  *         try:
  *             return self._cxx_hunspell.spell(c_word) != 0             # <<<<<<<<<<<<<<
  *         finally:
  *             free(c_word)
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_PyBool_FromLong((__pyx_v_self->_cxx_hunspell->spell(__pyx_v_c_word, NULL) != 0)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L5_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_r = __pyx_t_3;
-    __pyx_t_3 = 0;
+    __pyx_t_1 = __Pyx_PyBool_FromLong((__pyx_v_self->_cxx_hunspell->spell(__pyx_v_c_word, NULL) != 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L5_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_r = __pyx_t_1;
+    __pyx_t_1 = 0;
     goto __pyx_L4_return;
   }
 
-  /* "hunspell/hunspell.pyx":189
+  /* "hunspell/hunspell.pyx":165
  *             return self._cxx_hunspell.spell(c_word) != 0
  *         finally:
  *             free(c_word)             # <<<<<<<<<<<<<<
- * 
- *     # Python individual word suggestions
+ *
+ *     def suggest(self, basestring word):
  */
   /*finally:*/ {
     /*exception exit:*/{
       __Pyx_PyThreadState_declare
       __pyx_L5_error:;
-      __pyx_t_6 = 0; __pyx_t_7 = 0; __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0;
+      __pyx_t_7 = 0; __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0;
       __Pyx_PyThreadState_assign
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_9, &__pyx_t_10, &__pyx_t_11);
-      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_6, &__pyx_t_7, &__pyx_t_8) < 0)) __Pyx_ErrFetch(&__pyx_t_6, &__pyx_t_7, &__pyx_t_8);
-      __Pyx_XGOTREF(__pyx_t_6);
+      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12);
+      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_7, &__pyx_t_8, &__pyx_t_9) < 0)) __Pyx_ErrFetch(&__pyx_t_7, &__pyx_t_8, &__pyx_t_9);
       __Pyx_XGOTREF(__pyx_t_7);
       __Pyx_XGOTREF(__pyx_t_8);
       __Pyx_XGOTREF(__pyx_t_9);
       __Pyx_XGOTREF(__pyx_t_10);
       __Pyx_XGOTREF(__pyx_t_11);
-      __pyx_t_1 = __pyx_lineno; __pyx_t_4 = __pyx_clineno; __pyx_t_5 = __pyx_filename;
+      __Pyx_XGOTREF(__pyx_t_12);
+      __pyx_t_2 = __pyx_lineno; __pyx_t_5 = __pyx_clineno; __pyx_t_6 = __pyx_filename;
       {
         free(__pyx_v_c_word);
       }
       __Pyx_PyThreadState_assign
       if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_9);
         __Pyx_XGIVEREF(__pyx_t_10);
         __Pyx_XGIVEREF(__pyx_t_11);
-        __Pyx_ExceptionReset(__pyx_t_9, __pyx_t_10, __pyx_t_11);
+        __Pyx_XGIVEREF(__pyx_t_12);
+        __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_11, __pyx_t_12);
       }
-      __Pyx_XGIVEREF(__pyx_t_6);
       __Pyx_XGIVEREF(__pyx_t_7);
       __Pyx_XGIVEREF(__pyx_t_8);
-      __Pyx_ErrRestore(__pyx_t_6, __pyx_t_7, __pyx_t_8);
-      __pyx_t_6 = 0; __pyx_t_7 = 0; __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0;
-      __pyx_lineno = __pyx_t_1; __pyx_clineno = __pyx_t_4; __pyx_filename = __pyx_t_5;
+      __Pyx_XGIVEREF(__pyx_t_9);
+      __Pyx_ErrRestore(__pyx_t_7, __pyx_t_8, __pyx_t_9);
+      __pyx_t_7 = 0; __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0;
+      __pyx_lineno = __pyx_t_2; __pyx_clineno = __pyx_t_5; __pyx_filename = __pyx_t_6;
       goto __pyx_L1_error;
     }
     __pyx_L4_return: {
-      __pyx_t_11 = __pyx_r;
+      __pyx_t_12 = __pyx_r;
       __pyx_r = 0;
       free(__pyx_v_c_word);
-      __pyx_r = __pyx_t_11;
-      __pyx_t_11 = 0;
+      __pyx_r = __pyx_t_12;
+      __pyx_t_12 = 0;
       goto __pyx_L0;
     }
   }
 
-  /* "hunspell/hunspell.pyx":181
- * 
- *     # Python individual word spellcheck
+  /* "hunspell/hunspell.pyx":157
+ *         free(self.dpath)
+ *
  *     def spell(self, basestring word):             # <<<<<<<<<<<<<<
+ *         # Python individual word spellcheck
  *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_1);
   __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.spell", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -3883,12 +4007,12 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_4spell(struct __pyx
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":192
- * 
- *     # Python individual word suggestions
+/* "hunspell/hunspell.pyx":167
+ *             free(c_word)
+ *
  *     def suggest(self, basestring word):             # <<<<<<<<<<<<<<
- *         if word in self._suggest_cache:
- *             return self._suggest_cache[word]
+ *         # Python individual word suggestions
+ *         return self.action('suggest', word)
  */
 
 /* Python wrapper */
@@ -3897,7 +4021,7 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_7suggest(PyObject *
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("suggest (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 192, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 167, __pyx_L1_error)
   __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_6suggest(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject*)__pyx_v_word));
 
   /* function exit code */
@@ -3910,335 +4034,102 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_7suggest(PyObject *
 }
 
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_6suggest(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_word) {
-  char **__pyx_v_s_list;
-  char *__pyx_v_c_word;
-  int __pyx_v_count;
-  PyObject *__pyx_v_suggestion_list = NULL;
-  long __pyx_v_i;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   int __pyx_t_4;
-  int __pyx_t_5;
-  int __pyx_t_6;
-  char const *__pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
-  PyObject *__pyx_t_9 = NULL;
-  PyObject *__pyx_t_10 = NULL;
-  PyObject *__pyx_t_11 = NULL;
-  PyObject *__pyx_t_12 = NULL;
-  PyObject *__pyx_t_13 = NULL;
-  char const *__pyx_t_14;
+  PyObject *__pyx_t_5 = NULL;
   __Pyx_RefNannySetupContext("suggest", 0);
 
-  /* "hunspell/hunspell.pyx":193
- *     # Python individual word suggestions
+  /* "hunspell/hunspell.pyx":169
  *     def suggest(self, basestring word):
- *         if word in self._suggest_cache:             # <<<<<<<<<<<<<<
- *             return self._suggest_cache[word]
- * 
+ *         # Python individual word suggestions
+ *         return self.action('suggest', word)             # <<<<<<<<<<<<<<
+ *
+ *     def stem(self, basestring word):
  */
-  __pyx_t_1 = (__Pyx_PySequence_ContainsTF(__pyx_v_word, __pyx_v_self->_suggest_cache, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 193, __pyx_L1_error)
-  __pyx_t_2 = (__pyx_t_1 != 0);
-  if (__pyx_t_2) {
-
-    /* "hunspell/hunspell.pyx":194
- *     def suggest(self, basestring word):
- *         if word in self._suggest_cache:
- *             return self._suggest_cache[word]             # <<<<<<<<<<<<<<
- * 
- *         cdef char **s_list = NULL
- */
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = PyObject_GetItem(__pyx_v_self->_suggest_cache, __pyx_v_word); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 194, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_r = __pyx_t_3;
-    __pyx_t_3 = 0;
-    goto __pyx_L0;
-
-    /* "hunspell/hunspell.pyx":193
- *     # Python individual word suggestions
- *     def suggest(self, basestring word):
- *         if word in self._suggest_cache:             # <<<<<<<<<<<<<<
- *             return self._suggest_cache[word]
- * 
- */
-  }
-
-  /* "hunspell/hunspell.pyx":196
- *             return self._suggest_cache[word]
- * 
- *         cdef char **s_list = NULL             # <<<<<<<<<<<<<<
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
- */
-  __pyx_v_s_list = NULL;
-
-  /* "hunspell/hunspell.pyx":197
- * 
- *         cdef char **s_list = NULL
- *         cdef char *c_word = NULL             # <<<<<<<<<<<<<<
- *         if copy_to_c_string(word, &c_word) <= 0:
- *             raise MemoryError()
- */
-  __pyx_v_c_word = NULL;
-
-  /* "hunspell/hunspell.pyx":198
- *         cdef char **s_list = NULL
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
- * 
- */
-  __pyx_t_4 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(__pyx_v_word, (&__pyx_v_c_word)); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 198, __pyx_L1_error)
-  __pyx_t_2 = ((__pyx_t_4 <= 0) != 0);
-  if (__pyx_t_2) {
-
-    /* "hunspell/hunspell.pyx":199
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
- *             raise MemoryError()             # <<<<<<<<<<<<<<
- * 
- *         try:
- */
-    PyErr_NoMemory(); __PYX_ERR(0, 199, __pyx_L1_error)
-
-    /* "hunspell/hunspell.pyx":198
- *         cdef char **s_list = NULL
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
- * 
- */
-  }
-
-  /* "hunspell/hunspell.pyx":201
- *             raise MemoryError()
- * 
- *         try:             # <<<<<<<<<<<<<<
- *             count = self._cxx_hunspell.suggest(&s_list, c_word)
- *             try:
- */
-  /*try:*/ {
-
-    /* "hunspell/hunspell.pyx":202
- * 
- *         try:
- *             count = self._cxx_hunspell.suggest(&s_list, c_word)             # <<<<<<<<<<<<<<
- *             try:
- *                 suggestion_list = []
- */
-    __pyx_v_count = __pyx_v_self->_cxx_hunspell->suggest((&__pyx_v_s_list), __pyx_v_c_word);
-
-    /* "hunspell/hunspell.pyx":203
- *         try:
- *             count = self._cxx_hunspell.suggest(&s_list, c_word)
- *             try:             # <<<<<<<<<<<<<<
- *                 suggestion_list = []
- *                 for i from 0 <= i < count:
- */
-    /*try:*/ {
-
-      /* "hunspell/hunspell.pyx":204
- *             count = self._cxx_hunspell.suggest(&s_list, c_word)
- *             try:
- *                 suggestion_list = []             # <<<<<<<<<<<<<<
- *                 for i from 0 <= i < count:
- *                     suggestion_list.append(c_string_to_unicode_no_except(s_list[i]))
- */
-      __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L9_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_v_suggestion_list = __pyx_t_3;
-      __pyx_t_3 = 0;
-
-      /* "hunspell/hunspell.pyx":205
- *             try:
- *                 suggestion_list = []
- *                 for i from 0 <= i < count:             # <<<<<<<<<<<<<<
- *                     suggestion_list.append(c_string_to_unicode_no_except(s_list[i]))
- * 
- */
-      __pyx_t_4 = __pyx_v_count;
-      for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_4; __pyx_v_i++) {
-
-        /* "hunspell/hunspell.pyx":206
- *                 suggestion_list = []
- *                 for i from 0 <= i < count:
- *                     suggestion_list.append(c_string_to_unicode_no_except(s_list[i]))             # <<<<<<<<<<<<<<
- * 
- *                 suggestion_list = tuple(suggestion_list)
- */
-        __pyx_t_3 = __pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except((__pyx_v_s_list[__pyx_v_i])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 206, __pyx_L9_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_5 = __Pyx_PyObject_Append(__pyx_v_suggestion_list, __pyx_t_3); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 206, __pyx_L9_error)
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      }
-
-      /* "hunspell/hunspell.pyx":208
- *                     suggestion_list.append(c_string_to_unicode_no_except(s_list[i]))
- * 
- *                 suggestion_list = tuple(suggestion_list)             # <<<<<<<<<<<<<<
- *                 self._suggest_cache[word] = suggestion_list
- *                 return suggestion_list
- */
-      __pyx_t_3 = PySequence_Tuple(__pyx_v_suggestion_list); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L9_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF_SET(__pyx_v_suggestion_list, __pyx_t_3);
-      __pyx_t_3 = 0;
-
-      /* "hunspell/hunspell.pyx":209
- * 
- *                 suggestion_list = tuple(suggestion_list)
- *                 self._suggest_cache[word] = suggestion_list             # <<<<<<<<<<<<<<
- *                 return suggestion_list
- *             finally:
- */
-      if (unlikely(PyObject_SetItem(__pyx_v_self->_suggest_cache, __pyx_v_word, __pyx_v_suggestion_list) < 0)) __PYX_ERR(0, 209, __pyx_L9_error)
-
-      /* "hunspell/hunspell.pyx":210
- *                 suggestion_list = tuple(suggestion_list)
- *                 self._suggest_cache[word] = suggestion_list
- *                 return suggestion_list             # <<<<<<<<<<<<<<
- *             finally:
- *                 self._cxx_hunspell.free_list(&s_list, count)
- */
-      __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_v_suggestion_list);
-      __pyx_r = __pyx_v_suggestion_list;
-      goto __pyx_L8_return;
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_action); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  __pyx_t_4 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_4 = 1;
     }
+  }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_suggest, __pyx_v_word};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_suggest, __pyx_v_word};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  {
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 169, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    if (__pyx_t_3) {
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
+    }
+    __Pyx_INCREF(__pyx_n_s_suggest);
+    __Pyx_GIVEREF(__pyx_n_s_suggest);
+    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_4, __pyx_n_s_suggest);
+    __Pyx_INCREF(__pyx_v_word);
+    __Pyx_GIVEREF(__pyx_v_word);
+    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_v_word);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
 
-    /* "hunspell/hunspell.pyx":212
- *                 return suggestion_list
- *             finally:
- *                 self._cxx_hunspell.free_list(&s_list, count)             # <<<<<<<<<<<<<<
- *         finally:
+  /* "hunspell/hunspell.pyx":167
  *             free(c_word)
- */
-    /*finally:*/ {
-      /*exception exit:*/{
-        __Pyx_PyThreadState_declare
-        __pyx_L9_error:;
-        __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
-        __Pyx_PyThreadState_assign
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13);
-        if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10) < 0)) __Pyx_ErrFetch(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10);
-        __Pyx_XGOTREF(__pyx_t_8);
-        __Pyx_XGOTREF(__pyx_t_9);
-        __Pyx_XGOTREF(__pyx_t_10);
-        __Pyx_XGOTREF(__pyx_t_11);
-        __Pyx_XGOTREF(__pyx_t_12);
-        __Pyx_XGOTREF(__pyx_t_13);
-        __pyx_t_4 = __pyx_lineno; __pyx_t_6 = __pyx_clineno; __pyx_t_7 = __pyx_filename;
-        {
-          __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_s_list), __pyx_v_count);
-        }
-        __Pyx_PyThreadState_assign
-        if (PY_MAJOR_VERSION >= 3) {
-          __Pyx_XGIVEREF(__pyx_t_11);
-          __Pyx_XGIVEREF(__pyx_t_12);
-          __Pyx_XGIVEREF(__pyx_t_13);
-          __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
-        }
-        __Pyx_XGIVEREF(__pyx_t_8);
-        __Pyx_XGIVEREF(__pyx_t_9);
-        __Pyx_XGIVEREF(__pyx_t_10);
-        __Pyx_ErrRestore(__pyx_t_8, __pyx_t_9, __pyx_t_10);
-        __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
-        __pyx_lineno = __pyx_t_4; __pyx_clineno = __pyx_t_6; __pyx_filename = __pyx_t_7;
-        goto __pyx_L6_error;
-      }
-      __pyx_L8_return: {
-        __pyx_t_13 = __pyx_r;
-        __pyx_r = 0;
-        __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_s_list), __pyx_v_count);
-        __pyx_r = __pyx_t_13;
-        __pyx_t_13 = 0;
-        goto __pyx_L5_return;
-      }
-    }
-  }
-
-  /* "hunspell/hunspell.pyx":214
- *                 self._cxx_hunspell.free_list(&s_list, count)
- *         finally:
- *             free(c_word)             # <<<<<<<<<<<<<<
- * 
- *     # Python individual word stemming
- */
-  /*finally:*/ {
-    /*exception exit:*/{
-      __Pyx_PyThreadState_declare
-      __pyx_L6_error:;
-      __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0; __pyx_t_10 = 0; __pyx_t_9 = 0; __pyx_t_8 = 0;
-      __Pyx_PyThreadState_assign
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_10, &__pyx_t_9, &__pyx_t_8);
-      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11) < 0)) __Pyx_ErrFetch(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11);
-      __Pyx_XGOTREF(__pyx_t_13);
-      __Pyx_XGOTREF(__pyx_t_12);
-      __Pyx_XGOTREF(__pyx_t_11);
-      __Pyx_XGOTREF(__pyx_t_10);
-      __Pyx_XGOTREF(__pyx_t_9);
-      __Pyx_XGOTREF(__pyx_t_8);
-      __pyx_t_6 = __pyx_lineno; __pyx_t_4 = __pyx_clineno; __pyx_t_14 = __pyx_filename;
-      {
-        free(__pyx_v_c_word);
-      }
-      __Pyx_PyThreadState_assign
-      if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_10);
-        __Pyx_XGIVEREF(__pyx_t_9);
-        __Pyx_XGIVEREF(__pyx_t_8);
-        __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_9, __pyx_t_8);
-      }
-      __Pyx_XGIVEREF(__pyx_t_13);
-      __Pyx_XGIVEREF(__pyx_t_12);
-      __Pyx_XGIVEREF(__pyx_t_11);
-      __Pyx_ErrRestore(__pyx_t_13, __pyx_t_12, __pyx_t_11);
-      __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0; __pyx_t_10 = 0; __pyx_t_9 = 0; __pyx_t_8 = 0;
-      __pyx_lineno = __pyx_t_6; __pyx_clineno = __pyx_t_4; __pyx_filename = __pyx_t_14;
-      goto __pyx_L1_error;
-    }
-    __pyx_L5_return: {
-      __pyx_t_8 = __pyx_r;
-      __pyx_r = 0;
-      free(__pyx_v_c_word);
-      __pyx_r = __pyx_t_8;
-      __pyx_t_8 = 0;
-      goto __pyx_L0;
-    }
-  }
-
-  /* "hunspell/hunspell.pyx":192
- * 
- *     # Python individual word suggestions
+ *
  *     def suggest(self, basestring word):             # <<<<<<<<<<<<<<
- *         if word in self._suggest_cache:
- *             return self._suggest_cache[word]
+ *         # Python individual word suggestions
+ *         return self.action('suggest', word)
  */
 
   /* function exit code */
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
   __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.suggest", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_suggestion_list);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":217
- * 
- *     # Python individual word stemming
+/* "hunspell/hunspell.pyx":171
+ *         return self.action('suggest', word)
+ *
  *     def stem(self, basestring word):             # <<<<<<<<<<<<<<
- *         if word in self._stem_cache:
- *             return self._stem_cache[word]
+ *         # Python individual word stemming
+ *         return self.action('stem', word)
  */
 
 /* Python wrapper */
@@ -4247,7 +4138,7 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_9stem(PyObject *__p
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("stem (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 217, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 171, __pyx_L1_error)
   __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_8stem(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject*)__pyx_v_word));
 
   /* function exit code */
@@ -4260,208 +4151,446 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_9stem(PyObject *__p
 }
 
 static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_8stem(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_word) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  __Pyx_RefNannySetupContext("stem", 0);
+
+  /* "hunspell/hunspell.pyx":173
+ *     def stem(self, basestring word):
+ *         # Python individual word stemming
+ *         return self.action('stem', word)             # <<<<<<<<<<<<<<
+ *
+ *     def action(self, basestring action, basestring word):
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_action); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  __pyx_t_4 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_4 = 1;
+    }
+  }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_stem, __pyx_v_word};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_stem, __pyx_v_word};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  {
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    if (__pyx_t_3) {
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
+    }
+    __Pyx_INCREF(__pyx_n_s_stem);
+    __Pyx_GIVEREF(__pyx_n_s_stem);
+    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_4, __pyx_n_s_stem);
+    __Pyx_INCREF(__pyx_v_word);
+    __Pyx_GIVEREF(__pyx_v_word);
+    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_v_word);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "hunspell/hunspell.pyx":171
+ *         return self.action('suggest', word)
+ *
+ *     def stem(self, basestring word):             # <<<<<<<<<<<<<<
+ *         # Python individual word stemming
+ *         return self.action('stem', word)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.stem", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":175
+ *         return self.action('stem', word)
+ *
+ *     def action(self, basestring action, basestring word):             # <<<<<<<<<<<<<<
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11action(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11action(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_action = 0;
+  PyObject *__pyx_v_word = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("action (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_action,&__pyx_n_s_word,0};
+    PyObject* values[2] = {0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_action)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        case  1:
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_word)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("action", 1, 2, 2, 1); __PYX_ERR(0, 175, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "action") < 0)) __PYX_ERR(0, 175, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+    }
+    __pyx_v_action = ((PyObject*)values[0]);
+    __pyx_v_word = ((PyObject*)values[1]);
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("action", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 175, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.action", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_action), (&PyBaseString_Type), 1, "action", 1))) __PYX_ERR(0, 175, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_word), (&PyBaseString_Type), 1, "word", 1))) __PYX_ERR(0, 175, __pyx_L1_error)
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_10action(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), __pyx_v_action, __pyx_v_word);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_10action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, PyObject *__pyx_v_word) {
+  int __pyx_v_stem_action;
+  PyObject *__pyx_v_cache = NULL;
   char **__pyx_v_s_list;
   char *__pyx_v_c_word;
+  PyObject *__pyx_v_stem_list = 0;
+  PyObject *__pyx_v_stem_result = 0;
   int __pyx_v_count;
-  PyObject *__pyx_v_stem_list = NULL;
   long __pyx_v_i;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
-  int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_t_3;
   int __pyx_t_4;
-  int __pyx_t_5;
-  int __pyx_t_6;
-  char const *__pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
-  PyObject *__pyx_t_9 = NULL;
-  PyObject *__pyx_t_10 = NULL;
+  struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string __pyx_t_5;
+  PyObject *__pyx_t_6 = NULL;
+  struct __pyx_opt_args_8hunspell_8hunspell_c_string_to_unicode_no_except __pyx_t_7;
+  int __pyx_t_8;
+  int __pyx_t_9;
+  char const *__pyx_t_10;
   PyObject *__pyx_t_11 = NULL;
   PyObject *__pyx_t_12 = NULL;
   PyObject *__pyx_t_13 = NULL;
-  char const *__pyx_t_14;
-  __Pyx_RefNannySetupContext("stem", 0);
+  PyObject *__pyx_t_14 = NULL;
+  PyObject *__pyx_t_15 = NULL;
+  PyObject *__pyx_t_16 = NULL;
+  char const *__pyx_t_17;
+  __Pyx_RefNannySetupContext("action", 0);
 
-  /* "hunspell/hunspell.pyx":218
- *     # Python individual word stemming
- *     def stem(self, basestring word):
- *         if word in self._stem_cache:             # <<<<<<<<<<<<<<
- *             return self._stem_cache[word]
- * 
+  /* "hunspell/hunspell.pyx":176
+ *
+ *     def action(self, basestring action, basestring word):
+ *         cdef bint stem_action = (action == 'stem')             # <<<<<<<<<<<<<<
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *         if word in cache:
  */
-  __pyx_t_1 = (__Pyx_PySequence_ContainsTF(__pyx_v_word, __pyx_v_self->_stem_cache, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 218, __pyx_L1_error)
-  __pyx_t_2 = (__pyx_t_1 != 0);
-  if (__pyx_t_2) {
+  __pyx_t_1 = (__Pyx_PyUnicode_Equals(__pyx_v_action, __pyx_n_s_stem, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_v_stem_action = __pyx_t_1;
 
-    /* "hunspell/hunspell.pyx":219
- *     def stem(self, basestring word):
- *         if word in self._stem_cache:
- *             return self._stem_cache[word]             # <<<<<<<<<<<<<<
- * 
+  /* "hunspell/hunspell.pyx":177
+ *     def action(self, basestring action, basestring word):
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache             # <<<<<<<<<<<<<<
+ *         if word in cache:
+ *             return cache[word]
+ */
+  if ((__pyx_v_stem_action != 0)) {
+    __Pyx_INCREF(__pyx_v_self->_stem_cache);
+    __pyx_t_2 = __pyx_v_self->_stem_cache;
+  } else {
+    __Pyx_INCREF(__pyx_v_self->_suggest_cache);
+    __pyx_t_2 = __pyx_v_self->_suggest_cache;
+  }
+  __pyx_v_cache = __pyx_t_2;
+  __pyx_t_2 = 0;
+
+  /* "hunspell/hunspell.pyx":178
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *         if word in cache:             # <<<<<<<<<<<<<<
+ *             return cache[word]
+ *
+ */
+  __pyx_t_1 = (__Pyx_PySequence_ContainsTF(__pyx_v_word, __pyx_v_cache, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_3 = (__pyx_t_1 != 0);
+  if (__pyx_t_3) {
+
+    /* "hunspell/hunspell.pyx":179
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *         if word in cache:
+ *             return cache[word]             # <<<<<<<<<<<<<<
+ *
  *         cdef char **s_list = NULL
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = PyObject_GetItem(__pyx_v_self->_stem_cache, __pyx_v_word); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 219, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_r = __pyx_t_3;
-    __pyx_t_3 = 0;
+    __pyx_t_2 = PyObject_GetItem(__pyx_v_cache, __pyx_v_word); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 179, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_r = __pyx_t_2;
+    __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "hunspell/hunspell.pyx":218
- *     # Python individual word stemming
- *     def stem(self, basestring word):
- *         if word in self._stem_cache:             # <<<<<<<<<<<<<<
- *             return self._stem_cache[word]
- * 
+    /* "hunspell/hunspell.pyx":178
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *         if word in cache:             # <<<<<<<<<<<<<<
+ *             return cache[word]
+ *
  */
   }
 
-  /* "hunspell/hunspell.pyx":221
- *             return self._stem_cache[word]
- * 
+  /* "hunspell/hunspell.pyx":181
+ *             return cache[word]
+ *
  *         cdef char **s_list = NULL             # <<<<<<<<<<<<<<
  *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
+ *         cdef list stem_list
  */
   __pyx_v_s_list = NULL;
 
-  /* "hunspell/hunspell.pyx":222
- * 
+  /* "hunspell/hunspell.pyx":182
+ *
  *         cdef char **s_list = NULL
  *         cdef char *c_word = NULL             # <<<<<<<<<<<<<<
- *         if copy_to_c_string(word, &c_word) <= 0:
- *             raise MemoryError()
+ *         cdef list stem_list
+ *         cdef tuple stem_result
  */
   __pyx_v_c_word = NULL;
 
-  /* "hunspell/hunspell.pyx":223
- *         cdef char **s_list = NULL
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:             # <<<<<<<<<<<<<<
+  /* "hunspell/hunspell.pyx":185
+ *         cdef list stem_list
+ *         cdef tuple stem_result
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
- * 
+ *
  */
-  __pyx_t_4 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(__pyx_v_word, (&__pyx_v_c_word)); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 223, __pyx_L1_error)
-  __pyx_t_2 = ((__pyx_t_4 <= 0) != 0);
-  if (__pyx_t_2) {
+  __pyx_t_2 = __pyx_v_self->_dic_encoding;
+  __Pyx_INCREF(__pyx_t_2);
+  __pyx_t_5.__pyx_n = 1;
+  __pyx_t_5.encoding = ((PyObject*)__pyx_t_2);
+  __pyx_t_4 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(__pyx_v_word, (&__pyx_v_c_word), &__pyx_t_5); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_3 = ((__pyx_t_4 <= 0) != 0);
+  if (__pyx_t_3) {
 
-    /* "hunspell/hunspell.pyx":224
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:
+    /* "hunspell/hunspell.pyx":186
+ *         cdef tuple stem_result
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
  *             raise MemoryError()             # <<<<<<<<<<<<<<
- * 
+ *
  *         try:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 224, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 186, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":223
- *         cdef char **s_list = NULL
- *         cdef char *c_word = NULL
- *         if copy_to_c_string(word, &c_word) <= 0:             # <<<<<<<<<<<<<<
+    /* "hunspell/hunspell.pyx":185
+ *         cdef list stem_list
+ *         cdef tuple stem_result
+ *         if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
- * 
+ *
  */
   }
 
-  /* "hunspell/hunspell.pyx":226
+  /* "hunspell/hunspell.pyx":188
  *             raise MemoryError()
- * 
+ *
  *         try:             # <<<<<<<<<<<<<<
- *             count = self._cxx_hunspell.stem(&s_list, c_word)
- *             try:
+ *             if stem_action:
+ *                 count = self._cxx_hunspell.stem(&s_list, c_word)
  */
   /*try:*/ {
 
-    /* "hunspell/hunspell.pyx":227
- * 
+    /* "hunspell/hunspell.pyx":189
+ *
  *         try:
- *             count = self._cxx_hunspell.stem(&s_list, c_word)             # <<<<<<<<<<<<<<
- *             try:
- *                 stem_list = []
+ *             if stem_action:             # <<<<<<<<<<<<<<
+ *                 count = self._cxx_hunspell.stem(&s_list, c_word)
+ *             else:
  */
-    __pyx_v_count = __pyx_v_self->_cxx_hunspell->stem((&__pyx_v_s_list), __pyx_v_c_word);
+    __pyx_t_3 = (__pyx_v_stem_action != 0);
+    if (__pyx_t_3) {
 
-    /* "hunspell/hunspell.pyx":228
+      /* "hunspell/hunspell.pyx":190
  *         try:
- *             count = self._cxx_hunspell.stem(&s_list, c_word)
+ *             if stem_action:
+ *                 count = self._cxx_hunspell.stem(&s_list, c_word)             # <<<<<<<<<<<<<<
+ *             else:
+ *                 count = self._cxx_hunspell.suggest(&s_list, c_word)
+ */
+      __pyx_v_count = __pyx_v_self->_cxx_hunspell->stem((&__pyx_v_s_list), __pyx_v_c_word);
+
+      /* "hunspell/hunspell.pyx":189
+ *
+ *         try:
+ *             if stem_action:             # <<<<<<<<<<<<<<
+ *                 count = self._cxx_hunspell.stem(&s_list, c_word)
+ *             else:
+ */
+      goto __pyx_L8;
+    }
+
+    /* "hunspell/hunspell.pyx":192
+ *                 count = self._cxx_hunspell.stem(&s_list, c_word)
+ *             else:
+ *                 count = self._cxx_hunspell.suggest(&s_list, c_word)             # <<<<<<<<<<<<<<
+ *
+ *             try:
+ */
+    /*else*/ {
+      __pyx_v_count = __pyx_v_self->_cxx_hunspell->suggest((&__pyx_v_s_list), __pyx_v_c_word);
+    }
+    __pyx_L8:;
+
+    /* "hunspell/hunspell.pyx":194
+ *                 count = self._cxx_hunspell.suggest(&s_list, c_word)
+ *
  *             try:             # <<<<<<<<<<<<<<
  *                 stem_list = []
  *                 for i from 0 <= i < count:
  */
     /*try:*/ {
 
-      /* "hunspell/hunspell.pyx":229
- *             count = self._cxx_hunspell.stem(&s_list, c_word)
+      /* "hunspell/hunspell.pyx":195
+ *
  *             try:
  *                 stem_list = []             # <<<<<<<<<<<<<<
  *                 for i from 0 <= i < count:
- *                     stem_list.append(c_string_to_unicode_no_except(s_list[i]))
+ *                     stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))
  */
-      __pyx_t_3 = PyList_New(0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 229, __pyx_L9_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_v_stem_list = __pyx_t_3;
-      __pyx_t_3 = 0;
+      __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L10_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_v_stem_list = ((PyObject*)__pyx_t_2);
+      __pyx_t_2 = 0;
 
-      /* "hunspell/hunspell.pyx":230
+      /* "hunspell/hunspell.pyx":196
  *             try:
  *                 stem_list = []
  *                 for i from 0 <= i < count:             # <<<<<<<<<<<<<<
- *                     stem_list.append(c_string_to_unicode_no_except(s_list[i]))
- * 
+ *                     stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))
+ *
  */
       __pyx_t_4 = __pyx_v_count;
       for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_4; __pyx_v_i++) {
 
-        /* "hunspell/hunspell.pyx":231
+        /* "hunspell/hunspell.pyx":197
  *                 stem_list = []
  *                 for i from 0 <= i < count:
- *                     stem_list.append(c_string_to_unicode_no_except(s_list[i]))             # <<<<<<<<<<<<<<
- * 
- *                 stem_list = tuple(stem_list)
+ *                     stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))             # <<<<<<<<<<<<<<
+ *
+ *                 stem_result = tuple(stem_list)
  */
-        __pyx_t_3 = __pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except((__pyx_v_s_list[__pyx_v_i])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 231, __pyx_L9_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_5 = __Pyx_PyObject_Append(__pyx_v_stem_list, __pyx_t_3); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 231, __pyx_L9_error)
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __pyx_t_2 = __pyx_v_self->_dic_encoding;
+        __Pyx_INCREF(__pyx_t_2);
+        __pyx_t_7.__pyx_n = 1;
+        __pyx_t_7.encoding = ((PyObject*)__pyx_t_2);
+        __pyx_t_6 = __pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except((__pyx_v_s_list[__pyx_v_i]), &__pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 197, __pyx_L10_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __pyx_t_8 = __Pyx_PyList_Append(__pyx_v_stem_list, __pyx_t_6); if (unlikely(__pyx_t_8 == -1)) __PYX_ERR(0, 197, __pyx_L10_error)
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
 
-      /* "hunspell/hunspell.pyx":233
- *                     stem_list.append(c_string_to_unicode_no_except(s_list[i]))
- * 
- *                 stem_list = tuple(stem_list)             # <<<<<<<<<<<<<<
- *                 self._stem_cache[word] = stem_list
- *                 return stem_list
+      /* "hunspell/hunspell.pyx":199
+ *                     stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))
+ *
+ *                 stem_result = tuple(stem_list)             # <<<<<<<<<<<<<<
+ *                 cache[word] = stem_result
+ *                 return stem_result
  */
-      __pyx_t_3 = PySequence_Tuple(__pyx_v_stem_list); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 233, __pyx_L9_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF_SET(__pyx_v_stem_list, __pyx_t_3);
-      __pyx_t_3 = 0;
+      __pyx_t_6 = PyList_AsTuple(__pyx_v_stem_list); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 199, __pyx_L10_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_v_stem_result = ((PyObject*)__pyx_t_6);
+      __pyx_t_6 = 0;
 
-      /* "hunspell/hunspell.pyx":234
- * 
- *                 stem_list = tuple(stem_list)
- *                 self._stem_cache[word] = stem_list             # <<<<<<<<<<<<<<
- *                 return stem_list
+      /* "hunspell/hunspell.pyx":200
+ *
+ *                 stem_result = tuple(stem_list)
+ *                 cache[word] = stem_result             # <<<<<<<<<<<<<<
+ *                 return stem_result
  *             finally:
  */
-      if (unlikely(PyObject_SetItem(__pyx_v_self->_stem_cache, __pyx_v_word, __pyx_v_stem_list) < 0)) __PYX_ERR(0, 234, __pyx_L9_error)
+      if (unlikely(PyObject_SetItem(__pyx_v_cache, __pyx_v_word, __pyx_v_stem_result) < 0)) __PYX_ERR(0, 200, __pyx_L10_error)
 
-      /* "hunspell/hunspell.pyx":235
- *                 stem_list = tuple(stem_list)
- *                 self._stem_cache[word] = stem_list
- *                 return stem_list             # <<<<<<<<<<<<<<
+      /* "hunspell/hunspell.pyx":201
+ *                 stem_result = tuple(stem_list)
+ *                 cache[word] = stem_result
+ *                 return stem_result             # <<<<<<<<<<<<<<
  *             finally:
  *                 self._cxx_hunspell.free_list(&s_list, count)
  */
       __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_v_stem_list);
-      __pyx_r = __pyx_v_stem_list;
-      goto __pyx_L8_return;
+      __Pyx_INCREF(__pyx_v_stem_result);
+      __pyx_r = __pyx_v_stem_result;
+      goto __pyx_L9_return;
     }
 
-    /* "hunspell/hunspell.pyx":237
- *                 return stem_list
+    /* "hunspell/hunspell.pyx":203
+ *                 return stem_result
  *             finally:
  *                 self._cxx_hunspell.free_list(&s_list, count)             # <<<<<<<<<<<<<<
  *         finally:
@@ -4470,243 +4599,229 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_8stem(struct __pyx_
     /*finally:*/ {
       /*exception exit:*/{
         __Pyx_PyThreadState_declare
-        __pyx_L9_error:;
-        __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
+        __pyx_L10_error:;
+        __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0; __pyx_t_15 = 0; __pyx_t_16 = 0;
         __Pyx_PyThreadState_assign
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13);
-        if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10) < 0)) __Pyx_ErrFetch(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10);
-        __Pyx_XGOTREF(__pyx_t_8);
-        __Pyx_XGOTREF(__pyx_t_9);
-        __Pyx_XGOTREF(__pyx_t_10);
+        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+        if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_14, &__pyx_t_15, &__pyx_t_16);
+        if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13) < 0)) __Pyx_ErrFetch(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13);
         __Pyx_XGOTREF(__pyx_t_11);
         __Pyx_XGOTREF(__pyx_t_12);
         __Pyx_XGOTREF(__pyx_t_13);
-        __pyx_t_4 = __pyx_lineno; __pyx_t_6 = __pyx_clineno; __pyx_t_7 = __pyx_filename;
+        __Pyx_XGOTREF(__pyx_t_14);
+        __Pyx_XGOTREF(__pyx_t_15);
+        __Pyx_XGOTREF(__pyx_t_16);
+        __pyx_t_4 = __pyx_lineno; __pyx_t_9 = __pyx_clineno; __pyx_t_10 = __pyx_filename;
         {
           __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_s_list), __pyx_v_count);
         }
         __Pyx_PyThreadState_assign
         if (PY_MAJOR_VERSION >= 3) {
-          __Pyx_XGIVEREF(__pyx_t_11);
-          __Pyx_XGIVEREF(__pyx_t_12);
-          __Pyx_XGIVEREF(__pyx_t_13);
-          __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
+          __Pyx_XGIVEREF(__pyx_t_14);
+          __Pyx_XGIVEREF(__pyx_t_15);
+          __Pyx_XGIVEREF(__pyx_t_16);
+          __Pyx_ExceptionReset(__pyx_t_14, __pyx_t_15, __pyx_t_16);
         }
-        __Pyx_XGIVEREF(__pyx_t_8);
-        __Pyx_XGIVEREF(__pyx_t_9);
-        __Pyx_XGIVEREF(__pyx_t_10);
-        __Pyx_ErrRestore(__pyx_t_8, __pyx_t_9, __pyx_t_10);
-        __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
-        __pyx_lineno = __pyx_t_4; __pyx_clineno = __pyx_t_6; __pyx_filename = __pyx_t_7;
+        __Pyx_XGIVEREF(__pyx_t_11);
+        __Pyx_XGIVEREF(__pyx_t_12);
+        __Pyx_XGIVEREF(__pyx_t_13);
+        __Pyx_ErrRestore(__pyx_t_11, __pyx_t_12, __pyx_t_13);
+        __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0; __pyx_t_15 = 0; __pyx_t_16 = 0;
+        __pyx_lineno = __pyx_t_4; __pyx_clineno = __pyx_t_9; __pyx_filename = __pyx_t_10;
         goto __pyx_L6_error;
       }
-      __pyx_L8_return: {
-        __pyx_t_13 = __pyx_r;
+      __pyx_L9_return: {
+        __pyx_t_16 = __pyx_r;
         __pyx_r = 0;
         __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_s_list), __pyx_v_count);
-        __pyx_r = __pyx_t_13;
-        __pyx_t_13 = 0;
+        __pyx_r = __pyx_t_16;
+        __pyx_t_16 = 0;
         goto __pyx_L5_return;
       }
     }
   }
 
-  /* "hunspell/hunspell.pyx":239
+  /* "hunspell/hunspell.pyx":205
  *                 self._cxx_hunspell.free_list(&s_list, count)
  *         finally:
  *             free(c_word)             # <<<<<<<<<<<<<<
- * 
- *     def save_cache(self):
+ *
+ *     def bulk_suggest(self, words):
  */
   /*finally:*/ {
     /*exception exit:*/{
       __Pyx_PyThreadState_declare
       __pyx_L6_error:;
-      __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0; __pyx_t_10 = 0; __pyx_t_9 = 0; __pyx_t_8 = 0;
+      __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0; __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0;
       __Pyx_PyThreadState_assign
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_10, &__pyx_t_9, &__pyx_t_8);
-      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11) < 0)) __Pyx_ErrFetch(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11);
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11);
+      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_16, &__pyx_t_15, &__pyx_t_14) < 0)) __Pyx_ErrFetch(&__pyx_t_16, &__pyx_t_15, &__pyx_t_14);
+      __Pyx_XGOTREF(__pyx_t_16);
+      __Pyx_XGOTREF(__pyx_t_15);
+      __Pyx_XGOTREF(__pyx_t_14);
       __Pyx_XGOTREF(__pyx_t_13);
       __Pyx_XGOTREF(__pyx_t_12);
       __Pyx_XGOTREF(__pyx_t_11);
-      __Pyx_XGOTREF(__pyx_t_10);
-      __Pyx_XGOTREF(__pyx_t_9);
-      __Pyx_XGOTREF(__pyx_t_8);
-      __pyx_t_6 = __pyx_lineno; __pyx_t_4 = __pyx_clineno; __pyx_t_14 = __pyx_filename;
+      __pyx_t_9 = __pyx_lineno; __pyx_t_4 = __pyx_clineno; __pyx_t_17 = __pyx_filename;
       {
         free(__pyx_v_c_word);
       }
       __Pyx_PyThreadState_assign
       if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_10);
-        __Pyx_XGIVEREF(__pyx_t_9);
-        __Pyx_XGIVEREF(__pyx_t_8);
-        __Pyx_ExceptionReset(__pyx_t_10, __pyx_t_9, __pyx_t_8);
+        __Pyx_XGIVEREF(__pyx_t_13);
+        __Pyx_XGIVEREF(__pyx_t_12);
+        __Pyx_XGIVEREF(__pyx_t_11);
+        __Pyx_ExceptionReset(__pyx_t_13, __pyx_t_12, __pyx_t_11);
       }
-      __Pyx_XGIVEREF(__pyx_t_13);
-      __Pyx_XGIVEREF(__pyx_t_12);
-      __Pyx_XGIVEREF(__pyx_t_11);
-      __Pyx_ErrRestore(__pyx_t_13, __pyx_t_12, __pyx_t_11);
-      __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0; __pyx_t_10 = 0; __pyx_t_9 = 0; __pyx_t_8 = 0;
-      __pyx_lineno = __pyx_t_6; __pyx_clineno = __pyx_t_4; __pyx_filename = __pyx_t_14;
+      __Pyx_XGIVEREF(__pyx_t_16);
+      __Pyx_XGIVEREF(__pyx_t_15);
+      __Pyx_XGIVEREF(__pyx_t_14);
+      __Pyx_ErrRestore(__pyx_t_16, __pyx_t_15, __pyx_t_14);
+      __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0; __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0;
+      __pyx_lineno = __pyx_t_9; __pyx_clineno = __pyx_t_4; __pyx_filename = __pyx_t_17;
       goto __pyx_L1_error;
     }
     __pyx_L5_return: {
-      __pyx_t_8 = __pyx_r;
+      __pyx_t_11 = __pyx_r;
       __pyx_r = 0;
       free(__pyx_v_c_word);
-      __pyx_r = __pyx_t_8;
-      __pyx_t_8 = 0;
+      __pyx_r = __pyx_t_11;
+      __pyx_t_11 = 0;
       goto __pyx_L0;
     }
   }
 
-  /* "hunspell/hunspell.pyx":217
- * 
- *     # Python individual word stemming
- *     def stem(self, basestring word):             # <<<<<<<<<<<<<<
- *         if word in self._stem_cache:
- *             return self._stem_cache[word]
+  /* "hunspell/hunspell.pyx":175
+ *         return self.action('stem', word)
+ *
+ *     def action(self, basestring action, basestring word):             # <<<<<<<<<<<<<<
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.stem", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.action", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_cache);
   __Pyx_XDECREF(__pyx_v_stem_list);
+  __Pyx_XDECREF(__pyx_v_stem_result);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":241
+/* "hunspell/hunspell.pyx":207
  *             free(c_word)
- * 
- *     def save_cache(self):             # <<<<<<<<<<<<<<
- *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
- * 
+ *
+ *     def bulk_suggest(self, words):             # <<<<<<<<<<<<<<
+ *         return self.bulk_action('suggest', words)
+ *
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11save_cache(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11save_cache(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13bulk_suggest(PyObject *__pyx_v_self, PyObject *__pyx_v_words); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13bulk_suggest(PyObject *__pyx_v_self, PyObject *__pyx_v_words) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("save_cache (wrapper)", 0);
-  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_10save_cache(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self));
+  __Pyx_RefNannySetupContext("bulk_suggest (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_12bulk_suggest(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_words));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_10save_cache(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self) {
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_12bulk_suggest(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_words) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
+  int __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
-  __Pyx_RefNannySetupContext("save_cache", 0);
+  __Pyx_RefNannySetupContext("bulk_suggest", 0);
 
-  /* "hunspell/hunspell.pyx":242
- * 
- *     def save_cache(self):
- *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()             # <<<<<<<<<<<<<<
- * 
- *     def set_concurrency(self, n_cpus):
+  /* "hunspell/hunspell.pyx":208
+ *
+ *     def bulk_suggest(self, words):
+ *         return self.bulk_action('suggest', words)             # <<<<<<<<<<<<<<
+ *
+ *     def bulk_stem(self, words):
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_cache_manager); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 242, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_4)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_bulk_action); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 208, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  __pyx_t_4 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_4 = 1;
     }
   }
-  if (!__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_self->_cache_manager_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 242, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_self->_cache_manager_name};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 242, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_GOTREF(__pyx_t_2);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_self->_cache_manager_name};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 242, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_GOTREF(__pyx_t_2);
-    } else
-    #endif
-    {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 242, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      __Pyx_INCREF(__pyx_v_self->_cache_manager_name);
-      __Pyx_GIVEREF(__pyx_v_self->_cache_manager_name);
-      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_self->_cache_manager_name);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 242, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_suggest, __pyx_v_words};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_suggest, __pyx_v_words};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  {
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    if (__pyx_t_3) {
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
     }
+    __Pyx_INCREF(__pyx_n_s_suggest);
+    __Pyx_GIVEREF(__pyx_n_s_suggest);
+    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_4, __pyx_n_s_suggest);
+    __Pyx_INCREF(__pyx_v_words);
+    __Pyx_GIVEREF(__pyx_v_words);
+    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_v_words);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_save_all_cache_contents); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 242, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 242, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 242, __pyx_L1_error)
-  }
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
 
-  /* "hunspell/hunspell.pyx":241
+  /* "hunspell/hunspell.pyx":207
  *             free(c_word)
- * 
- *     def save_cache(self):             # <<<<<<<<<<<<<<
- *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
- * 
+ *
+ *     def bulk_suggest(self, words):             # <<<<<<<<<<<<<<
+ *         return self.bulk_action('suggest', words)
+ *
  */
 
   /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.save_cache", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.bulk_suggest", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4714,852 +4829,130 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_10save_cache(struct
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":244
- *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
- * 
- *     def set_concurrency(self, n_cpus):             # <<<<<<<<<<<<<<
- *         self.n_cpus = n_cpus
- * 
+/* "hunspell/hunspell.pyx":210
+ *         return self.bulk_action('suggest', words)
+ *
+ *     def bulk_stem(self, words):             # <<<<<<<<<<<<<<
+ *         return self.bulk_action('stem', words)
+ *
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13set_concurrency(PyObject *__pyx_v_self, PyObject *__pyx_v_n_cpus); /*proto*/
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13set_concurrency(PyObject *__pyx_v_self, PyObject *__pyx_v_n_cpus) {
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_stem(PyObject *__pyx_v_self, PyObject *__pyx_v_words); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_stem(PyObject *__pyx_v_self, PyObject *__pyx_v_words) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("set_concurrency (wrapper)", 0);
-  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_12set_concurrency(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_n_cpus));
+  __Pyx_RefNannySetupContext("bulk_stem (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_stem(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_words));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_12set_concurrency(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_n_cpus) {
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_stem(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_words) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  __Pyx_RefNannySetupContext("set_concurrency", 0);
-
-  /* "hunspell/hunspell.pyx":245
- * 
- *     def set_concurrency(self, n_cpus):
- *         self.n_cpus = n_cpus             # <<<<<<<<<<<<<<
- * 
- *     ###################
- */
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_n_cpus); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 245, __pyx_L1_error)
-  __pyx_v_self->n_cpus = __pyx_t_1;
-
-  /* "hunspell/hunspell.pyx":244
- *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
- * 
- *     def set_concurrency(self, n_cpus):             # <<<<<<<<<<<<<<
- *         self.n_cpus = n_cpus
- * 
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.set_concurrency", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "hunspell/hunspell.pyx":254
- *     # C realm thread dispatcher
- *     #
- *     cdef int _c_bulk_action(self, basestring action, char **word_array, char ***output_array, int n_words, int *output_counts) except +:             # <<<<<<<<<<<<<<
- *         # Allocate all memory per thread
- *         cdef thread_t **threads = <thread_t **>calloc(self.n_cpus, sizeof(thread_t *))
- */
-
-static int __pyx_f_8hunspell_8hunspell_12HunspellWrap__c_bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, char **__pyx_v_word_array, char ***__pyx_v_output_array, int __pyx_v_n_words, int *__pyx_v_output_counts) {
-  thread_t **__pyx_v_threads;
-  struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs *__pyx_v_thread_args;
-  int __pyx_v_rc;
-  int __pyx_v_i;
-  int __pyx_v_stride;
-  PyObject *__pyx_v_words_per_thread = NULL;
-  PyObject *__pyx_v_words_distributed = NULL;
-  int __pyx_r;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   int __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
-  int __pyx_t_6;
-  Hunspell *__pyx_t_7;
-  char const *__pyx_t_8;
-  PyObject *__pyx_t_9 = NULL;
-  PyObject *__pyx_t_10 = NULL;
-  PyObject *__pyx_t_11 = NULL;
-  PyObject *__pyx_t_12 = NULL;
-  PyObject *__pyx_t_13 = NULL;
-  PyObject *__pyx_t_14 = NULL;
-  __Pyx_RefNannySetupContext("_c_bulk_action", 0);
+  __Pyx_RefNannySetupContext("bulk_stem", 0);
 
-  /* "hunspell/hunspell.pyx":256
- *     cdef int _c_bulk_action(self, basestring action, char **word_array, char ***output_array, int n_words, int *output_counts) except +:
- *         # Allocate all memory per thread
- *         cdef thread_t **threads = <thread_t **>calloc(self.n_cpus, sizeof(thread_t *))             # <<<<<<<<<<<<<<
- *         cdef ThreadWorkerArgs *thread_args = <ThreadWorkerArgs *>calloc(self.n_cpus, sizeof(ThreadWorkerArgs))
- *         cdef int rc, i, stride
+  /* "hunspell/hunspell.pyx":211
+ *
+ *     def bulk_stem(self, words):
+ *         return self.bulk_action('stem', words)             # <<<<<<<<<<<<<<
+ *
+ *     def bulk_action(self, basestring action, words):
  */
-  __pyx_v_threads = ((thread_t **)calloc(__pyx_v_self->n_cpus, (sizeof(thread_t *))));
-
-  /* "hunspell/hunspell.pyx":257
- *         # Allocate all memory per thread
- *         cdef thread_t **threads = <thread_t **>calloc(self.n_cpus, sizeof(thread_t *))
- *         cdef ThreadWorkerArgs *thread_args = <ThreadWorkerArgs *>calloc(self.n_cpus, sizeof(ThreadWorkerArgs))             # <<<<<<<<<<<<<<
- *         cdef int rc, i, stride
- * 
- */
-  __pyx_v_thread_args = ((struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs *)calloc(__pyx_v_self->n_cpus, (sizeof(struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs))));
-
-  /* "hunspell/hunspell.pyx":260
- *         cdef int rc, i, stride
- * 
- *         if thread_args is NULL or threads is NULL:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
- * 
- */
-  __pyx_t_2 = ((__pyx_v_thread_args == NULL) != 0);
-  if (!__pyx_t_2) {
-  } else {
-    __pyx_t_1 = __pyx_t_2;
-    goto __pyx_L4_bool_binop_done;
-  }
-  __pyx_t_2 = ((__pyx_v_threads == NULL) != 0);
-  __pyx_t_1 = __pyx_t_2;
-  __pyx_L4_bool_binop_done:;
-  if (__pyx_t_1) {
-
-    /* "hunspell/hunspell.pyx":261
- * 
- *         if thread_args is NULL or threads is NULL:
- *             raise MemoryError()             # <<<<<<<<<<<<<<
- * 
- *         try:
- */
-    PyErr_NoMemory(); __PYX_ERR(0, 261, __pyx_L1_error)
-
-    /* "hunspell/hunspell.pyx":260
- *         cdef int rc, i, stride
- * 
- *         if thread_args is NULL or threads is NULL:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
- * 
- */
-  }
-
-  /* "hunspell/hunspell.pyx":263
- *             raise MemoryError()
- * 
- *         try:             # <<<<<<<<<<<<<<
- *             # Divide workload between threads
- *             words_per_thread = n_words / self.n_cpus
- */
-  /*try:*/ {
-
-    /* "hunspell/hunspell.pyx":265
- *         try:
- *             # Divide workload between threads
- *             words_per_thread = n_words / self.n_cpus             # <<<<<<<<<<<<<<
- *             words_distributed = 0
- *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
- */
-    if (unlikely(__pyx_v_self->n_cpus == 0)) {
-      PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-      __PYX_ERR(0, 265, __pyx_L7_error)
-    }
-    else if (sizeof(int) == sizeof(long) && (!(((int)-1) > 0)) && unlikely(__pyx_v_self->n_cpus == (int)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_v_n_words))) {
-      PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
-      __PYX_ERR(0, 265, __pyx_L7_error)
-    }
-    __pyx_t_3 = __Pyx_PyInt_From_int(__Pyx_div_int(__pyx_v_n_words, __pyx_v_self->n_cpus)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 265, __pyx_L7_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_v_words_per_thread = __pyx_t_3;
-    __pyx_t_3 = 0;
-
-    /* "hunspell/hunspell.pyx":266
- *             # Divide workload between threads
- *             words_per_thread = n_words / self.n_cpus
- *             words_distributed = 0             # <<<<<<<<<<<<<<
- *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
- *             if n_words % self.n_cpus != 0:
- */
-    __Pyx_INCREF(__pyx_int_0);
-    __pyx_v_words_distributed = __pyx_int_0;
-
-    /* "hunspell/hunspell.pyx":268
- *             words_distributed = 0
- *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
- *             if n_words % self.n_cpus != 0:             # <<<<<<<<<<<<<<
- *                 words_per_thread = (n_words - (n_words % self.n_cpus)) / self.n_cpus
- * 
- */
-    if (unlikely(__pyx_v_self->n_cpus == 0)) {
-      PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-      __PYX_ERR(0, 268, __pyx_L7_error)
-    }
-    __pyx_t_1 = ((__Pyx_mod_int(__pyx_v_n_words, __pyx_v_self->n_cpus) != 0) != 0);
-    if (__pyx_t_1) {
-
-      /* "hunspell/hunspell.pyx":269
- *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
- *             if n_words % self.n_cpus != 0:
- *                 words_per_thread = (n_words - (n_words % self.n_cpus)) / self.n_cpus             # <<<<<<<<<<<<<<
- * 
- *             for i from 0 <= i < self.n_cpus:
- */
-      if (unlikely(__pyx_v_self->n_cpus == 0)) {
-        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 269, __pyx_L7_error)
-      }
-      __pyx_t_4 = (__pyx_v_n_words - __Pyx_mod_int(__pyx_v_n_words, __pyx_v_self->n_cpus));
-      if (unlikely(__pyx_v_self->n_cpus == 0)) {
-        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-        __PYX_ERR(0, 269, __pyx_L7_error)
-      }
-      else if (sizeof(int) == sizeof(long) && (!(((int)-1) > 0)) && unlikely(__pyx_v_self->n_cpus == (int)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_t_4))) {
-        PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
-        __PYX_ERR(0, 269, __pyx_L7_error)
-      }
-      __pyx_t_3 = __Pyx_PyInt_From_int(__Pyx_div_int(__pyx_t_4, __pyx_v_self->n_cpus)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 269, __pyx_L7_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF_SET(__pyx_v_words_per_thread, __pyx_t_3);
-      __pyx_t_3 = 0;
-
-      /* "hunspell/hunspell.pyx":268
- *             words_distributed = 0
- *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
- *             if n_words % self.n_cpus != 0:             # <<<<<<<<<<<<<<
- *                 words_per_thread = (n_words - (n_words % self.n_cpus)) / self.n_cpus
- * 
- */
-    }
-
-    /* "hunspell/hunspell.pyx":271
- *                 words_per_thread = (n_words - (n_words % self.n_cpus)) / self.n_cpus
- * 
- *             for i from 0 <= i < self.n_cpus:             # <<<<<<<<<<<<<<
- *                 stride = i * words_per_thread
- *                 thread_args[i].tid = i
- */
-    __pyx_t_4 = __pyx_v_self->n_cpus;
-    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_4; __pyx_v_i++) {
-
-      /* "hunspell/hunspell.pyx":272
- * 
- *             for i from 0 <= i < self.n_cpus:
- *                 stride = i * words_per_thread             # <<<<<<<<<<<<<<
- *                 thread_args[i].tid = i
- * 
- */
-      __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 272, __pyx_L7_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_5 = PyNumber_Multiply(__pyx_t_3, __pyx_v_words_per_thread); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 272, __pyx_L7_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_5); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 272, __pyx_L7_error)
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_v_stride = __pyx_t_6;
-
-      /* "hunspell/hunspell.pyx":273
- *             for i from 0 <= i < self.n_cpus:
- *                 stride = i * words_per_thread
- *                 thread_args[i].tid = i             # <<<<<<<<<<<<<<
- * 
- *                 # Allocate one Hunspell Dict per thread since it isn't safe.
- */
-      (__pyx_v_thread_args[__pyx_v_i]).tid = __pyx_v_i;
-
-      /* "hunspell/hunspell.pyx":276
- * 
- *                 # Allocate one Hunspell Dict per thread since it isn't safe.
- *                 thread_args[i].hspell = self._create_hspell_inst(self.lang)             # <<<<<<<<<<<<<<
- * 
- *                 # Account for leftovers
- */
-      __pyx_t_5 = __pyx_v_self->lang;
-      __Pyx_INCREF(__pyx_t_5);
-      try {
-        __pyx_t_7 = ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_create_hspell_inst(__pyx_v_self, ((PyObject*)__pyx_t_5));
-      } catch(...) {
-        __Pyx_CppExn2PyErr();
-        __PYX_ERR(0, 276, __pyx_L7_error)
-      }
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      (__pyx_v_thread_args[__pyx_v_i]).hspell = __pyx_t_7;
-
-      /* "hunspell/hunspell.pyx":279
- * 
- *                 # Account for leftovers
- *                 if i == self.n_cpus - 1:             # <<<<<<<<<<<<<<
- *                     thread_args[i].n_words = n_words - words_distributed
- *                 else:
- */
-      __pyx_t_1 = ((__pyx_v_i == (__pyx_v_self->n_cpus - 1)) != 0);
-      if (__pyx_t_1) {
-
-        /* "hunspell/hunspell.pyx":280
- *                 # Account for leftovers
- *                 if i == self.n_cpus - 1:
- *                     thread_args[i].n_words = n_words - words_distributed             # <<<<<<<<<<<<<<
- *                 else:
- *                     thread_args[i].n_words = words_per_thread
- */
-        __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_n_words); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 280, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_3 = PyNumber_Subtract(__pyx_t_5, __pyx_v_words_distributed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 280, __pyx_L7_error)
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        (__pyx_v_thread_args[__pyx_v_i]).n_words = __pyx_t_6;
-
-        /* "hunspell/hunspell.pyx":279
- * 
- *                 # Account for leftovers
- *                 if i == self.n_cpus - 1:             # <<<<<<<<<<<<<<
- *                     thread_args[i].n_words = n_words - words_distributed
- *                 else:
- */
-        goto __pyx_L12;
-      }
-
-      /* "hunspell/hunspell.pyx":282
- *                     thread_args[i].n_words = n_words - words_distributed
- *                 else:
- *                     thread_args[i].n_words = words_per_thread             # <<<<<<<<<<<<<<
- *                     words_distributed += words_per_thread
- * 
- */
-      /*else*/ {
-        __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_v_words_per_thread); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 282, __pyx_L7_error)
-        (__pyx_v_thread_args[__pyx_v_i]).n_words = __pyx_t_6;
-
-        /* "hunspell/hunspell.pyx":283
- *                 else:
- *                     thread_args[i].n_words = words_per_thread
- *                     words_distributed += words_per_thread             # <<<<<<<<<<<<<<
- * 
- *                 # Find the stride into each array
- */
-        __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_v_words_distributed, __pyx_v_words_per_thread); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 283, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF_SET(__pyx_v_words_distributed, __pyx_t_3);
-        __pyx_t_3 = 0;
-      }
-      __pyx_L12:;
-
-      /* "hunspell/hunspell.pyx":286
- * 
- *                 # Find the stride into each array
- *                 thread_args[i].word_list = &word_array[stride]             # <<<<<<<<<<<<<<
- *                 thread_args[i].output_array_ptr = &output_array[stride]
- *                 thread_args[i].output_counts = &output_counts[stride]
- */
-      (__pyx_v_thread_args[__pyx_v_i]).word_list = (&(__pyx_v_word_array[__pyx_v_stride]));
-
-      /* "hunspell/hunspell.pyx":287
- *                 # Find the stride into each array
- *                 thread_args[i].word_list = &word_array[stride]
- *                 thread_args[i].output_array_ptr = &output_array[stride]             # <<<<<<<<<<<<<<
- *                 thread_args[i].output_counts = &output_counts[stride]
- * 
- */
-      (__pyx_v_thread_args[__pyx_v_i]).output_array_ptr = (&(__pyx_v_output_array[__pyx_v_stride]));
-
-      /* "hunspell/hunspell.pyx":288
- *                 thread_args[i].word_list = &word_array[stride]
- *                 thread_args[i].output_array_ptr = &output_array[stride]
- *                 thread_args[i].output_counts = &output_counts[stride]             # <<<<<<<<<<<<<<
- * 
- *                 # Create thread
- */
-      (__pyx_v_thread_args[__pyx_v_i]).output_counts = (&(__pyx_v_output_counts[__pyx_v_stride]));
-
-      /* "hunspell/hunspell.pyx":291
- * 
- *                 # Create thread
- *                 if action == "stem":             # <<<<<<<<<<<<<<
- *                     threads[i] = thread_create(&hunspell_stem_worker, <void *> &thread_args[i])
- *                 else: # suggest
- */
-      __pyx_t_1 = (__Pyx_PyUnicode_Equals(__pyx_v_action, __pyx_n_s_stem, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 291, __pyx_L7_error)
-      __pyx_t_2 = (__pyx_t_1 != 0);
-      if (__pyx_t_2) {
-
-        /* "hunspell/hunspell.pyx":292
- *                 # Create thread
- *                 if action == "stem":
- *                     threads[i] = thread_create(&hunspell_stem_worker, <void *> &thread_args[i])             # <<<<<<<<<<<<<<
- *                 else: # suggest
- *                     threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])
- */
-        (__pyx_v_threads[__pyx_v_i]) = thread_create((&__pyx_f_8hunspell_8hunspell_hunspell_stem_worker), ((void *)(&(__pyx_v_thread_args[__pyx_v_i]))));
-
-        /* "hunspell/hunspell.pyx":291
- * 
- *                 # Create thread
- *                 if action == "stem":             # <<<<<<<<<<<<<<
- *                     threads[i] = thread_create(&hunspell_stem_worker, <void *> &thread_args[i])
- *                 else: # suggest
- */
-        goto __pyx_L13;
-      }
-
-      /* "hunspell/hunspell.pyx":294
- *                     threads[i] = thread_create(&hunspell_stem_worker, <void *> &thread_args[i])
- *                 else: # suggest
- *                     threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])             # <<<<<<<<<<<<<<
- *                 if threads[i] is NULL:
- *                     raise OSError("Could not create thread")
- */
-      /*else*/ {
-        (__pyx_v_threads[__pyx_v_i]) = thread_create((&__pyx_f_8hunspell_8hunspell_hunspell_suggest_worker), ((void *)(&(__pyx_v_thread_args[__pyx_v_i]))));
-      }
-      __pyx_L13:;
-
-      /* "hunspell/hunspell.pyx":295
- *                 else: # suggest
- *                     threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])
- *                 if threads[i] is NULL:             # <<<<<<<<<<<<<<
- *                     raise OSError("Could not create thread")
- * 
- */
-      __pyx_t_2 = (((__pyx_v_threads[__pyx_v_i]) == NULL) != 0);
-      if (__pyx_t_2) {
-
-        /* "hunspell/hunspell.pyx":296
- *                     threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])
- *                 if threads[i] is NULL:
- *                     raise OSError("Could not create thread")             # <<<<<<<<<<<<<<
- * 
- *             # wait for each thread to complete
- */
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_OSError, __pyx_tuple__21, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_Raise(__pyx_t_3, 0, 0, 0);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __PYX_ERR(0, 296, __pyx_L7_error)
-
-        /* "hunspell/hunspell.pyx":295
- *                 else: # suggest
- *                     threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])
- *                 if threads[i] is NULL:             # <<<<<<<<<<<<<<
- *                     raise OSError("Could not create thread")
- * 
- */
-      }
-    }
-
-    /* "hunspell/hunspell.pyx":299
- * 
- *             # wait for each thread to complete
- *             for i from 0 <= i < self.n_cpus:             # <<<<<<<<<<<<<<
- *                 # block until thread i completes
- *                 rc = thread_join(threads[i])
- */
-    __pyx_t_4 = __pyx_v_self->n_cpus;
-    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_4; __pyx_v_i++) {
-
-      /* "hunspell/hunspell.pyx":301
- *             for i from 0 <= i < self.n_cpus:
- *                 # block until thread i completes
- *                 rc = thread_join(threads[i])             # <<<<<<<<<<<<<<
- *                 if rc:
- *                     raise OSError(rc, "Could not join thread")
- */
-      __pyx_v_rc = thread_join((__pyx_v_threads[__pyx_v_i]));
-
-      /* "hunspell/hunspell.pyx":302
- *                 # block until thread i completes
- *                 rc = thread_join(threads[i])
- *                 if rc:             # <<<<<<<<<<<<<<
- *                     raise OSError(rc, "Could not join thread")
- * 
- */
-      __pyx_t_2 = (__pyx_v_rc != 0);
-      if (__pyx_t_2) {
-
-        /* "hunspell/hunspell.pyx":303
- *                 rc = thread_join(threads[i])
- *                 if rc:
- *                     raise OSError(rc, "Could not join thread")             # <<<<<<<<<<<<<<
- * 
- *                 # Free Hunspell Dict
- */
-        __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_rc); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 303, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 303, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_GIVEREF(__pyx_t_3);
-        PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
-        __Pyx_INCREF(__pyx_kp_s_Could_not_join_thread);
-        __Pyx_GIVEREF(__pyx_kp_s_Could_not_join_thread);
-        PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_kp_s_Could_not_join_thread);
-        __pyx_t_3 = 0;
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_OSError, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 303, __pyx_L7_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_Raise(__pyx_t_3, 0, 0, 0);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __PYX_ERR(0, 303, __pyx_L7_error)
-
-        /* "hunspell/hunspell.pyx":302
- *                 # block until thread i completes
- *                 rc = thread_join(threads[i])
- *                 if rc:             # <<<<<<<<<<<<<<
- *                     raise OSError(rc, "Could not join thread")
- * 
- */
-      }
-
-      /* "hunspell/hunspell.pyx":306
- * 
- *                 # Free Hunspell Dict
- *                 del thread_args[i].hspell             # <<<<<<<<<<<<<<
- *             return 1
- *         finally:
- */
-      delete (__pyx_v_thread_args[__pyx_v_i]).hspell;
-    }
-
-    /* "hunspell/hunspell.pyx":307
- *                 # Free Hunspell Dict
- *                 del thread_args[i].hspell
- *             return 1             # <<<<<<<<<<<<<<
- *         finally:
- *             # Free top level stuff
- */
-    __pyx_r = 1;
-    goto __pyx_L6_return;
-  }
-
-  /* "hunspell/hunspell.pyx":310
- *         finally:
- *             # Free top level stuff
- *             free(thread_args)             # <<<<<<<<<<<<<<
- *             dealloc_threads(threads, self.n_cpus)
- * 
- */
-  /*finally:*/ {
-    /*exception exit:*/{
-      __Pyx_PyThreadState_declare
-      __pyx_L7_error:;
-      __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0;
-      __Pyx_PyThreadState_assign
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_12, &__pyx_t_13, &__pyx_t_14);
-      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_9, &__pyx_t_10, &__pyx_t_11) < 0)) __Pyx_ErrFetch(&__pyx_t_9, &__pyx_t_10, &__pyx_t_11);
-      __Pyx_XGOTREF(__pyx_t_9);
-      __Pyx_XGOTREF(__pyx_t_10);
-      __Pyx_XGOTREF(__pyx_t_11);
-      __Pyx_XGOTREF(__pyx_t_12);
-      __Pyx_XGOTREF(__pyx_t_13);
-      __Pyx_XGOTREF(__pyx_t_14);
-      __pyx_t_4 = __pyx_lineno; __pyx_t_6 = __pyx_clineno; __pyx_t_8 = __pyx_filename;
-      {
-        free(__pyx_v_thread_args);
-
-        /* "hunspell/hunspell.pyx":311
- *             # Free top level stuff
- *             free(thread_args)
- *             dealloc_threads(threads, self.n_cpus)             # <<<<<<<<<<<<<<
- * 
- *     # Parse the return of a bulk action
- */
-        dealloc_threads(__pyx_v_threads, __pyx_v_self->n_cpus);
-      }
-      __Pyx_PyThreadState_assign
-      if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_12);
-        __Pyx_XGIVEREF(__pyx_t_13);
-        __Pyx_XGIVEREF(__pyx_t_14);
-        __Pyx_ExceptionReset(__pyx_t_12, __pyx_t_13, __pyx_t_14);
-      }
-      __Pyx_XGIVEREF(__pyx_t_9);
-      __Pyx_XGIVEREF(__pyx_t_10);
-      __Pyx_XGIVEREF(__pyx_t_11);
-      __Pyx_ErrRestore(__pyx_t_9, __pyx_t_10, __pyx_t_11);
-      __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0;
-      __pyx_lineno = __pyx_t_4; __pyx_clineno = __pyx_t_6; __pyx_filename = __pyx_t_8;
-      goto __pyx_L1_error;
-    }
-    __pyx_L6_return: {
-      __pyx_t_6 = __pyx_r;
-
-      /* "hunspell/hunspell.pyx":310
- *         finally:
- *             # Free top level stuff
- *             free(thread_args)             # <<<<<<<<<<<<<<
- *             dealloc_threads(threads, self.n_cpus)
- * 
- */
-      free(__pyx_v_thread_args);
-
-      /* "hunspell/hunspell.pyx":311
- *             # Free top level stuff
- *             free(thread_args)
- *             dealloc_threads(threads, self.n_cpus)             # <<<<<<<<<<<<<<
- * 
- *     # Parse the return of a bulk action
- */
-      dealloc_threads(__pyx_v_threads, __pyx_v_self->n_cpus);
-      __pyx_r = __pyx_t_6;
-      goto __pyx_L0;
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_bulk_action); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 211, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  __pyx_t_4 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_4 = 1;
     }
   }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_stem, __pyx_v_words};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_n_s_stem, __pyx_v_words};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else
+  #endif
+  {
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 211, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    if (__pyx_t_3) {
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
+    }
+    __Pyx_INCREF(__pyx_n_s_stem);
+    __Pyx_GIVEREF(__pyx_n_s_stem);
+    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_4, __pyx_n_s_stem);
+    __Pyx_INCREF(__pyx_v_words);
+    __Pyx_GIVEREF(__pyx_v_words);
+    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_v_words);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
 
-  /* "hunspell/hunspell.pyx":254
- *     # C realm thread dispatcher
- *     #
- *     cdef int _c_bulk_action(self, basestring action, char **word_array, char ***output_array, int n_words, int *output_counts) except +:             # <<<<<<<<<<<<<<
- *         # Allocate all memory per thread
- *         cdef thread_t **threads = <thread_t **>calloc(self.n_cpus, sizeof(thread_t *))
+  /* "hunspell/hunspell.pyx":210
+ *         return self.bulk_action('suggest', words)
+ *
+ *     def bulk_stem(self, words):             # <<<<<<<<<<<<<<
+ *         return self.bulk_action('stem', words)
+ *
  */
 
   /* function exit code */
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap._c_bulk_action", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.bulk_stem", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_words_per_thread);
-  __Pyx_XDECREF(__pyx_v_words_distributed);
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":314
- * 
- *     # Parse the return of a bulk action
- *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except +:             # <<<<<<<<<<<<<<
- *         cdef int i, j
- *         try:
- */
-
-static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_ret_dict, PyObject *__pyx_v_unknown_words, int *__pyx_v_output_counts, char ***__pyx_v_output_array) {
-  int __pyx_v_i;
-  int __pyx_v_j;
-  __Pyx_RefNannyDeclarations
-  Py_ssize_t __pyx_t_1;
-  int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  int __pyx_t_6;
-  char const *__pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
-  PyObject *__pyx_t_9 = NULL;
-  PyObject *__pyx_t_10 = NULL;
-  PyObject *__pyx_t_11 = NULL;
-  PyObject *__pyx_t_12 = NULL;
-  PyObject *__pyx_t_13 = NULL;
-  __Pyx_RefNannySetupContext("_parse_bulk_results", 0);
-
-  /* "hunspell/hunspell.pyx":316
- *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except +:
- *         cdef int i, j
- *         try:             # <<<<<<<<<<<<<<
- *             for i from 0 <= i < len(unknown_words):
- *                 for j from 0 <= j < output_counts[i]:
- */
-  /*try:*/ {
-
-    /* "hunspell/hunspell.pyx":317
- *         cdef int i, j
- *         try:
- *             for i from 0 <= i < len(unknown_words):             # <<<<<<<<<<<<<<
- *                 for j from 0 <= j < output_counts[i]:
- *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j]))
- */
-    if (unlikely(__pyx_v_unknown_words == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 317, __pyx_L4_error)
-    }
-    __pyx_t_1 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 317, __pyx_L4_error)
-    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_1; __pyx_v_i++) {
-
-      /* "hunspell/hunspell.pyx":318
- *         try:
- *             for i from 0 <= i < len(unknown_words):
- *                 for j from 0 <= j < output_counts[i]:             # <<<<<<<<<<<<<<
- *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j]))
- *         finally:
- */
-      __pyx_t_2 = (__pyx_v_output_counts[__pyx_v_i]);
-      for (__pyx_v_j = 0; __pyx_v_j < __pyx_t_2; __pyx_v_j++) {
-
-        /* "hunspell/hunspell.pyx":319
- *             for i from 0 <= i < len(unknown_words):
- *                 for j from 0 <= j < output_counts[i]:
- *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j]))             # <<<<<<<<<<<<<<
- *         finally:
- *             for i from 0 <= i < len(unknown_words):
- */
-        if (unlikely(__pyx_v_ret_dict == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 319, __pyx_L4_error)
-        }
-        if (unlikely(__pyx_v_unknown_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 319, __pyx_L4_error)
-        }
-        __pyx_t_3 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L4_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_ret_dict, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 319, __pyx_L4_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_3 = __pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(((__pyx_v_output_array[__pyx_v_i])[__pyx_v_j])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L4_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_5 = __Pyx_PyObject_Append(__pyx_t_4, __pyx_t_3); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 319, __pyx_L4_error)
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      }
-    }
-  }
-
-  /* "hunspell/hunspell.pyx":321
- *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j]))
- *         finally:
- *             for i from 0 <= i < len(unknown_words):             # <<<<<<<<<<<<<<
- *                 # Free each suggestion list
- *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
- */
-  /*finally:*/ {
-    /*normal exit:*/{
-      if (unlikely(__pyx_v_unknown_words == Py_None)) {
-        PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-        __PYX_ERR(0, 321, __pyx_L1_error)
-      }
-      __pyx_t_1 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 321, __pyx_L1_error)
-      for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_1; __pyx_v_i++) {
-
-        /* "hunspell/hunspell.pyx":323
- *             for i from 0 <= i < len(unknown_words):
- *                 # Free each suggestion list
- *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])             # <<<<<<<<<<<<<<
- * 
- *     #
- */
-        __pyx_v_self->_cxx_hunspell->free_list((__pyx_v_output_array + __pyx_v_i), (__pyx_v_output_counts[__pyx_v_i]));
-      }
-      goto __pyx_L5;
-    }
-    /*exception exit:*/{
-      __Pyx_PyThreadState_declare
-      __pyx_L4_error:;
-      __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
-      __Pyx_PyThreadState_assign
-      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13);
-      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10) < 0)) __Pyx_ErrFetch(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10);
-      __Pyx_XGOTREF(__pyx_t_8);
-      __Pyx_XGOTREF(__pyx_t_9);
-      __Pyx_XGOTREF(__pyx_t_10);
-      __Pyx_XGOTREF(__pyx_t_11);
-      __Pyx_XGOTREF(__pyx_t_12);
-      __Pyx_XGOTREF(__pyx_t_13);
-      __pyx_t_2 = __pyx_lineno; __pyx_t_6 = __pyx_clineno; __pyx_t_7 = __pyx_filename;
-      {
-
-        /* "hunspell/hunspell.pyx":321
- *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j]))
- *         finally:
- *             for i from 0 <= i < len(unknown_words):             # <<<<<<<<<<<<<<
- *                 # Free each suggestion list
- *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
- */
-        if (unlikely(__pyx_v_unknown_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-          __PYX_ERR(0, 321, __pyx_L13_error)
-        }
-        __pyx_t_1 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 321, __pyx_L13_error)
-        for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_1; __pyx_v_i++) {
-
-          /* "hunspell/hunspell.pyx":323
- *             for i from 0 <= i < len(unknown_words):
- *                 # Free each suggestion list
- *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])             # <<<<<<<<<<<<<<
- * 
- *     #
- */
-          __pyx_v_self->_cxx_hunspell->free_list((__pyx_v_output_array + __pyx_v_i), (__pyx_v_output_counts[__pyx_v_i]));
-        }
-      }
-      __Pyx_PyThreadState_assign
-      if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_11);
-        __Pyx_XGIVEREF(__pyx_t_12);
-        __Pyx_XGIVEREF(__pyx_t_13);
-        __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
-      }
-      __Pyx_XGIVEREF(__pyx_t_8);
-      __Pyx_XGIVEREF(__pyx_t_9);
-      __Pyx_XGIVEREF(__pyx_t_10);
-      __Pyx_ErrRestore(__pyx_t_8, __pyx_t_9, __pyx_t_10);
-      __pyx_t_8 = 0; __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
-      __pyx_lineno = __pyx_t_2; __pyx_clineno = __pyx_t_6; __pyx_filename = __pyx_t_7;
-      goto __pyx_L1_error;
-      __pyx_L13_error:;
-      __Pyx_PyThreadState_assign
-      if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_11);
-        __Pyx_XGIVEREF(__pyx_t_12);
-        __Pyx_XGIVEREF(__pyx_t_13);
-        __Pyx_ExceptionReset(__pyx_t_11, __pyx_t_12, __pyx_t_13);
-      }
-      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-      __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-      __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0;
-      goto __pyx_L1_error;
-    }
-    __pyx_L5:;
-  }
-
-  /* "hunspell/hunspell.pyx":314
- * 
- *     # Parse the return of a bulk action
- *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except +:             # <<<<<<<<<<<<<<
- *         cdef int i, j
- *         try:
- */
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap._parse_bulk_results", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-}
-
-/* "hunspell/hunspell.pyx":328
- *     # Python API - Accepts a list of words, returns a dict of words mapped to a list of their hunspell suggestions
- *     #
- *     def bulk_action(self, basestring action, list words):             # <<<<<<<<<<<<<<
- *         if not isinstance(words, list) or not words:
- *             raise TypeError()
+/* "hunspell/hunspell.pyx":213
+ *         return self.bulk_action('stem', words)
+ *
+ *     def bulk_action(self, basestring action, words):             # <<<<<<<<<<<<<<
+ *         '''Accepts a list of words, returns a dict of words mapped to a list
+ *         # of their hunspell suggestions'''
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_action(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_action(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_17bulk_action(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_8hunspell_8hunspell_12HunspellWrap_16bulk_action[] = "Accepts a list of words, returns a dict of words mapped to a list\n        # of their hunspell suggestions";
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_17bulk_action(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_action = 0;
   PyObject *__pyx_v_words = 0;
   PyObject *__pyx_r = 0;
@@ -5585,11 +4978,11 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_action(PyObj
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_words)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("bulk_action", 1, 2, 2, 1); __PYX_ERR(0, 328, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("bulk_action", 1, 2, 2, 1); __PYX_ERR(0, 213, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "bulk_action") < 0)) __PYX_ERR(0, 328, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "bulk_action") < 0)) __PYX_ERR(0, 213, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -5598,19 +4991,18 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_action(PyObj
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
     __pyx_v_action = ((PyObject*)values[0]);
-    __pyx_v_words = ((PyObject*)values[1]);
+    __pyx_v_words = values[1];
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("bulk_action", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 328, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("bulk_action", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 213, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.bulk_action", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_action), (&PyBaseString_Type), 1, "action", 1))) __PYX_ERR(0, 328, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_words), (&PyList_Type), 1, "words", 1))) __PYX_ERR(0, 328, __pyx_L1_error)
-  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_action(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), __pyx_v_action, __pyx_v_words);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_action), (&PyBaseString_Type), 1, "action", 1))) __PYX_ERR(0, 213, __pyx_L1_error)
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_16bulk_action(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), __pyx_v_action, __pyx_v_words);
 
   /* function exit code */
   goto __pyx_L0;
@@ -5621,771 +5013,1653 @@ static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_action(PyObj
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, PyObject *__pyx_v_words) {
-  int __pyx_v_i;
-  PyObject *__pyx_v_ret_dict = NULL;
-  PyObject *__pyx_v_unknown_words = NULL;
-  char ***__pyx_v_output_array;
-  int *__pyx_v_output_counts;
-  char **__pyx_v_word_array;
-  PyObject *__pyx_v_unknown_word = NULL;
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_16bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_action, PyObject *__pyx_v_words) {
+  PyObject *__pyx_v_ret_dict = 0;
+  PyObject *__pyx_v_unknown_words = 0;
+  int __pyx_v_stem_action;
+  PyObject *__pyx_v_cache = NULL;
+  PyObject *__pyx_v_word = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  int __pyx_t_2;
+  Py_ssize_t __pyx_t_3;
+  PyObject *(*__pyx_t_4)(PyObject *);
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_9 = NULL;
+  int __pyx_t_10;
+  __Pyx_RefNannySetupContext("bulk_action", 0);
+
+  /* "hunspell/hunspell.pyx":216
+ *         '''Accepts a list of words, returns a dict of words mapped to a list
+ *         # of their hunspell suggestions'''
+ *         cdef dict ret_dict = {}             # <<<<<<<<<<<<<<
+ *         cdef list unknown_words = []
+ *         cdef bint stem_action = (action == 'stem')
+ */
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 216, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_ret_dict = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "hunspell/hunspell.pyx":217
+ *         # of their hunspell suggestions'''
+ *         cdef dict ret_dict = {}
+ *         cdef list unknown_words = []             # <<<<<<<<<<<<<<
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ */
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 217, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_unknown_words = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "hunspell/hunspell.pyx":218
+ *         cdef dict ret_dict = {}
+ *         cdef list unknown_words = []
+ *         cdef bint stem_action = (action == 'stem')             # <<<<<<<<<<<<<<
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *
+ */
+  __pyx_t_2 = (__Pyx_PyUnicode_Equals(__pyx_v_action, __pyx_n_s_stem, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 218, __pyx_L1_error)
+  __pyx_v_stem_action = __pyx_t_2;
+
+  /* "hunspell/hunspell.pyx":219
+ *         cdef list unknown_words = []
+ *         cdef bint stem_action = (action == 'stem')
+ *         cache = self._stem_cache if stem_action else self._suggest_cache             # <<<<<<<<<<<<<<
+ *
+ *         for word in words:
+ */
+  if ((__pyx_v_stem_action != 0)) {
+    __Pyx_INCREF(__pyx_v_self->_stem_cache);
+    __pyx_t_1 = __pyx_v_self->_stem_cache;
+  } else {
+    __Pyx_INCREF(__pyx_v_self->_suggest_cache);
+    __pyx_t_1 = __pyx_v_self->_suggest_cache;
+  }
+  __pyx_v_cache = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "hunspell/hunspell.pyx":221
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *
+ *         for word in words:             # <<<<<<<<<<<<<<
+ *             if not stem_action and self.spell(word):
+ *                 # No need to check correctly spelled words
+ */
+  if (likely(PyList_CheckExact(__pyx_v_words)) || PyTuple_CheckExact(__pyx_v_words)) {
+    __pyx_t_1 = __pyx_v_words; __Pyx_INCREF(__pyx_t_1); __pyx_t_3 = 0;
+    __pyx_t_4 = NULL;
+  } else {
+    __pyx_t_3 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_words); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 221, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_4 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 221, __pyx_L1_error)
+  }
+  for (;;) {
+    if (likely(!__pyx_t_4)) {
+      if (likely(PyList_CheckExact(__pyx_t_1))) {
+        if (__pyx_t_3 >= PyList_GET_SIZE(__pyx_t_1)) break;
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_3); __Pyx_INCREF(__pyx_t_5); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 221, __pyx_L1_error)
+        #else
+        __pyx_t_5 = PySequence_ITEM(__pyx_t_1, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 221, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        #endif
+      } else {
+        if (__pyx_t_3 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_5 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_3); __Pyx_INCREF(__pyx_t_5); __pyx_t_3++; if (unlikely(0 < 0)) __PYX_ERR(0, 221, __pyx_L1_error)
+        #else
+        __pyx_t_5 = PySequence_ITEM(__pyx_t_1, __pyx_t_3); __pyx_t_3++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 221, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        #endif
+      }
+    } else {
+      __pyx_t_5 = __pyx_t_4(__pyx_t_1);
+      if (unlikely(!__pyx_t_5)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+          else __PYX_ERR(0, 221, __pyx_L1_error)
+        }
+        break;
+      }
+      __Pyx_GOTREF(__pyx_t_5);
+    }
+    __Pyx_XDECREF_SET(__pyx_v_word, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "hunspell/hunspell.pyx":222
+ *
+ *         for word in words:
+ *             if not stem_action and self.spell(word):             # <<<<<<<<<<<<<<
+ *                 # No need to check correctly spelled words
+ *                 ret_dict[word] = (word,)
+ */
+    __pyx_t_6 = ((!(__pyx_v_stem_action != 0)) != 0);
+    if (__pyx_t_6) {
+    } else {
+      __pyx_t_2 = __pyx_t_6;
+      goto __pyx_L6_bool_binop_done;
+    }
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_spell); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 222, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_8 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
+      __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_7);
+      if (likely(__pyx_t_8)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_7);
+        __Pyx_INCREF(__pyx_t_8);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_7, function);
+      }
+    }
+    if (!__pyx_t_8) {
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_v_word); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 222, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_7)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_word};
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 222, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __Pyx_GOTREF(__pyx_t_5);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_word};
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 222, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __Pyx_GOTREF(__pyx_t_5);
+      } else
+      #endif
+      {
+        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 222, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_9);
+        __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
+        __Pyx_INCREF(__pyx_v_word);
+        __Pyx_GIVEREF(__pyx_v_word);
+        PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_v_word);
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 222, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 222, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_2 = __pyx_t_6;
+    __pyx_L6_bool_binop_done:;
+    if (__pyx_t_2) {
+
+      /* "hunspell/hunspell.pyx":224
+ *             if not stem_action and self.spell(word):
+ *                 # No need to check correctly spelled words
+ *                 ret_dict[word] = (word,)             # <<<<<<<<<<<<<<
+ *             elif word in cache:
+ *                 ret_dict[word] = cache[word]
+ */
+      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 224, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_v_word);
+      __Pyx_GIVEREF(__pyx_v_word);
+      PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_word);
+      if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_v_word, __pyx_t_5) < 0)) __PYX_ERR(0, 224, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+      /* "hunspell/hunspell.pyx":222
+ *
+ *         for word in words:
+ *             if not stem_action and self.spell(word):             # <<<<<<<<<<<<<<
+ *                 # No need to check correctly spelled words
+ *                 ret_dict[word] = (word,)
+ */
+      goto __pyx_L5;
+    }
+
+    /* "hunspell/hunspell.pyx":225
+ *                 # No need to check correctly spelled words
+ *                 ret_dict[word] = (word,)
+ *             elif word in cache:             # <<<<<<<<<<<<<<
+ *                 ret_dict[word] = cache[word]
+ *             else:
+ */
+    __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_v_word, __pyx_v_cache, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_6 = (__pyx_t_2 != 0);
+    if (__pyx_t_6) {
+
+      /* "hunspell/hunspell.pyx":226
+ *                 ret_dict[word] = (word,)
+ *             elif word in cache:
+ *                 ret_dict[word] = cache[word]             # <<<<<<<<<<<<<<
+ *             else:
+ *                 # This will turn into a tuple when completed
+ */
+      __pyx_t_5 = PyObject_GetItem(__pyx_v_cache, __pyx_v_word); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 226, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_v_word, __pyx_t_5) < 0)) __PYX_ERR(0, 226, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+      /* "hunspell/hunspell.pyx":225
+ *                 # No need to check correctly spelled words
+ *                 ret_dict[word] = (word,)
+ *             elif word in cache:             # <<<<<<<<<<<<<<
+ *                 ret_dict[word] = cache[word]
+ *             else:
+ */
+      goto __pyx_L5;
+    }
+
+    /* "hunspell/hunspell.pyx":229
+ *             else:
+ *                 # This will turn into a tuple when completed
+ *                 ret_dict[word] = []             # <<<<<<<<<<<<<<
+ *                 unknown_words.append(word)
+ *
+ */
+    /*else*/ {
+      __pyx_t_5 = PyList_New(0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_v_word, __pyx_t_5) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+      /* "hunspell/hunspell.pyx":230
+ *                 # This will turn into a tuple when completed
+ *                 ret_dict[word] = []
+ *                 unknown_words.append(word)             # <<<<<<<<<<<<<<
+ *
+ *         if unknown_words:
+ */
+      __pyx_t_10 = __Pyx_PyList_Append(__pyx_v_unknown_words, __pyx_v_word); if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 230, __pyx_L1_error)
+    }
+    __pyx_L5:;
+
+    /* "hunspell/hunspell.pyx":221
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *
+ *         for word in words:             # <<<<<<<<<<<<<<
+ *             if not stem_action and self.spell(word):
+ *                 # No need to check correctly spelled words
+ */
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "hunspell/hunspell.pyx":232
+ *                 unknown_words.append(word)
+ *
+ *         if unknown_words:             # <<<<<<<<<<<<<<
+ *             self._bulk_unknown_words(unknown_words, stem_action, ret_dict)
+ *
+ */
+  __pyx_t_6 = (__pyx_v_unknown_words != Py_None) && (PyList_GET_SIZE(__pyx_v_unknown_words) != 0);
+  if (__pyx_t_6) {
+
+    /* "hunspell/hunspell.pyx":233
+ *
+ *         if unknown_words:
+ *             self._bulk_unknown_words(unknown_words, stem_action, ret_dict)             # <<<<<<<<<<<<<<
+ *
+ *         return ret_dict
+ */
+    ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_bulk_unknown_words(__pyx_v_self, __pyx_v_unknown_words, __pyx_v_stem_action, __pyx_v_ret_dict);
+
+    /* "hunspell/hunspell.pyx":232
+ *                 unknown_words.append(word)
+ *
+ *         if unknown_words:             # <<<<<<<<<<<<<<
+ *             self._bulk_unknown_words(unknown_words, stem_action, ret_dict)
+ *
+ */
+  }
+
+  /* "hunspell/hunspell.pyx":235
+ *             self._bulk_unknown_words(unknown_words, stem_action, ret_dict)
+ *
+ *         return ret_dict             # <<<<<<<<<<<<<<
+ *
+ *
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_ret_dict);
+  __pyx_r = __pyx_v_ret_dict;
+  goto __pyx_L0;
+
+  /* "hunspell/hunspell.pyx":213
+ *         return self.bulk_action('stem', words)
+ *
+ *     def bulk_action(self, basestring action, words):             # <<<<<<<<<<<<<<
+ *         '''Accepts a list of words, returns a dict of words mapped to a list
+ *         # of their hunspell suggestions'''
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_9);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.bulk_action", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_ret_dict);
+  __Pyx_XDECREF(__pyx_v_unknown_words);
+  __Pyx_XDECREF(__pyx_v_cache);
+  __Pyx_XDECREF(__pyx_v_word);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":238
+ *
+ *
+ *     def save_cache(self):             # <<<<<<<<<<<<<<
+ *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
+ *
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_19save_cache(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_19save_cache(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("save_cache (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_18save_cache(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_18save_cache(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  __Pyx_RefNannySetupContext("save_cache", 0);
+
+  /* "hunspell/hunspell.pyx":239
+ *
+ *     def save_cache(self):
+ *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()             # <<<<<<<<<<<<<<
+ *
+ *     def set_concurrency(self, max_threads):
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_get_cache_manager); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (!__pyx_t_4) {
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_self->_cache_manager_name); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_self->_cache_manager_name};
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_2);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_self->_cache_manager_name};
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_2);
+    } else
+    #endif
+    {
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_INCREF(__pyx_v_self->_cache_manager_name);
+      __Pyx_GIVEREF(__pyx_v_self->_cache_manager_name);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_self->_cache_manager_name);
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_save_all_cache_contents); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "hunspell/hunspell.pyx":238
+ *
+ *
+ *     def save_cache(self):             # <<<<<<<<<<<<<<
+ *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
+ *
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.save_cache", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":241
+ *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
+ *
+ *     def set_concurrency(self, max_threads):             # <<<<<<<<<<<<<<
+ *         self.max_threads = max_threads
+ *
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_21set_concurrency(PyObject *__pyx_v_self, PyObject *__pyx_v_max_threads); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_21set_concurrency(PyObject *__pyx_v_self, PyObject *__pyx_v_max_threads) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("set_concurrency (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_20set_concurrency(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_max_threads));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_20set_concurrency(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_max_threads) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
+  __Pyx_RefNannySetupContext("set_concurrency", 0);
+
+  /* "hunspell/hunspell.pyx":242
+ *
+ *     def set_concurrency(self, max_threads):
+ *         self.max_threads = max_threads             # <<<<<<<<<<<<<<
+ *
+ *     ###################
+ */
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_max_threads); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 242, __pyx_L1_error)
+  __pyx_v_self->max_threads = __pyx_t_1;
+
+  /* "hunspell/hunspell.pyx":241
+ *         get_cache_manager(self._cache_manager_name).save_all_cache_contents()
+ *
+ *     def set_concurrency(self, max_threads):             # <<<<<<<<<<<<<<
+ *         self.max_threads = max_threads
+ *
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.set_concurrency", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":248
+ *     ###################
+ *
+ *     cdef int _c_bulk_action(self, char **word_array, char ***output_array, int n_words, bint stem_action, int *output_counts) except -1:             # <<<<<<<<<<<<<<
+ *         '''C realm thread dispatcher'''
+ *         # Allocate all memory per thread
+ */
+
+static int __pyx_f_8hunspell_8hunspell_12HunspellWrap__c_bulk_action(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, char **__pyx_v_word_array, char ***__pyx_v_output_array, int __pyx_v_n_words, int __pyx_v_stem_action, int *__pyx_v_output_counts) {
+  thread_t **__pyx_v_threads;
+  struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs *__pyx_v_thread_args;
+  int __pyx_v_rc;
+  int __pyx_v_i;
+  int __pyx_v_stride;
+  PyObject *__pyx_v_words_per_thread = NULL;
+  PyObject *__pyx_v_words_distributed = NULL;
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
   int __pyx_t_2;
-  int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
-  Py_ssize_t __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
-  PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  Hunspell *__pyx_t_7;
+  char const *__pyx_t_8;
   PyObject *__pyx_t_9 = NULL;
   PyObject *__pyx_t_10 = NULL;
-  int __pyx_t_11;
-  int __pyx_t_12;
-  char const *__pyx_t_13;
+  PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
+  PyObject *__pyx_t_13 = NULL;
   PyObject *__pyx_t_14 = NULL;
-  PyObject *__pyx_t_15 = NULL;
-  PyObject *__pyx_t_16 = NULL;
-  PyObject *__pyx_t_17 = NULL;
-  PyObject *__pyx_t_18 = NULL;
-  PyObject *__pyx_t_19 = NULL;
-  char const *__pyx_t_20;
-  __Pyx_RefNannySetupContext("bulk_action", 0);
+  __Pyx_RefNannySetupContext("_c_bulk_action", 0);
 
-  /* "hunspell/hunspell.pyx":329
- *     #
- *     def bulk_action(self, basestring action, list words):
- *         if not isinstance(words, list) or not words:             # <<<<<<<<<<<<<<
- *             raise TypeError()
- * 
+  /* "hunspell/hunspell.pyx":251
+ *         '''C realm thread dispatcher'''
+ *         # Allocate all memory per thread
+ *         cdef thread_t **threads = <thread_t **>calloc(self.max_threads, sizeof(thread_t *))             # <<<<<<<<<<<<<<
+ *         cdef ThreadWorkerArgs *thread_args = <ThreadWorkerArgs *>calloc(self.max_threads, sizeof(ThreadWorkerArgs))
+ *         cdef int rc, i, stride
  */
-  __pyx_t_2 = PyList_Check(__pyx_v_words); 
-  __pyx_t_3 = ((!(__pyx_t_2 != 0)) != 0);
-  if (!__pyx_t_3) {
+  __pyx_v_threads = ((thread_t **)calloc(__pyx_v_self->max_threads, (sizeof(thread_t *))));
+
+  /* "hunspell/hunspell.pyx":252
+ *         # Allocate all memory per thread
+ *         cdef thread_t **threads = <thread_t **>calloc(self.max_threads, sizeof(thread_t *))
+ *         cdef ThreadWorkerArgs *thread_args = <ThreadWorkerArgs *>calloc(self.max_threads, sizeof(ThreadWorkerArgs))             # <<<<<<<<<<<<<<
+ *         cdef int rc, i, stride
+ *
+ */
+  __pyx_v_thread_args = ((struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs *)calloc(__pyx_v_self->max_threads, (sizeof(struct __pyx_t_8hunspell_8hunspell_ThreadWorkerArgs))));
+
+  /* "hunspell/hunspell.pyx":255
+ *         cdef int rc, i, stride
+ *
+ *         if thread_args is NULL or threads is NULL:             # <<<<<<<<<<<<<<
+ *             raise MemoryError()
+ *
+ */
+  __pyx_t_2 = ((__pyx_v_thread_args == NULL) != 0);
+  if (!__pyx_t_2) {
   } else {
-    __pyx_t_1 = __pyx_t_3;
+    __pyx_t_1 = __pyx_t_2;
     goto __pyx_L4_bool_binop_done;
   }
-  __pyx_t_3 = (__pyx_v_words != Py_None) && (PyList_GET_SIZE(__pyx_v_words) != 0);
-  __pyx_t_2 = ((!__pyx_t_3) != 0);
+  __pyx_t_2 = ((__pyx_v_threads == NULL) != 0);
   __pyx_t_1 = __pyx_t_2;
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "hunspell/hunspell.pyx":330
- *     def bulk_action(self, basestring action, list words):
- *         if not isinstance(words, list) or not words:
- *             raise TypeError()             # <<<<<<<<<<<<<<
- * 
- *         cdef int i = 0
+    /* "hunspell/hunspell.pyx":256
+ *
+ *         if thread_args is NULL or threads is NULL:
+ *             raise MemoryError()             # <<<<<<<<<<<<<<
+ *
+ *         try:
  */
-    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_builtin_TypeError); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 330, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_Raise(__pyx_t_4, 0, 0, 0);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __PYX_ERR(0, 330, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 256, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":329
- *     #
- *     def bulk_action(self, basestring action, list words):
- *         if not isinstance(words, list) or not words:             # <<<<<<<<<<<<<<
- *             raise TypeError()
- * 
+    /* "hunspell/hunspell.pyx":255
+ *         cdef int rc, i, stride
+ *
+ *         if thread_args is NULL or threads is NULL:             # <<<<<<<<<<<<<<
+ *             raise MemoryError()
+ *
  */
   }
 
-  /* "hunspell/hunspell.pyx":332
- *             raise TypeError()
- * 
- *         cdef int i = 0             # <<<<<<<<<<<<<<
- *         ret_dict = {}
- *         unknown_words = []
+  /* "hunspell/hunspell.pyx":258
+ *             raise MemoryError()
+ *
+ *         try:             # <<<<<<<<<<<<<<
+ *             # Divide workload between threads
+ *             words_per_thread = n_words // self.max_threads
  */
-  __pyx_v_i = 0;
+  /*try:*/ {
 
-  /* "hunspell/hunspell.pyx":333
- * 
- *         cdef int i = 0
- *         ret_dict = {}             # <<<<<<<<<<<<<<
- *         unknown_words = []
- * 
+    /* "hunspell/hunspell.pyx":260
+ *         try:
+ *             # Divide workload between threads
+ *             words_per_thread = n_words // self.max_threads             # <<<<<<<<<<<<<<
+ *             words_distributed = 0
+ *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
  */
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 333, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_v_ret_dict = ((PyObject*)__pyx_t_4);
-  __pyx_t_4 = 0;
-
-  /* "hunspell/hunspell.pyx":334
- *         cdef int i = 0
- *         ret_dict = {}
- *         unknown_words = []             # <<<<<<<<<<<<<<
- * 
- *         # No need to check correctly spelled words
- */
-  __pyx_t_4 = PyList_New(0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 334, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_v_unknown_words = ((PyObject*)__pyx_t_4);
-  __pyx_t_4 = 0;
-
-  /* "hunspell/hunspell.pyx":337
- * 
- *         # No need to check correctly spelled words
- *         if action == "stem":             # <<<<<<<<<<<<<<
- *             for i from 0 <= i < len(words):
- *                 if words[i] in self._stem_cache:
- */
-  __pyx_t_1 = (__Pyx_PyUnicode_Equals(__pyx_v_action, __pyx_n_s_stem, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 337, __pyx_L1_error)
-  __pyx_t_2 = (__pyx_t_1 != 0);
-  if (__pyx_t_2) {
-
-    /* "hunspell/hunspell.pyx":338
- *         # No need to check correctly spelled words
- *         if action == "stem":
- *             for i from 0 <= i < len(words):             # <<<<<<<<<<<<<<
- *                 if words[i] in self._stem_cache:
- *                     ret_dict[words[i]] = self._stem_cache[words[i]]
- */
-    if (unlikely(__pyx_v_words == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 338, __pyx_L1_error)
+    if (unlikely(__pyx_v_self->max_threads == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+      __PYX_ERR(0, 260, __pyx_L7_error)
     }
-    __pyx_t_5 = PyList_GET_SIZE(__pyx_v_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 338, __pyx_L1_error)
-    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_5; __pyx_v_i++) {
+    else if (sizeof(int) == sizeof(long) && (!(((int)-1) > 0)) && unlikely(__pyx_v_self->max_threads == (int)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_v_n_words))) {
+      PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
+      __PYX_ERR(0, 260, __pyx_L7_error)
+    }
+    __pyx_t_3 = __Pyx_PyInt_From_int(__Pyx_div_int(__pyx_v_n_words, __pyx_v_self->max_threads)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 260, __pyx_L7_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_v_words_per_thread = __pyx_t_3;
+    __pyx_t_3 = 0;
 
-      /* "hunspell/hunspell.pyx":339
- *         if action == "stem":
- *             for i from 0 <= i < len(words):
- *                 if words[i] in self._stem_cache:             # <<<<<<<<<<<<<<
- *                     ret_dict[words[i]] = self._stem_cache[words[i]]
+    /* "hunspell/hunspell.pyx":261
+ *             # Divide workload between threads
+ *             words_per_thread = n_words // self.max_threads
+ *             words_distributed = 0             # <<<<<<<<<<<<<<
+ *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
+ *             if n_words == 0 or n_words % self.max_threads != 0:
+ */
+    __Pyx_INCREF(__pyx_int_0);
+    __pyx_v_words_distributed = __pyx_int_0;
+
+    /* "hunspell/hunspell.pyx":263
+ *             words_distributed = 0
+ *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
+ *             if n_words == 0 or n_words % self.max_threads != 0:             # <<<<<<<<<<<<<<
+ *                 words_per_thread = (n_words - (n_words % self.max_threads)) // self.max_threads
+ *
+ */
+    __pyx_t_2 = ((__pyx_v_n_words == 0) != 0);
+    if (!__pyx_t_2) {
+    } else {
+      __pyx_t_1 = __pyx_t_2;
+      goto __pyx_L10_bool_binop_done;
+    }
+    if (unlikely(__pyx_v_self->max_threads == 0)) {
+      PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+      __PYX_ERR(0, 263, __pyx_L7_error)
+    }
+    __pyx_t_2 = ((__Pyx_mod_int(__pyx_v_n_words, __pyx_v_self->max_threads) != 0) != 0);
+    __pyx_t_1 = __pyx_t_2;
+    __pyx_L10_bool_binop_done:;
+    if (__pyx_t_1) {
+
+      /* "hunspell/hunspell.pyx":264
+ *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
+ *             if n_words == 0 or n_words % self.max_threads != 0:
+ *                 words_per_thread = (n_words - (n_words % self.max_threads)) // self.max_threads             # <<<<<<<<<<<<<<
+ *
+ *             for i from 0 <= i < self.max_threads:
+ */
+      if (unlikely(__pyx_v_self->max_threads == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 264, __pyx_L7_error)
+      }
+      __pyx_t_4 = (__pyx_v_n_words - __Pyx_mod_int(__pyx_v_n_words, __pyx_v_self->max_threads));
+      if (unlikely(__pyx_v_self->max_threads == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 264, __pyx_L7_error)
+      }
+      else if (sizeof(int) == sizeof(long) && (!(((int)-1) > 0)) && unlikely(__pyx_v_self->max_threads == (int)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_t_4))) {
+        PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
+        __PYX_ERR(0, 264, __pyx_L7_error)
+      }
+      __pyx_t_3 = __Pyx_PyInt_From_int(__Pyx_div_int(__pyx_t_4, __pyx_v_self->max_threads)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 264, __pyx_L7_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF_SET(__pyx_v_words_per_thread, __pyx_t_3);
+      __pyx_t_3 = 0;
+
+      /* "hunspell/hunspell.pyx":263
+ *             words_distributed = 0
+ *             # If uneven, round down on workers per thread (but the last thread will have extra work to do)
+ *             if n_words == 0 or n_words % self.max_threads != 0:             # <<<<<<<<<<<<<<
+ *                 words_per_thread = (n_words - (n_words % self.max_threads)) // self.max_threads
+ *
+ */
+    }
+
+    /* "hunspell/hunspell.pyx":266
+ *                 words_per_thread = (n_words - (n_words % self.max_threads)) // self.max_threads
+ *
+ *             for i from 0 <= i < self.max_threads:             # <<<<<<<<<<<<<<
+ *                 stride = i * words_per_thread
+ *                 thread_args[i].tid = i
+ */
+    __pyx_t_4 = __pyx_v_self->max_threads;
+    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_4; __pyx_v_i++) {
+
+      /* "hunspell/hunspell.pyx":267
+ *
+ *             for i from 0 <= i < self.max_threads:
+ *                 stride = i * words_per_thread             # <<<<<<<<<<<<<<
+ *                 thread_args[i].tid = i
+ *                 thread_args[i].stem_action = stem_action
+ */
+      __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 267, __pyx_L7_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_5 = PyNumber_Multiply(__pyx_t_3, __pyx_v_words_per_thread); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 267, __pyx_L7_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_5); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 267, __pyx_L7_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_v_stride = __pyx_t_6;
+
+      /* "hunspell/hunspell.pyx":268
+ *             for i from 0 <= i < self.max_threads:
+ *                 stride = i * words_per_thread
+ *                 thread_args[i].tid = i             # <<<<<<<<<<<<<<
+ *                 thread_args[i].stem_action = stem_action
+ *
+ */
+      (__pyx_v_thread_args[__pyx_v_i]).tid = __pyx_v_i;
+
+      /* "hunspell/hunspell.pyx":269
+ *                 stride = i * words_per_thread
+ *                 thread_args[i].tid = i
+ *                 thread_args[i].stem_action = stem_action             # <<<<<<<<<<<<<<
+ *
+ *                 # Allocate one Hunspell Dict per thread since it isn't safe.
+ */
+      (__pyx_v_thread_args[__pyx_v_i]).stem_action = __pyx_v_stem_action;
+
+      /* "hunspell/hunspell.pyx":272
+ *
+ *                 # Allocate one Hunspell Dict per thread since it isn't safe.
+ *                 thread_args[i].hspell = self._create_hspell_inst(self.lang)             # <<<<<<<<<<<<<<
+ *
+ *                 # Account for leftovers
+ */
+      __pyx_t_5 = __pyx_v_self->lang;
+      __Pyx_INCREF(__pyx_t_5);
+      __pyx_t_7 = ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_create_hspell_inst(__pyx_v_self, ((PyObject*)__pyx_t_5)); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 272, __pyx_L7_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      (__pyx_v_thread_args[__pyx_v_i]).hspell = __pyx_t_7;
+
+      /* "hunspell/hunspell.pyx":275
+ *
+ *                 # Account for leftovers
+ *                 if i == self.max_threads - 1:             # <<<<<<<<<<<<<<
+ *                     thread_args[i].n_words = n_words - words_distributed
  *                 else:
  */
-      if (unlikely(__pyx_v_words == Py_None)) {
-        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 339, __pyx_L1_error)
-      }
-      __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 339, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_t_4, __pyx_v_self->_stem_cache, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 339, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_1 = (__pyx_t_2 != 0);
+      __pyx_t_1 = ((__pyx_v_i == (__pyx_v_self->max_threads - 1)) != 0);
       if (__pyx_t_1) {
 
-        /* "hunspell/hunspell.pyx":340
- *             for i from 0 <= i < len(words):
- *                 if words[i] in self._stem_cache:
- *                     ret_dict[words[i]] = self._stem_cache[words[i]]             # <<<<<<<<<<<<<<
+        /* "hunspell/hunspell.pyx":276
+ *                 # Account for leftovers
+ *                 if i == self.max_threads - 1:
+ *                     thread_args[i].n_words = n_words - words_distributed             # <<<<<<<<<<<<<<
  *                 else:
- *                     ret_dict[words[i]] = []
+ *                     thread_args[i].n_words = words_per_thread
  */
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 340, __pyx_L1_error)
-        }
-        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 340, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_6 = PyObject_GetItem(__pyx_v_self->_stem_cache, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 340, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 340, __pyx_L1_error)
-        }
-        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 340, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_t_4, __pyx_t_6) < 0)) __PYX_ERR(0, 340, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_n_words); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 276, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __pyx_t_3 = PyNumber_Subtract(__pyx_t_5, __pyx_v_words_distributed); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 276, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 276, __pyx_L7_error)
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        (__pyx_v_thread_args[__pyx_v_i]).n_words = __pyx_t_6;
 
-        /* "hunspell/hunspell.pyx":339
- *         if action == "stem":
- *             for i from 0 <= i < len(words):
- *                 if words[i] in self._stem_cache:             # <<<<<<<<<<<<<<
- *                     ret_dict[words[i]] = self._stem_cache[words[i]]
+        /* "hunspell/hunspell.pyx":275
+ *
+ *                 # Account for leftovers
+ *                 if i == self.max_threads - 1:             # <<<<<<<<<<<<<<
+ *                     thread_args[i].n_words = n_words - words_distributed
  *                 else:
  */
-        goto __pyx_L9;
+        goto __pyx_L14;
       }
 
-      /* "hunspell/hunspell.pyx":342
- *                     ret_dict[words[i]] = self._stem_cache[words[i]]
+      /* "hunspell/hunspell.pyx":278
+ *                     thread_args[i].n_words = n_words - words_distributed
  *                 else:
- *                     ret_dict[words[i]] = []             # <<<<<<<<<<<<<<
- *                     unknown_words.append(words[i])
- *         else: # suggest
+ *                     thread_args[i].n_words = words_per_thread             # <<<<<<<<<<<<<<
+ *                     words_distributed += words_per_thread
+ *
  */
       /*else*/ {
-        __pyx_t_6 = PyList_New(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 342, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 342, __pyx_L1_error)
-        }
-        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 342, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_t_4, __pyx_t_6) < 0)) __PYX_ERR(0, 342, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_v_words_per_thread); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 278, __pyx_L7_error)
+        (__pyx_v_thread_args[__pyx_v_i]).n_words = __pyx_t_6;
 
-        /* "hunspell/hunspell.pyx":343
+        /* "hunspell/hunspell.pyx":279
  *                 else:
- *                     ret_dict[words[i]] = []
- *                     unknown_words.append(words[i])             # <<<<<<<<<<<<<<
- *         else: # suggest
- *             for i from 0 <= i < len(words):
+ *                     thread_args[i].n_words = words_per_thread
+ *                     words_distributed += words_per_thread             # <<<<<<<<<<<<<<
+ *
+ *                 # Find the stride into each array
  */
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 343, __pyx_L1_error)
-        }
-        __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 343, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_7 = __Pyx_PyList_Append(__pyx_v_unknown_words, __pyx_t_6); if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(0, 343, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_v_words_distributed, __pyx_v_words_per_thread); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF_SET(__pyx_v_words_distributed, __pyx_t_3);
+        __pyx_t_3 = 0;
       }
-      __pyx_L9:;
+      __pyx_L14:;
+
+      /* "hunspell/hunspell.pyx":282
+ *
+ *                 # Find the stride into each array
+ *                 thread_args[i].word_list = &word_array[stride]             # <<<<<<<<<<<<<<
+ *                 thread_args[i].output_array_ptr = &output_array[stride]
+ *                 thread_args[i].output_counts = &output_counts[stride]
+ */
+      (__pyx_v_thread_args[__pyx_v_i]).word_list = (&(__pyx_v_word_array[__pyx_v_stride]));
+
+      /* "hunspell/hunspell.pyx":283
+ *                 # Find the stride into each array
+ *                 thread_args[i].word_list = &word_array[stride]
+ *                 thread_args[i].output_array_ptr = &output_array[stride]             # <<<<<<<<<<<<<<
+ *                 thread_args[i].output_counts = &output_counts[stride]
+ *
+ */
+      (__pyx_v_thread_args[__pyx_v_i]).output_array_ptr = (&(__pyx_v_output_array[__pyx_v_stride]));
+
+      /* "hunspell/hunspell.pyx":284
+ *                 thread_args[i].word_list = &word_array[stride]
+ *                 thread_args[i].output_array_ptr = &output_array[stride]
+ *                 thread_args[i].output_counts = &output_counts[stride]             # <<<<<<<<<<<<<<
+ *
+ *                 # Create thread
+ */
+      (__pyx_v_thread_args[__pyx_v_i]).output_counts = (&(__pyx_v_output_counts[__pyx_v_stride]));
+
+      /* "hunspell/hunspell.pyx":287
+ *
+ *                 # Create thread
+ *                 threads[i] = thread_create(&hunspell_worker, <void *> &thread_args[i])             # <<<<<<<<<<<<<<
+ *                 if threads[i] is NULL:
+ *                     raise OSError("Could not create thread")
+ */
+      (__pyx_v_threads[__pyx_v_i]) = thread_create((&__pyx_f_8hunspell_8hunspell_hunspell_worker), ((void *)(&(__pyx_v_thread_args[__pyx_v_i]))));
+
+      /* "hunspell/hunspell.pyx":288
+ *                 # Create thread
+ *                 threads[i] = thread_create(&hunspell_worker, <void *> &thread_args[i])
+ *                 if threads[i] is NULL:             # <<<<<<<<<<<<<<
+ *                     raise OSError("Could not create thread")
+ *
+ */
+      __pyx_t_1 = (((__pyx_v_threads[__pyx_v_i]) == NULL) != 0);
+      if (__pyx_t_1) {
+
+        /* "hunspell/hunspell.pyx":289
+ *                 threads[i] = thread_create(&hunspell_worker, <void *> &thread_args[i])
+ *                 if threads[i] is NULL:
+ *                     raise OSError("Could not create thread")             # <<<<<<<<<<<<<<
+ *
+ *             # wait for each thread to complete
+ */
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_OSError, __pyx_tuple__18, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 289, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __PYX_ERR(0, 289, __pyx_L7_error)
+
+        /* "hunspell/hunspell.pyx":288
+ *                 # Create thread
+ *                 threads[i] = thread_create(&hunspell_worker, <void *> &thread_args[i])
+ *                 if threads[i] is NULL:             # <<<<<<<<<<<<<<
+ *                     raise OSError("Could not create thread")
+ *
+ */
+      }
     }
 
-    /* "hunspell/hunspell.pyx":337
- * 
- *         # No need to check correctly spelled words
- *         if action == "stem":             # <<<<<<<<<<<<<<
- *             for i from 0 <= i < len(words):
- *                 if words[i] in self._stem_cache:
+    /* "hunspell/hunspell.pyx":292
+ *
+ *             # wait for each thread to complete
+ *             for i from 0 <= i < self.max_threads:             # <<<<<<<<<<<<<<
+ *                 # block until thread i completes
+ *                 rc = thread_join(threads[i])
  */
-    goto __pyx_L6;
+    __pyx_t_4 = __pyx_v_self->max_threads;
+    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_4; __pyx_v_i++) {
+
+      /* "hunspell/hunspell.pyx":294
+ *             for i from 0 <= i < self.max_threads:
+ *                 # block until thread i completes
+ *                 rc = thread_join(threads[i])             # <<<<<<<<<<<<<<
+ *                 if rc:
+ *                     raise OSError(rc, "Could not join thread")
+ */
+      __pyx_v_rc = thread_join((__pyx_v_threads[__pyx_v_i]));
+
+      /* "hunspell/hunspell.pyx":295
+ *                 # block until thread i completes
+ *                 rc = thread_join(threads[i])
+ *                 if rc:             # <<<<<<<<<<<<<<
+ *                     raise OSError(rc, "Could not join thread")
+ *
+ */
+      __pyx_t_1 = (__pyx_v_rc != 0);
+      if (__pyx_t_1) {
+
+        /* "hunspell/hunspell.pyx":296
+ *                 rc = thread_join(threads[i])
+ *                 if rc:
+ *                     raise OSError(rc, "Could not join thread")             # <<<<<<<<<<<<<<
+ *
+ *                 # Free Hunspell Dict
+ */
+        __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_rc); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 296, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_GIVEREF(__pyx_t_3);
+        PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
+        __Pyx_INCREF(__pyx_kp_s_Could_not_join_thread);
+        __Pyx_GIVEREF(__pyx_kp_s_Could_not_join_thread);
+        PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_kp_s_Could_not_join_thread);
+        __pyx_t_3 = 0;
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_OSError, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L7_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __PYX_ERR(0, 296, __pyx_L7_error)
+
+        /* "hunspell/hunspell.pyx":295
+ *                 # block until thread i completes
+ *                 rc = thread_join(threads[i])
+ *                 if rc:             # <<<<<<<<<<<<<<
+ *                     raise OSError(rc, "Could not join thread")
+ *
+ */
+      }
+
+      /* "hunspell/hunspell.pyx":299
+ *
+ *                 # Free Hunspell Dict
+ *                 del thread_args[i].hspell             # <<<<<<<<<<<<<<
+ *             return 1
+ *         finally:
+ */
+      delete (__pyx_v_thread_args[__pyx_v_i]).hspell;
+    }
+
+    /* "hunspell/hunspell.pyx":300
+ *                 # Free Hunspell Dict
+ *                 del thread_args[i].hspell
+ *             return 1             # <<<<<<<<<<<<<<
+ *         finally:
+ *             # Free top level stuff
+ */
+    __pyx_r = 1;
+    goto __pyx_L6_return;
   }
 
-  /* "hunspell/hunspell.pyx":345
- *                     unknown_words.append(words[i])
- *         else: # suggest
- *             for i from 0 <= i < len(words):             # <<<<<<<<<<<<<<
- *                 if self.spell(words[i]):
- *                     ret_dict[words[i]] = [words[i]]
+  /* "hunspell/hunspell.pyx":303
+ *         finally:
+ *             # Free top level stuff
+ *             free(thread_args)             # <<<<<<<<<<<<<<
+ *             dealloc_threads(threads, self.max_threads)
+ *
  */
-  /*else*/ {
-    if (unlikely(__pyx_v_words == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 345, __pyx_L1_error)
-    }
-    __pyx_t_5 = PyList_GET_SIZE(__pyx_v_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 345, __pyx_L1_error)
-    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_5; __pyx_v_i++) {
+  /*finally:*/ {
+    /*exception exit:*/{
+      __Pyx_PyThreadState_declare
+      __pyx_L7_error:;
+      __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0;
+      __Pyx_PyThreadState_assign
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_12, &__pyx_t_13, &__pyx_t_14);
+      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_9, &__pyx_t_10, &__pyx_t_11) < 0)) __Pyx_ErrFetch(&__pyx_t_9, &__pyx_t_10, &__pyx_t_11);
+      __Pyx_XGOTREF(__pyx_t_9);
+      __Pyx_XGOTREF(__pyx_t_10);
+      __Pyx_XGOTREF(__pyx_t_11);
+      __Pyx_XGOTREF(__pyx_t_12);
+      __Pyx_XGOTREF(__pyx_t_13);
+      __Pyx_XGOTREF(__pyx_t_14);
+      __pyx_t_4 = __pyx_lineno; __pyx_t_6 = __pyx_clineno; __pyx_t_8 = __pyx_filename;
+      {
+        free(__pyx_v_thread_args);
 
-      /* "hunspell/hunspell.pyx":346
- *         else: # suggest
- *             for i from 0 <= i < len(words):
- *                 if self.spell(words[i]):             # <<<<<<<<<<<<<<
- *                     ret_dict[words[i]] = [words[i]]
- *                 elif words[i] in self._suggest_cache:
+        /* "hunspell/hunspell.pyx":304
+ *             # Free top level stuff
+ *             free(thread_args)
+ *             dealloc_threads(threads, self.max_threads)             # <<<<<<<<<<<<<<
+ *
+ *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except *:
  */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_spell); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 346, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (unlikely(__pyx_v_words == Py_None)) {
-        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 346, __pyx_L1_error)
+        dealloc_threads(__pyx_v_threads, __pyx_v_self->max_threads);
       }
-      __pyx_t_8 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 346, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_9 = NULL;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-        __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_4);
-        if (likely(__pyx_t_9)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-          __Pyx_INCREF(__pyx_t_9);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_4, function);
+      __Pyx_PyThreadState_assign
+      if (PY_MAJOR_VERSION >= 3) {
+        __Pyx_XGIVEREF(__pyx_t_12);
+        __Pyx_XGIVEREF(__pyx_t_13);
+        __Pyx_XGIVEREF(__pyx_t_14);
+        __Pyx_ExceptionReset(__pyx_t_12, __pyx_t_13, __pyx_t_14);
+      }
+      __Pyx_XGIVEREF(__pyx_t_9);
+      __Pyx_XGIVEREF(__pyx_t_10);
+      __Pyx_XGIVEREF(__pyx_t_11);
+      __Pyx_ErrRestore(__pyx_t_9, __pyx_t_10, __pyx_t_11);
+      __pyx_t_9 = 0; __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0;
+      __pyx_lineno = __pyx_t_4; __pyx_clineno = __pyx_t_6; __pyx_filename = __pyx_t_8;
+      goto __pyx_L1_error;
+    }
+    __pyx_L6_return: {
+      __pyx_t_6 = __pyx_r;
+
+      /* "hunspell/hunspell.pyx":303
+ *         finally:
+ *             # Free top level stuff
+ *             free(thread_args)             # <<<<<<<<<<<<<<
+ *             dealloc_threads(threads, self.max_threads)
+ *
+ */
+      free(__pyx_v_thread_args);
+
+      /* "hunspell/hunspell.pyx":304
+ *             # Free top level stuff
+ *             free(thread_args)
+ *             dealloc_threads(threads, self.max_threads)             # <<<<<<<<<<<<<<
+ *
+ *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except *:
+ */
+      dealloc_threads(__pyx_v_threads, __pyx_v_self->max_threads);
+      __pyx_r = __pyx_t_6;
+      goto __pyx_L0;
+    }
+  }
+
+  /* "hunspell/hunspell.pyx":248
+ *     ###################
+ *
+ *     cdef int _c_bulk_action(self, char **word_array, char ***output_array, int n_words, bint stem_action, int *output_counts) except -1:             # <<<<<<<<<<<<<<
+ *         '''C realm thread dispatcher'''
+ *         # Allocate all memory per thread
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap._c_bulk_action", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_words_per_thread);
+  __Pyx_XDECREF(__pyx_v_words_distributed);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":306
+ *             dealloc_threads(threads, self.max_threads)
+ *
+ *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except *:             # <<<<<<<<<<<<<<
+ *         '''Parse the return of a bulk action'''
+ *         cdef int unknown_len = len(unknown_words)
+ */
+
+static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_ret_dict, PyObject *__pyx_v_unknown_words, int *__pyx_v_output_counts, char ***__pyx_v_output_array) {
+  int __pyx_v_unknown_len;
+  int __pyx_v_i;
+  int __pyx_v_j;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  struct __pyx_opt_args_8hunspell_8hunspell_c_string_to_unicode_no_except __pyx_t_7;
+  int __pyx_t_8;
+  char const *__pyx_t_9;
+  PyObject *__pyx_t_10 = NULL;
+  PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
+  PyObject *__pyx_t_13 = NULL;
+  PyObject *__pyx_t_14 = NULL;
+  PyObject *__pyx_t_15 = NULL;
+  int __pyx_t_16;
+  __Pyx_RefNannySetupContext("_parse_bulk_results", 0);
+
+  /* "hunspell/hunspell.pyx":308
+ *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except *:
+ *         '''Parse the return of a bulk action'''
+ *         cdef int unknown_len = len(unknown_words)             # <<<<<<<<<<<<<<
+ *         cdef int i, j
+ *         try:
+ */
+  if (unlikely(__pyx_v_unknown_words == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(0, 308, __pyx_L1_error)
+  }
+  __pyx_t_1 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 308, __pyx_L1_error)
+  __pyx_v_unknown_len = __pyx_t_1;
+
+  /* "hunspell/hunspell.pyx":310
+ *         cdef int unknown_len = len(unknown_words)
+ *         cdef int i, j
+ *         try:             # <<<<<<<<<<<<<<
+ *             for i from 0 <= i < unknown_len:
+ *                 for j from 0 <= j < output_counts[i]:
+ */
+  /*try:*/ {
+
+    /* "hunspell/hunspell.pyx":311
+ *         cdef int i, j
+ *         try:
+ *             for i from 0 <= i < unknown_len:             # <<<<<<<<<<<<<<
+ *                 for j from 0 <= j < output_counts[i]:
+ *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j], self._dic_encoding))
+ */
+    __pyx_t_2 = __pyx_v_unknown_len;
+    for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_2; __pyx_v_i++) {
+
+      /* "hunspell/hunspell.pyx":312
+ *         try:
+ *             for i from 0 <= i < unknown_len:
+ *                 for j from 0 <= j < output_counts[i]:             # <<<<<<<<<<<<<<
+ *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j], self._dic_encoding))
+ *                 ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])
+ */
+      __pyx_t_3 = (__pyx_v_output_counts[__pyx_v_i]);
+      for (__pyx_v_j = 0; __pyx_v_j < __pyx_t_3; __pyx_v_j++) {
+
+        /* "hunspell/hunspell.pyx":313
+ *             for i from 0 <= i < unknown_len:
+ *                 for j from 0 <= j < output_counts[i]:
+ *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j], self._dic_encoding))             # <<<<<<<<<<<<<<
+ *                 ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])
+ *         finally:
+ */
+        if (unlikely(__pyx_v_ret_dict == Py_None)) {
+          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+          __PYX_ERR(0, 313, __pyx_L4_error)
         }
-      }
-      if (!__pyx_t_9) {
-        __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_8); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+        if (unlikely(__pyx_v_unknown_words == Py_None)) {
+          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+          __PYX_ERR(0, 313, __pyx_L4_error)
+        }
+        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 313, __pyx_L4_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_5 = __Pyx_PyDict_GetItem(__pyx_v_ret_dict, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 313, __pyx_L4_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __pyx_t_4 = __pyx_v_self->_dic_encoding;
+        __Pyx_INCREF(__pyx_t_4);
+        __pyx_t_7.__pyx_n = 1;
+        __pyx_t_7.encoding = ((PyObject*)__pyx_t_4);
+        __pyx_t_6 = __pyx_f_8hunspell_8hunspell_c_string_to_unicode_no_except(((__pyx_v_output_array[__pyx_v_i])[__pyx_v_j]), &__pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 313, __pyx_L4_error)
         __Pyx_GOTREF(__pyx_t_6);
-      } else {
-        #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_4)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_8};
-          __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-        } else
-        #endif
-        #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_8};
-          __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-        } else
-        #endif
-        {
-          __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 346, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_10);
-          __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_9); __pyx_t_9 = NULL;
-          __Pyx_GIVEREF(__pyx_t_8);
-          PyTuple_SET_ITEM(__pyx_t_10, 0+1, __pyx_t_8);
-          __pyx_t_8 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_10, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 346, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-        }
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __pyx_t_8 = __Pyx_PyObject_Append(__pyx_t_5, __pyx_t_6); if (unlikely(__pyx_t_8 == -1)) __PYX_ERR(0, 313, __pyx_L4_error)
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 346, __pyx_L1_error)
+
+      /* "hunspell/hunspell.pyx":314
+ *                 for j from 0 <= j < output_counts[i]:
+ *                     ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j], self._dic_encoding))
+ *                 ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])             # <<<<<<<<<<<<<<
+ *         finally:
+ *             for i from 0 <= i < unknown_len:
+ */
+      if (unlikely(__pyx_v_ret_dict == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 314, __pyx_L4_error)
+      }
+      if (unlikely(__pyx_v_unknown_words == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 314, __pyx_L4_error)
+      }
+      __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 314, __pyx_L4_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_5 = __Pyx_PyDict_GetItem(__pyx_v_ret_dict, __pyx_t_6); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 314, __pyx_L4_error)
+      __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (__pyx_t_1) {
-
-        /* "hunspell/hunspell.pyx":347
- *             for i from 0 <= i < len(words):
- *                 if self.spell(words[i]):
- *                     ret_dict[words[i]] = [words[i]]             # <<<<<<<<<<<<<<
- *                 elif words[i] in self._suggest_cache:
- *                     ret_dict[words[i]] = self._suggest_cache[words[i]]
- */
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 347, __pyx_L1_error)
-        }
-        __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 347, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_4 = PyList_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 347, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_6);
-        PyList_SET_ITEM(__pyx_t_4, 0, __pyx_t_6);
-        __pyx_t_6 = 0;
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 347, __pyx_L1_error)
-        }
-        __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 347, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_t_6, __pyx_t_4) < 0)) __PYX_ERR(0, 347, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-        /* "hunspell/hunspell.pyx":346
- *         else: # suggest
- *             for i from 0 <= i < len(words):
- *                 if self.spell(words[i]):             # <<<<<<<<<<<<<<
- *                     ret_dict[words[i]] = [words[i]]
- *                 elif words[i] in self._suggest_cache:
- */
-        goto __pyx_L12;
-      }
-
-      /* "hunspell/hunspell.pyx":348
- *                 if self.spell(words[i]):
- *                     ret_dict[words[i]] = [words[i]]
- *                 elif words[i] in self._suggest_cache:             # <<<<<<<<<<<<<<
- *                     ret_dict[words[i]] = self._suggest_cache[words[i]]
- *                 else:
- */
-      if (unlikely(__pyx_v_words == Py_None)) {
+      __pyx_t_6 = PySequence_Tuple(__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 314, __pyx_L4_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (unlikely(__pyx_v_ret_dict == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 348, __pyx_L1_error)
+        __PYX_ERR(0, 314, __pyx_L4_error)
       }
-      __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 348, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_1 = (__Pyx_PySequence_ContainsTF(__pyx_t_4, __pyx_v_self->_suggest_cache, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 348, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_2 = (__pyx_t_1 != 0);
-      if (__pyx_t_2) {
-
-        /* "hunspell/hunspell.pyx":349
- *                     ret_dict[words[i]] = [words[i]]
- *                 elif words[i] in self._suggest_cache:
- *                     ret_dict[words[i]] = self._suggest_cache[words[i]]             # <<<<<<<<<<<<<<
- *                 else:
- *                     ret_dict[words[i]] = []
- */
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 349, __pyx_L1_error)
-        }
-        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 349, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_6 = PyObject_GetItem(__pyx_v_self->_suggest_cache, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 349, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 349, __pyx_L1_error)
-        }
-        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 349, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_t_4, __pyx_t_6) < 0)) __PYX_ERR(0, 349, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-
-        /* "hunspell/hunspell.pyx":348
- *                 if self.spell(words[i]):
- *                     ret_dict[words[i]] = [words[i]]
- *                 elif words[i] in self._suggest_cache:             # <<<<<<<<<<<<<<
- *                     ret_dict[words[i]] = self._suggest_cache[words[i]]
- *                 else:
- */
-        goto __pyx_L12;
+      if (unlikely(__pyx_v_unknown_words == Py_None)) {
+        PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+        __PYX_ERR(0, 314, __pyx_L4_error)
       }
-
-      /* "hunspell/hunspell.pyx":351
- *                     ret_dict[words[i]] = self._suggest_cache[words[i]]
- *                 else:
- *                     ret_dict[words[i]] = []             # <<<<<<<<<<<<<<
- *                     unknown_words.append(words[i])
- * 
- */
-      /*else*/ {
-        __pyx_t_6 = PyList_New(0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 351, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 351, __pyx_L1_error)
-        }
-        __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 351, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_t_4, __pyx_t_6) < 0)) __PYX_ERR(0, 351, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-
-        /* "hunspell/hunspell.pyx":352
- *                 else:
- *                     ret_dict[words[i]] = []
- *                     unknown_words.append(words[i])             # <<<<<<<<<<<<<<
- * 
- *         # Initialize C word list
- */
-        if (unlikely(__pyx_v_words == Py_None)) {
-          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-          __PYX_ERR(0, 352, __pyx_L1_error)
-        }
-        __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 352, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_7 = __Pyx_PyList_Append(__pyx_v_unknown_words, __pyx_t_6); if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(0, 352, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-      __pyx_L12:;
+      __pyx_t_5 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 314, __pyx_L4_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      if (unlikely(PyDict_SetItem(__pyx_v_ret_dict, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 314, __pyx_L4_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
   }
-  __pyx_L6:;
 
-  /* "hunspell/hunspell.pyx":356
- *         # Initialize C word list
+  /* "hunspell/hunspell.pyx":316
+ *                 ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])
+ *         finally:
+ *             for i from 0 <= i < unknown_len:             # <<<<<<<<<<<<<<
+ *                 # Free each suggestion list
+ *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
+ */
+  /*finally:*/ {
+    /*normal exit:*/{
+      __pyx_t_2 = __pyx_v_unknown_len;
+      for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_2; __pyx_v_i++) {
+
+        /* "hunspell/hunspell.pyx":318
+ *             for i from 0 <= i < unknown_len:
+ *                 # Free each suggestion list
+ *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])             # <<<<<<<<<<<<<<
+ *
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+ */
+        __pyx_v_self->_cxx_hunspell->free_list((__pyx_v_output_array + __pyx_v_i), (__pyx_v_output_counts[__pyx_v_i]));
+      }
+      goto __pyx_L5;
+    }
+    /*exception exit:*/{
+      __Pyx_PyThreadState_declare
+      __pyx_L4_error:;
+      __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0; __pyx_t_15 = 0;
+      __Pyx_PyThreadState_assign
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_13, &__pyx_t_14, &__pyx_t_15);
+      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12) < 0)) __Pyx_ErrFetch(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12);
+      __Pyx_XGOTREF(__pyx_t_10);
+      __Pyx_XGOTREF(__pyx_t_11);
+      __Pyx_XGOTREF(__pyx_t_12);
+      __Pyx_XGOTREF(__pyx_t_13);
+      __Pyx_XGOTREF(__pyx_t_14);
+      __Pyx_XGOTREF(__pyx_t_15);
+      __pyx_t_2 = __pyx_lineno; __pyx_t_3 = __pyx_clineno; __pyx_t_9 = __pyx_filename;
+      {
+
+        /* "hunspell/hunspell.pyx":316
+ *                 ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])
+ *         finally:
+ *             for i from 0 <= i < unknown_len:             # <<<<<<<<<<<<<<
+ *                 # Free each suggestion list
+ *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
+ */
+        __pyx_t_16 = __pyx_v_unknown_len;
+        for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_16; __pyx_v_i++) {
+
+          /* "hunspell/hunspell.pyx":318
+ *             for i from 0 <= i < unknown_len:
+ *                 # Free each suggestion list
+ *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])             # <<<<<<<<<<<<<<
+ *
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+ */
+          __pyx_v_self->_cxx_hunspell->free_list((__pyx_v_output_array + __pyx_v_i), (__pyx_v_output_counts[__pyx_v_i]));
+        }
+      }
+      __Pyx_PyThreadState_assign
+      if (PY_MAJOR_VERSION >= 3) {
+        __Pyx_XGIVEREF(__pyx_t_13);
+        __Pyx_XGIVEREF(__pyx_t_14);
+        __Pyx_XGIVEREF(__pyx_t_15);
+        __Pyx_ExceptionReset(__pyx_t_13, __pyx_t_14, __pyx_t_15);
+      }
+      __Pyx_XGIVEREF(__pyx_t_10);
+      __Pyx_XGIVEREF(__pyx_t_11);
+      __Pyx_XGIVEREF(__pyx_t_12);
+      __Pyx_ErrRestore(__pyx_t_10, __pyx_t_11, __pyx_t_12);
+      __pyx_t_10 = 0; __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0; __pyx_t_15 = 0;
+      __pyx_lineno = __pyx_t_2; __pyx_clineno = __pyx_t_3; __pyx_filename = __pyx_t_9;
+      goto __pyx_L1_error;
+    }
+    __pyx_L5:;
+  }
+
+  /* "hunspell/hunspell.pyx":306
+ *             dealloc_threads(threads, self.max_threads)
+ *
+ *     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except *:             # <<<<<<<<<<<<<<
+ *         '''Parse the return of a bulk action'''
+ *         cdef int unknown_len = len(unknown_words)
+ */
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap._parse_bulk_results", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+}
+
+/* "hunspell/hunspell.pyx":320
+ *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
+ *
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):             # <<<<<<<<<<<<<<
+ *         cdef int unknown_len = len(unknown_words)
+ *         # C version of: ["foo", "bar", "baz"]
+ */
+
+static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__bulk_unknown_words(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_unknown_words, int __pyx_v_stem_action, PyObject *__pyx_v_ret_dict) {
+  int __pyx_v_unknown_len;
+  char ***__pyx_v_output_array;
+  int *__pyx_v_output_counts;
+  char **__pyx_v_word_array;
+  PyObject *__pyx_v_cache = NULL;
+  Py_ssize_t __pyx_v_i;
+  PyObject *__pyx_v_unknown_word = NULL;
+  __Pyx_RefNannyDeclarations
+  Py_ssize_t __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  struct __pyx_opt_args_8hunspell_8hunspell_copy_to_c_string __pyx_t_7;
+  int __pyx_t_8;
+  int __pyx_t_9;
+  char const *__pyx_t_10;
+  PyObject *__pyx_t_11 = NULL;
+  PyObject *__pyx_t_12 = NULL;
+  PyObject *__pyx_t_13 = NULL;
+  PyObject *__pyx_t_14 = NULL;
+  PyObject *__pyx_t_15 = NULL;
+  PyObject *__pyx_t_16 = NULL;
+  char const *__pyx_t_17;
+  __Pyx_RefNannySetupContext("_bulk_unknown_words", 0);
+
+  /* "hunspell/hunspell.pyx":321
+ *
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+ *         cdef int unknown_len = len(unknown_words)             # <<<<<<<<<<<<<<
+ *         # C version of: ["foo", "bar", "baz"]
+ *         cdef char ***output_array = NULL
+ */
+  if (unlikely(__pyx_v_unknown_words == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(0, 321, __pyx_L1_error)
+  }
+  __pyx_t_1 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(0, 321, __pyx_L1_error)
+  __pyx_v_unknown_len = __pyx_t_1;
+
+  /* "hunspell/hunspell.pyx":323
+ *         cdef int unknown_len = len(unknown_words)
  *         # C version of: ["foo", "bar", "baz"]
  *         cdef char ***output_array = NULL             # <<<<<<<<<<<<<<
  *         cdef int *output_counts = NULL
- *         cdef char **word_array = <char **>calloc(len(unknown_words), sizeof(char *))
+ *         cdef char **word_array = <char **>calloc(unknown_len, sizeof(char *))
  */
   __pyx_v_output_array = NULL;
 
-  /* "hunspell/hunspell.pyx":357
+  /* "hunspell/hunspell.pyx":324
  *         # C version of: ["foo", "bar", "baz"]
  *         cdef char ***output_array = NULL
  *         cdef int *output_counts = NULL             # <<<<<<<<<<<<<<
- *         cdef char **word_array = <char **>calloc(len(unknown_words), sizeof(char *))
- *         if word_array is NULL:
+ *         cdef char **word_array = <char **>calloc(unknown_len, sizeof(char *))
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
  */
   __pyx_v_output_counts = NULL;
 
-  /* "hunspell/hunspell.pyx":358
+  /* "hunspell/hunspell.pyx":325
  *         cdef char ***output_array = NULL
  *         cdef int *output_counts = NULL
- *         cdef char **word_array = <char **>calloc(len(unknown_words), sizeof(char *))             # <<<<<<<<<<<<<<
- *         if word_array is NULL:
- *             raise MemoryError()
+ *         cdef char **word_array = <char **>calloc(unknown_len, sizeof(char *))             # <<<<<<<<<<<<<<
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *
  */
-  __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 358, __pyx_L1_error)
-  __pyx_v_word_array = ((char **)calloc(__pyx_t_5, (sizeof(char *))));
+  __pyx_v_word_array = ((char **)calloc(__pyx_v_unknown_len, (sizeof(char *))));
 
-  /* "hunspell/hunspell.pyx":359
+  /* "hunspell/hunspell.pyx":326
  *         cdef int *output_counts = NULL
- *         cdef char **word_array = <char **>calloc(len(unknown_words), sizeof(char *))
+ *         cdef char **word_array = <char **>calloc(unknown_len, sizeof(char *))
+ *         cache = self._stem_cache if stem_action else self._suggest_cache             # <<<<<<<<<<<<<<
+ *
+ *         if word_array is NULL:
+ */
+  if ((__pyx_v_stem_action != 0)) {
+    __Pyx_INCREF(__pyx_v_self->_stem_cache);
+    __pyx_t_2 = __pyx_v_self->_stem_cache;
+  } else {
+    __Pyx_INCREF(__pyx_v_self->_suggest_cache);
+    __pyx_t_2 = __pyx_v_self->_suggest_cache;
+  }
+  __pyx_v_cache = __pyx_t_2;
+  __pyx_t_2 = 0;
+
+  /* "hunspell/hunspell.pyx":328
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *
  *         if word_array is NULL:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
  *         for i, unknown_word in enumerate(unknown_words):
  */
-  __pyx_t_2 = ((__pyx_v_word_array == NULL) != 0);
-  if (__pyx_t_2) {
+  __pyx_t_3 = ((__pyx_v_word_array == NULL) != 0);
+  if (__pyx_t_3) {
 
-    /* "hunspell/hunspell.pyx":360
- *         cdef char **word_array = <char **>calloc(len(unknown_words), sizeof(char *))
+    /* "hunspell/hunspell.pyx":329
+ *
  *         if word_array is NULL:
  *             raise MemoryError()             # <<<<<<<<<<<<<<
  *         for i, unknown_word in enumerate(unknown_words):
- *             if copy_to_c_string(unknown_word, &word_array[i]) <= 0:
+ *             if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 360, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 329, __pyx_L1_error)
 
-    /* "hunspell/hunspell.pyx":359
- *         cdef int *output_counts = NULL
- *         cdef char **word_array = <char **>calloc(len(unknown_words), sizeof(char *))
+    /* "hunspell/hunspell.pyx":328
+ *         cache = self._stem_cache if stem_action else self._suggest_cache
+ *
  *         if word_array is NULL:             # <<<<<<<<<<<<<<
  *             raise MemoryError()
  *         for i, unknown_word in enumerate(unknown_words):
  */
   }
 
-  /* "hunspell/hunspell.pyx":361
+  /* "hunspell/hunspell.pyx":330
  *         if word_array is NULL:
  *             raise MemoryError()
  *         for i, unknown_word in enumerate(unknown_words):             # <<<<<<<<<<<<<<
- *             if copy_to_c_string(unknown_word, &word_array[i]) <= 0:
+ *             if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:
  *                 raise MemoryError()
  */
-  __pyx_t_11 = 0;
-  __pyx_t_6 = __pyx_v_unknown_words; __Pyx_INCREF(__pyx_t_6); __pyx_t_5 = 0;
+  __pyx_t_1 = 0;
+  __pyx_t_2 = __pyx_v_unknown_words; __Pyx_INCREF(__pyx_t_2); __pyx_t_4 = 0;
   for (;;) {
-    if (__pyx_t_5 >= PyList_GET_SIZE(__pyx_t_6)) break;
+    if (__pyx_t_4 >= PyList_GET_SIZE(__pyx_t_2)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_4 = PyList_GET_ITEM(__pyx_t_6, __pyx_t_5); __Pyx_INCREF(__pyx_t_4); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 361, __pyx_L1_error)
+    __pyx_t_5 = PyList_GET_ITEM(__pyx_t_2, __pyx_t_4); __Pyx_INCREF(__pyx_t_5); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 330, __pyx_L1_error)
     #else
-    __pyx_t_4 = PySequence_ITEM(__pyx_t_6, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 361, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_5 = PySequence_ITEM(__pyx_t_2, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 330, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     #endif
-    __Pyx_XDECREF_SET(__pyx_v_unknown_word, __pyx_t_4);
-    __pyx_t_4 = 0;
-    __pyx_v_i = __pyx_t_11;
-    __pyx_t_11 = (__pyx_t_11 + 1);
+    __Pyx_XDECREF_SET(__pyx_v_unknown_word, __pyx_t_5);
+    __pyx_t_5 = 0;
+    __pyx_v_i = __pyx_t_1;
+    __pyx_t_1 = (__pyx_t_1 + 1);
 
-    /* "hunspell/hunspell.pyx":362
+    /* "hunspell/hunspell.pyx":331
  *             raise MemoryError()
  *         for i, unknown_word in enumerate(unknown_words):
- *             if copy_to_c_string(unknown_word, &word_array[i]) <= 0:             # <<<<<<<<<<<<<<
+ *             if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:             # <<<<<<<<<<<<<<
  *                 raise MemoryError()
- * 
+ *
  */
-    if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_unknown_word))||((__pyx_v_unknown_word) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_unknown_word)->tp_name), 0))) __PYX_ERR(0, 362, __pyx_L1_error)
-    __pyx_t_12 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(((PyObject*)__pyx_v_unknown_word), (&(__pyx_v_word_array[__pyx_v_i]))); if (unlikely(__pyx_t_12 == -1)) __PYX_ERR(0, 362, __pyx_L1_error)
-    __pyx_t_2 = ((__pyx_t_12 <= 0) != 0);
-    if (__pyx_t_2) {
+    if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_unknown_word))||((__pyx_v_unknown_word) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_unknown_word)->tp_name), 0))) __PYX_ERR(0, 331, __pyx_L1_error)
+    __pyx_t_5 = __pyx_v_self->_dic_encoding;
+    __Pyx_INCREF(__pyx_t_5);
+    __pyx_t_7.__pyx_n = 1;
+    __pyx_t_7.encoding = ((PyObject*)__pyx_t_5);
+    __pyx_t_6 = __pyx_f_8hunspell_8hunspell_copy_to_c_string(((PyObject*)__pyx_v_unknown_word), (&(__pyx_v_word_array[__pyx_v_i])), &__pyx_t_7); if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 331, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_3 = ((__pyx_t_6 <= 0) != 0);
+    if (__pyx_t_3) {
 
-      /* "hunspell/hunspell.pyx":363
+      /* "hunspell/hunspell.pyx":332
  *         for i, unknown_word in enumerate(unknown_words):
- *             if copy_to_c_string(unknown_word, &word_array[i]) <= 0:
+ *             if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:
  *                 raise MemoryError()             # <<<<<<<<<<<<<<
- * 
+ *
  *         try:
  */
-      PyErr_NoMemory(); __PYX_ERR(0, 363, __pyx_L1_error)
+      PyErr_NoMemory(); __PYX_ERR(0, 332, __pyx_L1_error)
 
-      /* "hunspell/hunspell.pyx":362
+      /* "hunspell/hunspell.pyx":331
  *             raise MemoryError()
  *         for i, unknown_word in enumerate(unknown_words):
- *             if copy_to_c_string(unknown_word, &word_array[i]) <= 0:             # <<<<<<<<<<<<<<
+ *             if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:             # <<<<<<<<<<<<<<
  *                 raise MemoryError()
- * 
+ *
  */
     }
 
-    /* "hunspell/hunspell.pyx":361
+    /* "hunspell/hunspell.pyx":330
  *         if word_array is NULL:
  *             raise MemoryError()
  *         for i, unknown_word in enumerate(unknown_words):             # <<<<<<<<<<<<<<
- *             if copy_to_c_string(unknown_word, &word_array[i]) <= 0:
+ *             if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:
  *                 raise MemoryError()
  */
   }
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "hunspell/hunspell.pyx":365
+  /* "hunspell/hunspell.pyx":334
  *                 raise MemoryError()
- * 
+ *
  *         try:             # <<<<<<<<<<<<<<
  *             # Create output arrays
  *             # Array of arrays of C strings (e.g. [["food", ...], ["bar"], ["bad", ...]])
  */
   /*try:*/ {
 
-    /* "hunspell/hunspell.pyx":370
+    /* "hunspell/hunspell.pyx":339
  *             # This array will be divided evenly amongst the threads for the return values
  *             # of Hunspell.suggest(), each call returns an array of C strings
- *             output_array = <char ***>calloc(len(unknown_words), sizeof(char **))             # <<<<<<<<<<<<<<
- * 
+ *             output_array = <char ***>calloc(unknown_len, sizeof(char **))             # <<<<<<<<<<<<<<
+ *
  *             # Array of integers, each the length of the corresponding C string array
  */
-    __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 370, __pyx_L18_error)
-    __pyx_v_output_array = ((char ***)calloc(__pyx_t_5, (sizeof(char **))));
+    __pyx_v_output_array = ((char ***)calloc(__pyx_v_unknown_len, (sizeof(char **))));
 
-    /* "hunspell/hunspell.pyx":375
+    /* "hunspell/hunspell.pyx":344
  *             # This array will be divided evenly amongst the threads for the length of the
  *             # arrays returned by each call to Hunspell.suggest()
- *             output_counts = <int *>calloc(len(unknown_words), sizeof(int))             # <<<<<<<<<<<<<<
+ *             output_counts = <int *>calloc(unknown_len, sizeof(int))             # <<<<<<<<<<<<<<
  *             if output_counts is NULL or output_array is NULL:
  *                 raise MemoryError()
  */
-    __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 375, __pyx_L18_error)
-    __pyx_v_output_counts = ((int *)calloc(__pyx_t_5, (sizeof(int))));
+    __pyx_v_output_counts = ((int *)calloc(__pyx_v_unknown_len, (sizeof(int))));
 
-    /* "hunspell/hunspell.pyx":376
+    /* "hunspell/hunspell.pyx":345
  *             # arrays returned by each call to Hunspell.suggest()
- *             output_counts = <int *>calloc(len(unknown_words), sizeof(int))
+ *             output_counts = <int *>calloc(unknown_len, sizeof(int))
  *             if output_counts is NULL or output_array is NULL:             # <<<<<<<<<<<<<<
  *                 raise MemoryError()
- * 
+ *
  */
-    __pyx_t_1 = ((__pyx_v_output_counts == NULL) != 0);
-    if (!__pyx_t_1) {
+    __pyx_t_8 = ((__pyx_v_output_counts == NULL) != 0);
+    if (!__pyx_t_8) {
     } else {
-      __pyx_t_2 = __pyx_t_1;
-      goto __pyx_L21_bool_binop_done;
+      __pyx_t_3 = __pyx_t_8;
+      goto __pyx_L11_bool_binop_done;
     }
-    __pyx_t_1 = ((__pyx_v_output_array == NULL) != 0);
-    __pyx_t_2 = __pyx_t_1;
-    __pyx_L21_bool_binop_done:;
-    if (__pyx_t_2) {
+    __pyx_t_8 = ((__pyx_v_output_array == NULL) != 0);
+    __pyx_t_3 = __pyx_t_8;
+    __pyx_L11_bool_binop_done:;
+    if (__pyx_t_3) {
 
-      /* "hunspell/hunspell.pyx":377
- *             output_counts = <int *>calloc(len(unknown_words), sizeof(int))
+      /* "hunspell/hunspell.pyx":346
+ *             output_counts = <int *>calloc(unknown_len, sizeof(int))
  *             if output_counts is NULL or output_array is NULL:
  *                 raise MemoryError()             # <<<<<<<<<<<<<<
- * 
+ *
  *             try:
  */
-      PyErr_NoMemory(); __PYX_ERR(0, 377, __pyx_L18_error)
+      PyErr_NoMemory(); __PYX_ERR(0, 346, __pyx_L8_error)
 
-      /* "hunspell/hunspell.pyx":376
+      /* "hunspell/hunspell.pyx":345
  *             # arrays returned by each call to Hunspell.suggest()
- *             output_counts = <int *>calloc(len(unknown_words), sizeof(int))
+ *             output_counts = <int *>calloc(unknown_len, sizeof(int))
  *             if output_counts is NULL or output_array is NULL:             # <<<<<<<<<<<<<<
  *                 raise MemoryError()
- * 
+ *
  */
     }
 
-    /* "hunspell/hunspell.pyx":379
+    /* "hunspell/hunspell.pyx":348
  *                 raise MemoryError()
- * 
+ *
  *             try:             # <<<<<<<<<<<<<<
  *                 # Schedule bulk job
- *                 self._c_bulk_action(action, word_array, output_array, len(unknown_words), output_counts)
+ *                 self._c_bulk_action(word_array, output_array, unknown_len, stem_action, output_counts)
  */
     /*try:*/ {
 
-      /* "hunspell/hunspell.pyx":381
+      /* "hunspell/hunspell.pyx":350
  *             try:
  *                 # Schedule bulk job
- *                 self._c_bulk_action(action, word_array, output_array, len(unknown_words), output_counts)             # <<<<<<<<<<<<<<
- * 
+ *                 self._c_bulk_action(word_array, output_array, unknown_len, stem_action, output_counts)             # <<<<<<<<<<<<<<
+ *
  *                 # Parse the return
  */
-      __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 381, __pyx_L24_error)
-      try {
-        ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_c_bulk_action(__pyx_v_self, __pyx_v_action, __pyx_v_word_array, __pyx_v_output_array, __pyx_t_5, __pyx_v_output_counts);
-      } catch(...) {
-        __Pyx_CppExn2PyErr();
-        __PYX_ERR(0, 381, __pyx_L24_error)
-      }
+      __pyx_t_6 = ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_c_bulk_action(__pyx_v_self, __pyx_v_word_array, __pyx_v_output_array, __pyx_v_unknown_len, __pyx_v_stem_action, __pyx_v_output_counts); if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 350, __pyx_L14_error)
 
-      /* "hunspell/hunspell.pyx":384
- * 
+      /* "hunspell/hunspell.pyx":353
+ *
  *                 # Parse the return
  *                 self._parse_bulk_results(ret_dict, unknown_words, output_counts, output_array)             # <<<<<<<<<<<<<<
- * 
+ *
  *                 # Add ret_dict words to cache
  */
-      try {
-        ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_parse_bulk_results(__pyx_v_self, __pyx_v_ret_dict, __pyx_v_unknown_words, __pyx_v_output_counts, __pyx_v_output_array);
-      } catch(...) {
-        __Pyx_CppExn2PyErr();
-        __PYX_ERR(0, 384, __pyx_L24_error)
-      }
+      ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_parse_bulk_results(__pyx_v_self, __pyx_v_ret_dict, __pyx_v_unknown_words, __pyx_v_output_counts, __pyx_v_output_array); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 353, __pyx_L14_error)
 
-      /* "hunspell/hunspell.pyx":387
- * 
+      /* "hunspell/hunspell.pyx":356
+ *
  *                 # Add ret_dict words to cache
- *                 if action == "stem":             # <<<<<<<<<<<<<<
- *                     for i from 0 <= i < len(unknown_words):
- *                         self._stem_cache[unknown_words[i]] = ret_dict[unknown_words[i]]
- */
-      __pyx_t_2 = (__Pyx_PyUnicode_Equals(__pyx_v_action, __pyx_n_s_stem, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 387, __pyx_L24_error)
-      __pyx_t_1 = (__pyx_t_2 != 0);
-      if (__pyx_t_1) {
-
-        /* "hunspell/hunspell.pyx":388
- *                 # Add ret_dict words to cache
- *                 if action == "stem":
- *                     for i from 0 <= i < len(unknown_words):             # <<<<<<<<<<<<<<
- *                         self._stem_cache[unknown_words[i]] = ret_dict[unknown_words[i]]
- *                 else:
- */
-        __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 388, __pyx_L24_error)
-        for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_5; __pyx_v_i++) {
-
-          /* "hunspell/hunspell.pyx":389
- *                 if action == "stem":
- *                     for i from 0 <= i < len(unknown_words):
- *                         self._stem_cache[unknown_words[i]] = ret_dict[unknown_words[i]]             # <<<<<<<<<<<<<<
- *                 else:
- *                     for i from 0 <= i < len(unknown_words):
- */
-          __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 389, __pyx_L24_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_ret_dict, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 389, __pyx_L24_error)
-          __Pyx_GOTREF(__pyx_t_4);
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 389, __pyx_L24_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          if (unlikely(PyObject_SetItem(__pyx_v_self->_stem_cache, __pyx_t_6, __pyx_t_4) < 0)) __PYX_ERR(0, 389, __pyx_L24_error)
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        }
-
-        /* "hunspell/hunspell.pyx":387
- * 
- *                 # Add ret_dict words to cache
- *                 if action == "stem":             # <<<<<<<<<<<<<<
- *                     for i from 0 <= i < len(unknown_words):
- *                         self._stem_cache[unknown_words[i]] = ret_dict[unknown_words[i]]
- */
-        goto __pyx_L26;
-      }
-
-      /* "hunspell/hunspell.pyx":391
- *                         self._stem_cache[unknown_words[i]] = ret_dict[unknown_words[i]]
- *                 else:
- *                     for i from 0 <= i < len(unknown_words):             # <<<<<<<<<<<<<<
- *                         self._suggest_cache[unknown_words[i]] = ret_dict[unknown_words[i]]
- *                 return ret_dict
- */
-      /*else*/ {
-        __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 391, __pyx_L24_error)
-        for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_5; __pyx_v_i++) {
-
-          /* "hunspell/hunspell.pyx":392
- *                 else:
- *                     for i from 0 <= i < len(unknown_words):
- *                         self._suggest_cache[unknown_words[i]] = ret_dict[unknown_words[i]]             # <<<<<<<<<<<<<<
- *                 return ret_dict
+ *                 for i from 0 <= i < unknown_len:             # <<<<<<<<<<<<<<
+ *                     cache[unknown_words[i]] = ret_dict[unknown_words[i]]
  *             finally:
  */
-          __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 392, __pyx_L24_error)
-          __Pyx_GOTREF(__pyx_t_4);
-          __pyx_t_6 = __Pyx_PyDict_GetItem(__pyx_v_ret_dict, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 392, __pyx_L24_error)
-          __Pyx_GOTREF(__pyx_t_6);
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          __pyx_t_4 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 392, __pyx_L24_error)
-          __Pyx_GOTREF(__pyx_t_4);
-          if (unlikely(PyObject_SetItem(__pyx_v_self->_suggest_cache, __pyx_t_4, __pyx_t_6) < 0)) __PYX_ERR(0, 392, __pyx_L24_error)
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        }
-      }
-      __pyx_L26:;
+      __pyx_t_6 = __pyx_v_unknown_len;
+      for (__pyx_v_i = 0; __pyx_v_i < __pyx_t_6; __pyx_v_i++) {
 
-      /* "hunspell/hunspell.pyx":393
- *                     for i from 0 <= i < len(unknown_words):
- *                         self._suggest_cache[unknown_words[i]] = ret_dict[unknown_words[i]]
- *                 return ret_dict             # <<<<<<<<<<<<<<
+        /* "hunspell/hunspell.pyx":357
+ *                 # Add ret_dict words to cache
+ *                 for i from 0 <= i < unknown_len:
+ *                     cache[unknown_words[i]] = ret_dict[unknown_words[i]]             # <<<<<<<<<<<<<<
  *             finally:
  *                 # Free top level stuff
  */
-      __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_v_ret_dict);
-      __pyx_r = __pyx_v_ret_dict;
-      goto __pyx_L23_return;
+        if (unlikely(__pyx_v_ret_dict == Py_None)) {
+          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+          __PYX_ERR(0, 357, __pyx_L14_error)
+        }
+        if (unlikely(__pyx_v_unknown_words == Py_None)) {
+          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+          __PYX_ERR(0, 357, __pyx_L14_error)
+        }
+        __pyx_t_2 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 1, 1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 357, __pyx_L14_error)
+        __Pyx_GOTREF(__pyx_t_2);
+        __pyx_t_5 = __Pyx_PyDict_GetItem(__pyx_v_ret_dict, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 357, __pyx_L14_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        if (unlikely(__pyx_v_unknown_words == Py_None)) {
+          PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+          __PYX_ERR(0, 357, __pyx_L14_error)
+        }
+        __pyx_t_2 = __Pyx_GetItemInt_List(__pyx_v_unknown_words, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 1, 1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 357, __pyx_L14_error)
+        __Pyx_GOTREF(__pyx_t_2);
+        if (unlikely(PyObject_SetItem(__pyx_v_cache, __pyx_t_2, __pyx_t_5) < 0)) __PYX_ERR(0, 357, __pyx_L14_error)
+        __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      }
     }
 
-    /* "hunspell/hunspell.pyx":396
+    /* "hunspell/hunspell.pyx":360
  *             finally:
  *                 # Free top level stuff
  *                 free(output_array)             # <<<<<<<<<<<<<<
@@ -6393,207 +6667,169 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_14bulk_action(struc
  *         finally:
  */
     /*finally:*/ {
-      /*exception exit:*/{
-        __Pyx_PyThreadState_declare
-        __pyx_L24_error:;
-        __pyx_t_14 = 0; __pyx_t_15 = 0; __pyx_t_16 = 0; __pyx_t_17 = 0; __pyx_t_18 = 0; __pyx_t_19 = 0;
-        __Pyx_PyThreadState_assign
-        __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-        __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-        if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_17, &__pyx_t_18, &__pyx_t_19);
-        if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_14, &__pyx_t_15, &__pyx_t_16) < 0)) __Pyx_ErrFetch(&__pyx_t_14, &__pyx_t_15, &__pyx_t_16);
-        __Pyx_XGOTREF(__pyx_t_14);
-        __Pyx_XGOTREF(__pyx_t_15);
-        __Pyx_XGOTREF(__pyx_t_16);
-        __Pyx_XGOTREF(__pyx_t_17);
-        __Pyx_XGOTREF(__pyx_t_18);
-        __Pyx_XGOTREF(__pyx_t_19);
-        __pyx_t_11 = __pyx_lineno; __pyx_t_12 = __pyx_clineno; __pyx_t_13 = __pyx_filename;
-        {
-          free(__pyx_v_output_array);
+      /*normal exit:*/{
+        free(__pyx_v_output_array);
 
-          /* "hunspell/hunspell.pyx":397
+        /* "hunspell/hunspell.pyx":361
  *                 # Free top level stuff
  *                 free(output_array)
  *                 free(output_counts)             # <<<<<<<<<<<<<<
  *         finally:
- *             self._cxx_hunspell.free_list(&word_array, len(unknown_words))
+ *             self._cxx_hunspell.free_list(&word_array, unknown_len)
  */
-          free(__pyx_v_output_counts);
-        }
-        __Pyx_PyThreadState_assign
-        if (PY_MAJOR_VERSION >= 3) {
-          __Pyx_XGIVEREF(__pyx_t_17);
-          __Pyx_XGIVEREF(__pyx_t_18);
-          __Pyx_XGIVEREF(__pyx_t_19);
-          __Pyx_ExceptionReset(__pyx_t_17, __pyx_t_18, __pyx_t_19);
-        }
-        __Pyx_XGIVEREF(__pyx_t_14);
-        __Pyx_XGIVEREF(__pyx_t_15);
-        __Pyx_XGIVEREF(__pyx_t_16);
-        __Pyx_ErrRestore(__pyx_t_14, __pyx_t_15, __pyx_t_16);
-        __pyx_t_14 = 0; __pyx_t_15 = 0; __pyx_t_16 = 0; __pyx_t_17 = 0; __pyx_t_18 = 0; __pyx_t_19 = 0;
-        __pyx_lineno = __pyx_t_11; __pyx_clineno = __pyx_t_12; __pyx_filename = __pyx_t_13;
-        goto __pyx_L18_error;
+        free(__pyx_v_output_counts);
+        goto __pyx_L15;
       }
-      __pyx_L23_return: {
-        __pyx_t_19 = __pyx_r;
-        __pyx_r = 0;
+      /*exception exit:*/{
+        __Pyx_PyThreadState_declare
+        __pyx_L14_error:;
+        __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0; __pyx_t_15 = 0; __pyx_t_16 = 0;
+        __Pyx_PyThreadState_assign
+        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_14, &__pyx_t_15, &__pyx_t_16);
+        if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13) < 0)) __Pyx_ErrFetch(&__pyx_t_11, &__pyx_t_12, &__pyx_t_13);
+        __Pyx_XGOTREF(__pyx_t_11);
+        __Pyx_XGOTREF(__pyx_t_12);
+        __Pyx_XGOTREF(__pyx_t_13);
+        __Pyx_XGOTREF(__pyx_t_14);
+        __Pyx_XGOTREF(__pyx_t_15);
+        __Pyx_XGOTREF(__pyx_t_16);
+        __pyx_t_6 = __pyx_lineno; __pyx_t_9 = __pyx_clineno; __pyx_t_10 = __pyx_filename;
+        {
 
-        /* "hunspell/hunspell.pyx":396
+          /* "hunspell/hunspell.pyx":360
  *             finally:
  *                 # Free top level stuff
  *                 free(output_array)             # <<<<<<<<<<<<<<
  *                 free(output_counts)
  *         finally:
  */
-        free(__pyx_v_output_array);
+          free(__pyx_v_output_array);
 
-        /* "hunspell/hunspell.pyx":397
+          /* "hunspell/hunspell.pyx":361
  *                 # Free top level stuff
  *                 free(output_array)
  *                 free(output_counts)             # <<<<<<<<<<<<<<
  *         finally:
- *             self._cxx_hunspell.free_list(&word_array, len(unknown_words))
+ *             self._cxx_hunspell.free_list(&word_array, unknown_len)
  */
-        free(__pyx_v_output_counts);
-        __pyx_r = __pyx_t_19;
-        __pyx_t_19 = 0;
-        goto __pyx_L17_return;
+          free(__pyx_v_output_counts);
+        }
+        __Pyx_PyThreadState_assign
+        if (PY_MAJOR_VERSION >= 3) {
+          __Pyx_XGIVEREF(__pyx_t_14);
+          __Pyx_XGIVEREF(__pyx_t_15);
+          __Pyx_XGIVEREF(__pyx_t_16);
+          __Pyx_ExceptionReset(__pyx_t_14, __pyx_t_15, __pyx_t_16);
+        }
+        __Pyx_XGIVEREF(__pyx_t_11);
+        __Pyx_XGIVEREF(__pyx_t_12);
+        __Pyx_XGIVEREF(__pyx_t_13);
+        __Pyx_ErrRestore(__pyx_t_11, __pyx_t_12, __pyx_t_13);
+        __pyx_t_11 = 0; __pyx_t_12 = 0; __pyx_t_13 = 0; __pyx_t_14 = 0; __pyx_t_15 = 0; __pyx_t_16 = 0;
+        __pyx_lineno = __pyx_t_6; __pyx_clineno = __pyx_t_9; __pyx_filename = __pyx_t_10;
+        goto __pyx_L8_error;
       }
+      __pyx_L15:;
     }
   }
 
-  /* "hunspell/hunspell.pyx":399
+  /* "hunspell/hunspell.pyx":363
  *                 free(output_counts)
  *         finally:
- *             self._cxx_hunspell.free_list(&word_array, len(unknown_words))             # <<<<<<<<<<<<<<
+ *             self._cxx_hunspell.free_list(&word_array, unknown_len)             # <<<<<<<<<<<<<<
  */
   /*finally:*/ {
+    /*normal exit:*/{
+      __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_word_array), __pyx_v_unknown_len);
+      goto __pyx_L9;
+    }
     /*exception exit:*/{
       __Pyx_PyThreadState_declare
-      __pyx_L18_error:;
-      __pyx_t_19 = 0; __pyx_t_18 = 0; __pyx_t_17 = 0; __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0;
+      __pyx_L8_error:;
+      __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0; __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0;
       __Pyx_PyThreadState_assign
-      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-      __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_16, &__pyx_t_15, &__pyx_t_14);
-      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_19, &__pyx_t_18, &__pyx_t_17) < 0)) __Pyx_ErrFetch(&__pyx_t_19, &__pyx_t_18, &__pyx_t_17);
-      __Pyx_XGOTREF(__pyx_t_19);
-      __Pyx_XGOTREF(__pyx_t_18);
-      __Pyx_XGOTREF(__pyx_t_17);
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      if (PY_MAJOR_VERSION >= 3) __Pyx_ExceptionSwap(&__pyx_t_13, &__pyx_t_12, &__pyx_t_11);
+      if ((PY_MAJOR_VERSION < 3) || unlikely(__Pyx_GetException(&__pyx_t_16, &__pyx_t_15, &__pyx_t_14) < 0)) __Pyx_ErrFetch(&__pyx_t_16, &__pyx_t_15, &__pyx_t_14);
       __Pyx_XGOTREF(__pyx_t_16);
       __Pyx_XGOTREF(__pyx_t_15);
       __Pyx_XGOTREF(__pyx_t_14);
-      __pyx_t_12 = __pyx_lineno; __pyx_t_11 = __pyx_clineno; __pyx_t_20 = __pyx_filename;
+      __Pyx_XGOTREF(__pyx_t_13);
+      __Pyx_XGOTREF(__pyx_t_12);
+      __Pyx_XGOTREF(__pyx_t_11);
+      __pyx_t_9 = __pyx_lineno; __pyx_t_6 = __pyx_clineno; __pyx_t_17 = __pyx_filename;
       {
-        __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 399, __pyx_L34_error)
-        __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_word_array), __pyx_t_5);
+        __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_word_array), __pyx_v_unknown_len);
       }
       __Pyx_PyThreadState_assign
       if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_16);
-        __Pyx_XGIVEREF(__pyx_t_15);
-        __Pyx_XGIVEREF(__pyx_t_14);
-        __Pyx_ExceptionReset(__pyx_t_16, __pyx_t_15, __pyx_t_14);
+        __Pyx_XGIVEREF(__pyx_t_13);
+        __Pyx_XGIVEREF(__pyx_t_12);
+        __Pyx_XGIVEREF(__pyx_t_11);
+        __Pyx_ExceptionReset(__pyx_t_13, __pyx_t_12, __pyx_t_11);
       }
-      __Pyx_XGIVEREF(__pyx_t_19);
-      __Pyx_XGIVEREF(__pyx_t_18);
-      __Pyx_XGIVEREF(__pyx_t_17);
-      __Pyx_ErrRestore(__pyx_t_19, __pyx_t_18, __pyx_t_17);
-      __pyx_t_19 = 0; __pyx_t_18 = 0; __pyx_t_17 = 0; __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0;
-      __pyx_lineno = __pyx_t_12; __pyx_clineno = __pyx_t_11; __pyx_filename = __pyx_t_20;
-      goto __pyx_L1_error;
-      __pyx_L34_error:;
-      __Pyx_PyThreadState_assign
-      if (PY_MAJOR_VERSION >= 3) {
-        __Pyx_XGIVEREF(__pyx_t_16);
-        __Pyx_XGIVEREF(__pyx_t_15);
-        __Pyx_XGIVEREF(__pyx_t_14);
-        __Pyx_ExceptionReset(__pyx_t_16, __pyx_t_15, __pyx_t_14);
-      }
-      __Pyx_XDECREF(__pyx_t_19); __pyx_t_19 = 0;
-      __Pyx_XDECREF(__pyx_t_18); __pyx_t_18 = 0;
-      __Pyx_XDECREF(__pyx_t_17); __pyx_t_17 = 0;
-      __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0;
+      __Pyx_XGIVEREF(__pyx_t_16);
+      __Pyx_XGIVEREF(__pyx_t_15);
+      __Pyx_XGIVEREF(__pyx_t_14);
+      __Pyx_ErrRestore(__pyx_t_16, __pyx_t_15, __pyx_t_14);
+      __pyx_t_16 = 0; __pyx_t_15 = 0; __pyx_t_14 = 0; __pyx_t_13 = 0; __pyx_t_12 = 0; __pyx_t_11 = 0;
+      __pyx_lineno = __pyx_t_9; __pyx_clineno = __pyx_t_6; __pyx_filename = __pyx_t_17;
       goto __pyx_L1_error;
     }
-    __pyx_L17_return: {
-      __pyx_t_14 = __pyx_r;
-      __pyx_r = 0;
-      if (unlikely(!__pyx_v_unknown_words)) { __Pyx_RaiseUnboundLocalError("unknown_words"); __PYX_ERR(0, 399, __pyx_L1_error) }
-      if (unlikely(__pyx_v_unknown_words == Py_None)) {
-        PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-        __PYX_ERR(0, 399, __pyx_L1_error)
-      }
-      __pyx_t_5 = PyList_GET_SIZE(__pyx_v_unknown_words); if (unlikely(__pyx_t_5 == -1)) __PYX_ERR(0, 399, __pyx_L1_error)
-      __pyx_v_self->_cxx_hunspell->free_list((&__pyx_v_word_array), __pyx_t_5);
-      __pyx_r = __pyx_t_14;
-      __pyx_t_14 = 0;
-      goto __pyx_L0;
-    }
+    __pyx_L9:;
   }
 
-  /* "hunspell/hunspell.pyx":328
- *     # Python API - Accepts a list of words, returns a dict of words mapped to a list of their hunspell suggestions
- *     #
- *     def bulk_action(self, basestring action, list words):             # <<<<<<<<<<<<<<
- *         if not isinstance(words, list) or not words:
- *             raise TypeError()
+  /* "hunspell/hunspell.pyx":320
+ *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
+ *
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):             # <<<<<<<<<<<<<<
+ *         cdef int unknown_len = len(unknown_words)
+ *         # C version of: ["foo", "bar", "baz"]
  */
 
   /* function exit code */
+  goto __pyx_L0;
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_9);
-  __Pyx_XDECREF(__pyx_t_10);
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.bulk_action", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_WriteUnraisable("hunspell.hunspell.HunspellWrap._bulk_unknown_words", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_ret_dict);
-  __Pyx_XDECREF(__pyx_v_unknown_words);
+  __Pyx_XDECREF(__pyx_v_cache);
   __Pyx_XDECREF(__pyx_v_unknown_word);
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":107
+/* "hunspell/hunspell.pyx":84
  *     # C-realm properties
  *     cdef Hunspell *_cxx_hunspell
- *     cdef public int n_cpus             # <<<<<<<<<<<<<<
+ *     cdef public int max_threads             # <<<<<<<<<<<<<<
  *     cdef public basestring lang
  *     cdef public basestring _cache_manager_name
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_6n_cpus_1__get__(PyObject *__pyx_v_self); /*proto*/
-static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_6n_cpus_1__get__(PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11max_threads_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11max_threads_1__get__(PyObject *__pyx_v_self) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus___get__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self));
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_11max_threads___get__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self) {
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_11max_threads___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->n_cpus); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->max_threads); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -6602,7 +6838,7 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus___get__(str
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.n_cpus.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.max_threads.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -6611,40 +6847,40 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus___get__(str
 }
 
 /* Python wrapper */
-static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_6n_cpus_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
-static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_6n_cpus_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_11max_threads_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_11max_threads_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus_2__set__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_11max_threads_2__set__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_value));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_6n_cpus_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value) {
+static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_11max_threads_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("__set__", 0);
-  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_value); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 107, __pyx_L1_error)
-  __pyx_v_self->n_cpus = __pyx_t_1;
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_value); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 84, __pyx_L1_error)
+  __pyx_v_self->max_threads = __pyx_t_1;
 
   /* function exit code */
   __pyx_r = 0;
   goto __pyx_L0;
   __pyx_L1_error:;
-  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.n_cpus.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap.max_threads.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":108
+/* "hunspell/hunspell.pyx":85
  *     cdef Hunspell *_cxx_hunspell
- *     cdef public int n_cpus
+ *     cdef public int max_threads
  *     cdef public basestring lang             # <<<<<<<<<<<<<<
  *     cdef public basestring _cache_manager_name
  *     cdef public basestring _hunspell_dir
@@ -6697,7 +6933,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_4lang_2__set__(struct __p
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 108, __pyx_L1_error)
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 85, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -6747,12 +6983,12 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_4lang_4__del__(struct __p
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":109
- *     cdef public int n_cpus
+/* "hunspell/hunspell.pyx":86
+ *     cdef public int max_threads
  *     cdef public basestring lang
  *     cdef public basestring _cache_manager_name             # <<<<<<<<<<<<<<
  *     cdef public basestring _hunspell_dir
- *     cdef public object _suggest_cache
+ *     cdef public basestring _dic_encoding
  */
 
 /* Python wrapper */
@@ -6802,7 +7038,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_19_cache_manager_name_2__
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 109, __pyx_L1_error)
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 86, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -6852,12 +7088,12 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_19_cache_manager_name_4__
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":110
+/* "hunspell/hunspell.pyx":87
  *     cdef public basestring lang
  *     cdef public basestring _cache_manager_name
  *     cdef public basestring _hunspell_dir             # <<<<<<<<<<<<<<
+ *     cdef public basestring _dic_encoding
  *     cdef public object _suggest_cache
- *     cdef public object _stem_cache
  */
 
 /* Python wrapper */
@@ -6907,7 +7143,7 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_hunspell_dir_2__set__(
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 110, __pyx_L1_error)
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 87, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -6957,9 +7193,114 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_hunspell_dir_4__del__(
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":111
+/* "hunspell/hunspell.pyx":88
  *     cdef public basestring _cache_manager_name
  *     cdef public basestring _hunspell_dir
+ *     cdef public basestring _dic_encoding             # <<<<<<<<<<<<<<
+ *     cdef public object _suggest_cache
+ *     cdef public object _stem_cache
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding___get__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding___get__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_self->_dic_encoding);
+  __pyx_r = __pyx_v_self->_dic_encoding;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_2__set__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_2__set__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__set__", 0);
+  if (!(likely(__Pyx_PyBaseString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", (PY_MAJOR_VERSION < 3 ? "basestring" : "str"), Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_1 = __pyx_v_value;
+  __Pyx_INCREF(__pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __Pyx_GOTREF(__pyx_v_self->_dic_encoding);
+  __Pyx_DECREF(__pyx_v_self->_dic_encoding);
+  __pyx_v_self->_dic_encoding = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap._dic_encoding.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_5__del__(PyObject *__pyx_v_self); /*proto*/
+static int __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_5__del__(PyObject *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_4__del__(((struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_4__del__(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *__pyx_v_self) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__del__", 0);
+  __Pyx_INCREF(Py_None);
+  __Pyx_GIVEREF(Py_None);
+  __Pyx_GOTREF(__pyx_v_self->_dic_encoding);
+  __Pyx_DECREF(__pyx_v_self->_dic_encoding);
+  __pyx_v_self->_dic_encoding = ((PyObject*)Py_None);
+
+  /* function exit code */
+  __pyx_r = 0;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "hunspell/hunspell.pyx":89
+ *     cdef public basestring _hunspell_dir
+ *     cdef public basestring _dic_encoding
  *     cdef public object _suggest_cache             # <<<<<<<<<<<<<<
  *     cdef public object _stem_cache
  *     cdef char *affpath
@@ -7052,8 +7393,8 @@ static int __pyx_pf_8hunspell_8hunspell_12HunspellWrap_14_suggest_cache_4__del__
   return __pyx_r;
 }
 
-/* "hunspell/hunspell.pyx":112
- *     cdef public basestring _hunspell_dir
+/* "hunspell/hunspell.pyx":90
+ *     cdef public basestring _dic_encoding
  *     cdef public object _suggest_cache
  *     cdef public object _stem_cache             # <<<<<<<<<<<<<<
  *     cdef char *affpath
@@ -7162,6 +7503,7 @@ static PyObject *__pyx_tp_new_8hunspell_8hunspell_HunspellWrap(PyTypeObject *t, 
   p->lang = ((PyObject*)Py_None); Py_INCREF(Py_None);
   p->_cache_manager_name = ((PyObject*)Py_None); Py_INCREF(Py_None);
   p->_hunspell_dir = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->_dic_encoding = ((PyObject*)Py_None); Py_INCREF(Py_None);
   p->_suggest_cache = Py_None; Py_INCREF(Py_None);
   p->_stem_cache = Py_None; Py_INCREF(Py_None);
   return o;
@@ -7186,6 +7528,7 @@ static void __pyx_tp_dealloc_8hunspell_8hunspell_HunspellWrap(PyObject *o) {
   Py_CLEAR(p->lang);
   Py_CLEAR(p->_cache_manager_name);
   Py_CLEAR(p->_hunspell_dir);
+  Py_CLEAR(p->_dic_encoding);
   Py_CLEAR(p->_suggest_cache);
   Py_CLEAR(p->_stem_cache);
   (*Py_TYPE(o)->tp_free)(o);
@@ -7215,13 +7558,13 @@ static int __pyx_tp_clear_8hunspell_8hunspell_HunspellWrap(PyObject *o) {
   return 0;
 }
 
-static PyObject *__pyx_getprop_8hunspell_8hunspell_12HunspellWrap_n_cpus(PyObject *o, CYTHON_UNUSED void *x) {
-  return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_6n_cpus_1__get__(o);
+static PyObject *__pyx_getprop_8hunspell_8hunspell_12HunspellWrap_max_threads(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_11max_threads_1__get__(o);
 }
 
-static int __pyx_setprop_8hunspell_8hunspell_12HunspellWrap_n_cpus(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+static int __pyx_setprop_8hunspell_8hunspell_12HunspellWrap_max_threads(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
   if (v) {
-    return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_6n_cpus_3__set__(o, v);
+    return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_11max_threads_3__set__(o, v);
   }
   else {
     PyErr_SetString(PyExc_NotImplementedError, "__del__");
@@ -7268,6 +7611,19 @@ static int __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__hunspell_dir(PyObje
   }
 }
 
+static PyObject *__pyx_getprop_8hunspell_8hunspell_12HunspellWrap__dic_encoding(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_1__get__(o);
+}
+
+static int __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__dic_encoding(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_3__set__(o, v);
+  }
+  else {
+    return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_13_dic_encoding_5__del__(o);
+  }
+}
+
 static PyObject *__pyx_getprop_8hunspell_8hunspell_12HunspellWrap__suggest_cache(PyObject *o, CYTHON_UNUSED void *x) {
   return __pyx_pw_8hunspell_8hunspell_12HunspellWrap_14_suggest_cache_1__get__(o);
 }
@@ -7298,17 +7654,21 @@ static PyMethodDef __pyx_methods_8hunspell_8hunspell_HunspellWrap[] = {
   {"spell", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_5spell, METH_O, 0},
   {"suggest", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_7suggest, METH_O, 0},
   {"stem", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_9stem, METH_O, 0},
-  {"save_cache", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11save_cache, METH_NOARGS, 0},
-  {"set_concurrency", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13set_concurrency, METH_O, 0},
-  {"bulk_action", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_action, METH_VARARGS|METH_KEYWORDS, 0},
+  {"action", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_11action, METH_VARARGS|METH_KEYWORDS, 0},
+  {"bulk_suggest", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_13bulk_suggest, METH_O, 0},
+  {"bulk_stem", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_15bulk_stem, METH_O, 0},
+  {"bulk_action", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_17bulk_action, METH_VARARGS|METH_KEYWORDS, __pyx_doc_8hunspell_8hunspell_12HunspellWrap_16bulk_action},
+  {"save_cache", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_19save_cache, METH_NOARGS, 0},
+  {"set_concurrency", (PyCFunction)__pyx_pw_8hunspell_8hunspell_12HunspellWrap_21set_concurrency, METH_O, 0},
   {0, 0, 0, 0}
 };
 
 static struct PyGetSetDef __pyx_getsets_8hunspell_8hunspell_HunspellWrap[] = {
-  {(char *)"n_cpus", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap_n_cpus, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap_n_cpus, (char *)0, 0},
+  {(char *)"max_threads", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap_max_threads, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap_max_threads, (char *)0, 0},
   {(char *)"lang", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap_lang, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap_lang, (char *)0, 0},
   {(char *)"_cache_manager_name", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap__cache_manager_name, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__cache_manager_name, (char *)0, 0},
   {(char *)"_hunspell_dir", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap__hunspell_dir, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__hunspell_dir, (char *)0, 0},
+  {(char *)"_dic_encoding", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap__dic_encoding, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__dic_encoding, (char *)0, 0},
   {(char *)"_suggest_cache", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap__suggest_cache, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__suggest_cache, (char *)0, 0},
   {(char *)"_stem_cache", __pyx_getprop_8hunspell_8hunspell_12HunspellWrap__stem_cache, __pyx_setprop_8hunspell_8hunspell_12HunspellWrap__stem_cache, (char *)0, 0},
   {0, 0, 0, 0, 0}
@@ -7395,43 +7755,47 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
+  {&__pyx_kp_s_, __pyx_k_, sizeof(__pyx_k_), 0, 0, 1, 0},
+  {&__pyx_kp_u_, __pyx_k_, sizeof(__pyx_k_), 0, 1, 0, 0},
   {&__pyx_n_s_AutoSyncCache, __pyx_k_AutoSyncCache, sizeof(__pyx_k_AutoSyncCache), 0, 0, 1, 1},
+  {&__pyx_n_s_BYTES_TYPE, __pyx_k_BYTES_TYPE, sizeof(__pyx_k_BYTES_TYPE), 0, 0, 1, 1},
   {&__pyx_kp_s_C_Users_Matthew_Workspace_cython, __pyx_k_C_Users_Matthew_Workspace_cython, sizeof(__pyx_k_C_Users_Matthew_Workspace_cython), 0, 0, 1, 0},
   {&__pyx_kp_s_Could_not_create_thread, __pyx_k_Could_not_create_thread, sizeof(__pyx_k_Could_not_create_thread), 0, 0, 1, 0},
   {&__pyx_kp_s_Could_not_join_thread, __pyx_k_Could_not_join_thread, sizeof(__pyx_k_Could_not_join_thread), 0, 0, 1, 0},
   {&__pyx_kp_s_File_not_found_or_accessible, __pyx_k_File_not_found_or_accessible, sizeof(__pyx_k_File_not_found_or_accessible), 0, 0, 1, 0},
   {&__pyx_n_s_HUNSPELL_DATA, __pyx_k_HUNSPELL_DATA, sizeof(__pyx_k_HUNSPELL_DATA), 0, 0, 1, 1},
   {&__pyx_n_s_IOError, __pyx_k_IOError, sizeof(__pyx_k_IOError), 0, 0, 1, 1},
+  {&__pyx_n_s_LookupError, __pyx_k_LookupError, sizeof(__pyx_k_LookupError), 0, 0, 1, 1},
   {&__pyx_n_s_MemoryError, __pyx_k_MemoryError, sizeof(__pyx_k_MemoryError), 0, 0, 1, 1},
-  {&__pyx_n_s_NUMBER_OF_PROCESSORS, __pyx_k_NUMBER_OF_PROCESSORS, sizeof(__pyx_k_NUMBER_OF_PROCESSORS), 0, 0, 1, 1},
   {&__pyx_n_s_NonPersistentCache, __pyx_k_NonPersistentCache, sizeof(__pyx_k_NonPersistentCache), 0, 0, 1, 1},
   {&__pyx_n_s_OSError, __pyx_k_OSError, sizeof(__pyx_k_OSError), 0, 0, 1, 1},
   {&__pyx_n_s_R_OK, __pyx_k_R_OK, sizeof(__pyx_k_R_OK), 0, 0, 1, 1},
-  {&__pyx_n_s_SC_NPROCESSORS_ONLN, __pyx_k_SC_NPROCESSORS_ONLN, sizeof(__pyx_k_SC_NPROCESSORS_ONLN), 0, 0, 1, 1},
   {&__pyx_n_s_TimeCount, __pyx_k_TimeCount, sizeof(__pyx_k_TimeCount), 0, 0, 1, 1},
-  {&__pyx_n_s_TypeError, __pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 0, 1, 1},
   {&__pyx_kp_s_UTF_8, __pyx_k_UTF_8, sizeof(__pyx_k_UTF_8), 0, 0, 1, 0},
   {&__pyx_n_s_UnicodeDecodeError, __pyx_k_UnicodeDecodeError, sizeof(__pyx_k_UnicodeDecodeError), 0, 0, 1, 1},
-  {&__pyx_kp_u__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 1, 0, 0},
-  {&__pyx_kp_s__6, __pyx_k__6, sizeof(__pyx_k__6), 0, 0, 1, 0},
+  {&__pyx_kp_s__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 0, 1, 0},
   {&__pyx_n_s_abspath, __pyx_k_abspath, sizeof(__pyx_k_abspath), 0, 0, 1, 1},
   {&__pyx_n_s_access, __pyx_k_access, sizeof(__pyx_k_access), 0, 0, 1, 1},
   {&__pyx_n_s_action, __pyx_k_action, sizeof(__pyx_k_action), 0, 0, 1, 1},
   {&__pyx_kp_s_aff, __pyx_k_aff, sizeof(__pyx_k_aff), 0, 0, 1, 0},
   {&__pyx_n_s_append, __pyx_k_append, sizeof(__pyx_k_append), 0, 0, 1, 1},
+  {&__pyx_n_s_ascii, __pyx_k_ascii, sizeof(__pyx_k_ascii), 0, 0, 1, 1},
+  {&__pyx_n_s_bulk_action, __pyx_k_bulk_action, sizeof(__pyx_k_bulk_action), 0, 0, 1, 1},
   {&__pyx_n_s_cache_directory, __pyx_k_cache_directory, sizeof(__pyx_k_cache_directory), 0, 0, 1, 1},
   {&__pyx_n_s_cache_manager, __pyx_k_cache_manager, sizeof(__pyx_k_cache_manager), 0, 0, 1, 1},
   {&__pyx_n_s_cache_registered, __pyx_k_cache_registered, sizeof(__pyx_k_cache_registered), 0, 0, 1, 1},
   {&__pyx_n_s_cacheman_autosync, __pyx_k_cacheman_autosync, sizeof(__pyx_k_cacheman_autosync), 0, 0, 1, 1},
   {&__pyx_n_s_cacheman_cacher, __pyx_k_cacheman_cacher, sizeof(__pyx_k_cacheman_cacher), 0, 0, 1, 1},
   {&__pyx_n_s_cacheman_cachewrap, __pyx_k_cacheman_cachewrap, sizeof(__pyx_k_cacheman_cachewrap), 0, 0, 1, 1},
-  {&__pyx_n_s_detectCPUs, __pyx_k_detectCPUs, sizeof(__pyx_k_detectCPUs), 0, 0, 1, 1},
+  {&__pyx_n_s_decode, __pyx_k_decode, sizeof(__pyx_k_decode), 0, 0, 1, 1},
+  {&__pyx_n_s_detect_cpus, __pyx_k_detect_cpus, sizeof(__pyx_k_detect_cpus), 0, 0, 1, 1},
   {&__pyx_kp_s_dic, __pyx_k_dic, sizeof(__pyx_k_dic), 0, 0, 1, 0},
   {&__pyx_n_s_dictionaries, __pyx_k_dictionaries, sizeof(__pyx_k_dictionaries), 0, 0, 1, 1},
   {&__pyx_n_s_dirname, __pyx_k_dirname, sizeof(__pyx_k_dirname), 0, 0, 1, 1},
   {&__pyx_n_s_disk_cache_dir, __pyx_k_disk_cache_dir, sizeof(__pyx_k_disk_cache_dir), 0, 0, 1, 1},
   {&__pyx_n_s_en_US, __pyx_k_en_US, sizeof(__pyx_k_en_US), 0, 0, 1, 1},
   {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
+  {&__pyx_n_s_encoding, __pyx_k_encoding, sizeof(__pyx_k_encoding), 0, 0, 1, 1},
   {&__pyx_n_s_enumerate, __pyx_k_enumerate, sizeof(__pyx_k_enumerate), 0, 0, 1, 1},
   {&__pyx_n_s_environ, __pyx_k_environ, sizeof(__pyx_k_environ), 0, 0, 1, 1},
   {&__pyx_n_s_file, __pyx_k_file, sizeof(__pyx_k_file), 0, 0, 1, 1},
@@ -7448,32 +7812,30 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_join, __pyx_k_join, sizeof(__pyx_k_join), 0, 0, 1, 1},
   {&__pyx_n_s_lang, __pyx_k_lang, sizeof(__pyx_k_lang), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
-  {&__pyx_n_s_ncpus, __pyx_k_ncpus, sizeof(__pyx_k_ncpus), 0, 0, 1, 1},
   {&__pyx_n_s_os, __pyx_k_os, sizeof(__pyx_k_os), 0, 0, 1, 1},
   {&__pyx_n_s_path, __pyx_k_path, sizeof(__pyx_k_path), 0, 0, 1, 1},
-  {&__pyx_n_s_popen2, __pyx_k_popen2, sizeof(__pyx_k_popen2), 0, 0, 1, 1},
+  {&__pyx_n_s_platform, __pyx_k_platform, sizeof(__pyx_k_platform), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_vtable, __pyx_k_pyx_vtable, sizeof(__pyx_k_pyx_vtable), 0, 0, 1, 1},
-  {&__pyx_n_s_read, __pyx_k_read, sizeof(__pyx_k_read), 0, 0, 1, 1},
   {&__pyx_n_s_retrieve_cache, __pyx_k_retrieve_cache, sizeof(__pyx_k_retrieve_cache), 0, 0, 1, 1},
   {&__pyx_n_s_save_all_cache_contents, __pyx_k_save_all_cache_contents, sizeof(__pyx_k_save_all_cache_contents), 0, 0, 1, 1},
   {&__pyx_n_s_spell, __pyx_k_spell, sizeof(__pyx_k_spell), 0, 0, 1, 1},
   {&__pyx_n_s_stem, __pyx_k_stem, sizeof(__pyx_k_stem), 0, 0, 1, 1},
   {&__pyx_n_s_strict, __pyx_k_strict, sizeof(__pyx_k_strict), 0, 0, 1, 1},
-  {&__pyx_n_s_sysconf, __pyx_k_sysconf, sizeof(__pyx_k_sysconf), 0, 0, 1, 1},
-  {&__pyx_n_s_sysconf_names, __pyx_k_sysconf_names, sizeof(__pyx_k_sysconf_names), 0, 0, 1, 1},
-  {&__pyx_kp_s_sysctl_n_hw_ncpu, __pyx_k_sysctl_n_hw_ncpu, sizeof(__pyx_k_sysctl_n_hw_ncpu), 0, 0, 1, 0},
+  {&__pyx_n_s_suggest, __pyx_k_suggest, sizeof(__pyx_k_suggest), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_s_time_checks, __pyx_k_time_checks, sizeof(__pyx_k_time_checks), 0, 0, 1, 1},
+  {&__pyx_n_s_valid_encoding, __pyx_k_valid_encoding, sizeof(__pyx_k_valid_encoding), 0, 0, 1, 1},
+  {&__pyx_n_s_word, __pyx_k_word, sizeof(__pyx_k_word), 0, 0, 1, 1},
   {&__pyx_n_s_words, __pyx_k_words, sizeof(__pyx_k_words), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(0, 44, __pyx_L1_error)
-  __pyx_builtin_UnicodeDecodeError = __Pyx_GetBuiltinName(__pyx_n_s_UnicodeDecodeError); if (!__pyx_builtin_UnicodeDecodeError) __PYX_ERR(0, 54, __pyx_L1_error)
-  __pyx_builtin_IOError = __Pyx_GetBuiltinName(__pyx_n_s_IOError); if (!__pyx_builtin_IOError) __PYX_ERR(0, 130, __pyx_L1_error)
-  __pyx_builtin_OSError = __Pyx_GetBuiltinName(__pyx_n_s_OSError); if (!__pyx_builtin_OSError) __PYX_ERR(0, 296, __pyx_L1_error)
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 330, __pyx_L1_error)
-  __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(0, 361, __pyx_L1_error)
+  __pyx_builtin_LookupError = __Pyx_GetBuiltinName(__pyx_n_s_LookupError); if (!__pyx_builtin_LookupError) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(0, 33, __pyx_L1_error)
+  __pyx_builtin_UnicodeDecodeError = __Pyx_GetBuiltinName(__pyx_n_s_UnicodeDecodeError); if (!__pyx_builtin_UnicodeDecodeError) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_builtin_IOError = __Pyx_GetBuiltinName(__pyx_n_s_IOError); if (!__pyx_builtin_IOError) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_builtin_OSError = __Pyx_GetBuiltinName(__pyx_n_s_OSError); if (!__pyx_builtin_OSError) __PYX_ERR(0, 289, __pyx_L1_error)
+  __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(0, 330, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -7483,194 +7845,161 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "hunspell/hunspell.pyx":24
- *         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
- *             # Linux & Unix:
- *             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")             # <<<<<<<<<<<<<<
- *             if isinstance(ncpus, int) and ncpus > 0:
- *                 return ncpus
- */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_n_s_SC_NPROCESSORS_ONLN); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 24, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple_);
-  __Pyx_GIVEREF(__pyx_tuple_);
-
-  /* "hunspell/hunspell.pyx":28
- *                 return ncpus
- *         else: # OSX:
- *             return int(os.popen2("sysctl -n hw.ncpu")[1].read())             # <<<<<<<<<<<<<<
- *     # Windows:
- *     if "NUMBER_OF_PROCESSORS" in os.environ:
- */
-  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_sysctl_n_hw_ncpu); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 28, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__2);
-  __Pyx_GIVEREF(__pyx_tuple__2);
-
-  /* "hunspell/hunspell.pyx":40
- * cdef int copy_to_c_string(basestring py_unicode_string, char **holder) except -1:
- *     cdef size_t str_len = len(py_unicode_string)
- *     py_byte_string = py_unicode_string.encode('UTF-8', 'strict')             # <<<<<<<<<<<<<<
- *     cdef char *c_raw_string = py_byte_string
- *     holder[0] = <char *>malloc((str_len + 1) * sizeof(char)) # deref doesn't support left-hand assignment
- */
-  __pyx_tuple__3 = PyTuple_Pack(2, __pyx_kp_s_UTF_8, __pyx_n_s_strict); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 40, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__3);
-  __Pyx_GIVEREF(__pyx_tuple__3);
-
-  /* "hunspell/hunspell.pyx":146
+  /* "hunspell/hunspell.pyx":123
  *         # TODO - make these LRU caches so that you don't destroy your memory!
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.environ.get("HUNSPELL_DATA")             # <<<<<<<<<<<<<<
  *         if hunspell_data_dir is None:
  *             hunspell_data_dir = os.path.join(os.path.dirname(__file__), '..', 'dictionaries')
  */
-  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_n_s_HUNSPELL_DATA); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 146, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__5);
-  __Pyx_GIVEREF(__pyx_tuple__5);
+  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_n_s_HUNSPELL_DATA); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 123, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__2);
+  __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "hunspell/hunspell.pyx":159
+  /* "hunspell/hunspell.pyx":137
  *         if disk_cache_dir:
  *             manager.cache_directory = disk_cache_dir
  *         if not manager.cache_registered("hunspell_suggest"):             # <<<<<<<<<<<<<<
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  */
-  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 159, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__7);
-  __Pyx_GIVEREF(__pyx_tuple__7);
+  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__4)) __PYX_ERR(0, 137, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__4);
+  __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "hunspell/hunspell.pyx":161
+  /* "hunspell/hunspell.pyx":139
  *         if not manager.cache_registered("hunspell_suggest"):
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]             # <<<<<<<<<<<<<<
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  */
-  __pyx_tuple__8 = PyTuple_Pack(2, __pyx_int_60, __pyx_int_1000000); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 161, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__8);
-  __Pyx_GIVEREF(__pyx_tuple__8);
-  __pyx_tuple__9 = PyTuple_Pack(2, __pyx_int_300, __pyx_int_10000); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 161, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__9);
-  __Pyx_GIVEREF(__pyx_tuple__9);
-  __pyx_tuple__10 = PyTuple_Pack(2, __pyx_int_900, __pyx_int_1); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 161, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__10);
-  __Pyx_GIVEREF(__pyx_tuple__10);
+  __pyx_tuple__5 = PyTuple_Pack(2, __pyx_int_60, __pyx_int_1000000); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__5);
+  __Pyx_GIVEREF(__pyx_tuple__5);
+  __pyx_tuple__6 = PyTuple_Pack(2, __pyx_int_300, __pyx_int_10000); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__6);
+  __Pyx_GIVEREF(__pyx_tuple__6);
+  __pyx_tuple__7 = PyTuple_Pack(2, __pyx_int_900, __pyx_int_1); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__7);
+  __Pyx_GIVEREF(__pyx_tuple__7);
 
-  /* "hunspell/hunspell.pyx":162
+  /* "hunspell/hunspell.pyx":140
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)             # <<<<<<<<<<<<<<
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  */
-  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 162, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__11);
-  __Pyx_GIVEREF(__pyx_tuple__11);
+  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 140, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__8);
+  __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "hunspell/hunspell.pyx":164
+  /* "hunspell/hunspell.pyx":142
  *                 AutoSyncCache("hunspell_suggest", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)             # <<<<<<<<<<<<<<
  *         if not manager.cache_registered("hunspell_stem"):
  *             if disk_cache_dir:
  */
-  __pyx_tuple__12 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 164, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__12);
-  __Pyx_GIVEREF(__pyx_tuple__12);
+  __pyx_tuple__9 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 142, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__9);
+  __Pyx_GIVEREF(__pyx_tuple__9);
 
-  /* "hunspell/hunspell.pyx":165
+  /* "hunspell/hunspell.pyx":143
  *             else:
  *                 NonPersistentCache("hunspell_suggest", cache_manager=manager)
  *         if not manager.cache_registered("hunspell_stem"):             # <<<<<<<<<<<<<<
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  */
-  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 165, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__13);
-  __Pyx_GIVEREF(__pyx_tuple__13);
+  __pyx_tuple__10 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 143, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__10);
+  __Pyx_GIVEREF(__pyx_tuple__10);
 
-  /* "hunspell/hunspell.pyx":167
+  /* "hunspell/hunspell.pyx":145
  *         if not manager.cache_registered("hunspell_stem"):
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]             # <<<<<<<<<<<<<<
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  */
-  __pyx_tuple__14 = PyTuple_Pack(2, __pyx_int_60, __pyx_int_1000000); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 167, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__14);
-  __Pyx_GIVEREF(__pyx_tuple__14);
-  __pyx_tuple__15 = PyTuple_Pack(2, __pyx_int_300, __pyx_int_10000); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 167, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__15);
-  __Pyx_GIVEREF(__pyx_tuple__15);
-  __pyx_tuple__16 = PyTuple_Pack(2, __pyx_int_900, __pyx_int_1); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 167, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__16);
-  __Pyx_GIVEREF(__pyx_tuple__16);
+  __pyx_tuple__11 = PyTuple_Pack(2, __pyx_int_60, __pyx_int_1000000); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 145, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__11);
+  __Pyx_GIVEREF(__pyx_tuple__11);
+  __pyx_tuple__12 = PyTuple_Pack(2, __pyx_int_300, __pyx_int_10000); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 145, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__12);
+  __Pyx_GIVEREF(__pyx_tuple__12);
+  __pyx_tuple__13 = PyTuple_Pack(2, __pyx_int_900, __pyx_int_1); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 145, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__13);
+  __Pyx_GIVEREF(__pyx_tuple__13);
 
-  /* "hunspell/hunspell.pyx":168
+  /* "hunspell/hunspell.pyx":146
  *             if disk_cache_dir:
  *                 custom_time_checks = [TimeCount(60, 1000000), TimeCount(300, 10000), TimeCount(900, 1)]
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)             # <<<<<<<<<<<<<<
  *             else:
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)
  */
-  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 168, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__17);
-  __Pyx_GIVEREF(__pyx_tuple__17);
+  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 146, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__14);
+  __Pyx_GIVEREF(__pyx_tuple__14);
 
-  /* "hunspell/hunspell.pyx":170
+  /* "hunspell/hunspell.pyx":148
  *                 AutoSyncCache("hunspell_stem", cache_manager=manager, time_checks=custom_time_checks)
  *             else:
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)             # <<<<<<<<<<<<<<
  *         self._suggest_cache = manager.retrieve_cache("hunspell_suggest")
  *         self._stem_cache = manager.retrieve_cache("hunspell_stem")
  */
-  __pyx_tuple__18 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(0, 170, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__18);
-  __Pyx_GIVEREF(__pyx_tuple__18);
+  __pyx_tuple__15 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__15);
+  __Pyx_GIVEREF(__pyx_tuple__15);
 
-  /* "hunspell/hunspell.pyx":171
+  /* "hunspell/hunspell.pyx":149
  *             else:
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)
  *         self._suggest_cache = manager.retrieve_cache("hunspell_suggest")             # <<<<<<<<<<<<<<
  *         self._stem_cache = manager.retrieve_cache("hunspell_stem")
- * 
+ *
  */
-  __pyx_tuple__19 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 171, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
+  __pyx_tuple__16 = PyTuple_Pack(1, __pyx_n_s_hunspell_suggest); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__16);
+  __Pyx_GIVEREF(__pyx_tuple__16);
 
-  /* "hunspell/hunspell.pyx":172
+  /* "hunspell/hunspell.pyx":150
  *                 NonPersistentCache("hunspell_stem", cache_manager=manager)
  *         self._suggest_cache = manager.retrieve_cache("hunspell_suggest")
  *         self._stem_cache = manager.retrieve_cache("hunspell_stem")             # <<<<<<<<<<<<<<
- * 
- *     # Python Destructor
+ *
+ *     def __dealloc__(self):
  */
-  __pyx_tuple__20 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 172, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__20);
-  __Pyx_GIVEREF(__pyx_tuple__20);
+  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_s_hunspell_stem); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 150, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__17);
+  __Pyx_GIVEREF(__pyx_tuple__17);
 
-  /* "hunspell/hunspell.pyx":296
- *                     threads[i] = thread_create(&hunspell_suggest_worker, <void *> &thread_args[i])
+  /* "hunspell/hunspell.pyx":289
+ *                 threads[i] = thread_create(&hunspell_worker, <void *> &thread_args[i])
  *                 if threads[i] is NULL:
  *                     raise OSError("Could not create thread")             # <<<<<<<<<<<<<<
- * 
+ *
  *             # wait for each thread to complete
  */
-  __pyx_tuple__21 = PyTuple_Pack(1, __pyx_kp_s_Could_not_create_thread); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 296, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__21);
-  __Pyx_GIVEREF(__pyx_tuple__21);
+  __pyx_tuple__18 = PyTuple_Pack(1, __pyx_kp_s_Could_not_create_thread); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(0, 289, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__18);
+  __Pyx_GIVEREF(__pyx_tuple__18);
 
-  /* "hunspell/hunspell.pyx":19
- * 
- * # Detects the number of CPUs on a system. Cribbed from pp.
- * def detectCPUs():             # <<<<<<<<<<<<<<
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):
+  /* "hunspell/hunspell.pyx":15
+ * from hunspell.thread cimport *
+ *
+ * def valid_encoding(basestring encoding):             # <<<<<<<<<<<<<<
+ *     try:
+ *         "".encode(encoding, 'strict')
  */
-  __pyx_tuple__22 = PyTuple_Pack(1, __pyx_n_s_ncpus); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__22);
-  __Pyx_GIVEREF(__pyx_tuple__22);
-  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(0, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_C_Users_Matthew_Workspace_cython, __pyx_n_s_detectCPUs, 19, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_tuple__19 = PyTuple_Pack(1, __pyx_n_s_encoding); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__19);
+  __Pyx_GIVEREF(__pyx_tuple__19);
+  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_C_Users_Matthew_Workspace_cython, __pyx_n_s_valid_encoding, 15, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -7779,12 +8108,13 @@ PyMODINIT_FUNC PyInit_hunspell(void)
   /*--- Type init code ---*/
   __pyx_vtabptr_8hunspell_8hunspell_HunspellWrap = &__pyx_vtable_8hunspell_8hunspell_HunspellWrap;
   __pyx_vtable_8hunspell_8hunspell_HunspellWrap._create_hspell_inst = (Hunspell *(*)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *))__pyx_f_8hunspell_8hunspell_12HunspellWrap__create_hspell_inst;
-  __pyx_vtable_8hunspell_8hunspell_HunspellWrap._c_bulk_action = (int (*)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *, char **, char ***, int, int *))__pyx_f_8hunspell_8hunspell_12HunspellWrap__c_bulk_action;
+  __pyx_vtable_8hunspell_8hunspell_HunspellWrap._c_bulk_action = (int (*)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, char **, char ***, int, int, int *))__pyx_f_8hunspell_8hunspell_12HunspellWrap__c_bulk_action;
   __pyx_vtable_8hunspell_8hunspell_HunspellWrap._parse_bulk_results = (void (*)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *, PyObject *, int *, char ***))__pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results;
-  if (PyType_Ready(&__pyx_type_8hunspell_8hunspell_HunspellWrap) < 0) __PYX_ERR(0, 104, __pyx_L1_error)
+  __pyx_vtable_8hunspell_8hunspell_HunspellWrap._bulk_unknown_words = (void (*)(struct __pyx_obj_8hunspell_8hunspell_HunspellWrap *, PyObject *, int, PyObject *))__pyx_f_8hunspell_8hunspell_12HunspellWrap__bulk_unknown_words;
+  if (PyType_Ready(&__pyx_type_8hunspell_8hunspell_HunspellWrap) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
   __pyx_type_8hunspell_8hunspell_HunspellWrap.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_8hunspell_8hunspell_HunspellWrap.tp_dict, __pyx_vtabptr_8hunspell_8hunspell_HunspellWrap) < 0) __PYX_ERR(0, 104, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "HunspellWrap", (PyObject *)&__pyx_type_8hunspell_8hunspell_HunspellWrap) < 0) __PYX_ERR(0, 104, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_8hunspell_8hunspell_HunspellWrap.tp_dict, __pyx_vtabptr_8hunspell_8hunspell_HunspellWrap) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "HunspellWrap", (PyObject *)&__pyx_type_8hunspell_8hunspell_HunspellWrap) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
   __pyx_ptype_8hunspell_8hunspell_HunspellWrap = &__pyx_type_8hunspell_8hunspell_HunspellWrap;
   /*--- Type import code ---*/
   /*--- Variable import code ---*/
@@ -7796,8 +8126,8 @@ PyMODINIT_FUNC PyInit_hunspell(void)
 
   /* "hunspell/hunspell.pyx":1
  * import os             # <<<<<<<<<<<<<<
+ * from .platform import detect_cpus
  * from cacheman.cachewrap import NonPersistentCache
- * from cacheman.cacher import get_cache_manager
  */
   __pyx_t_1 = __Pyx_Import(__pyx_n_s_os, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -7806,94 +8136,115 @@ PyMODINIT_FUNC PyInit_hunspell(void)
 
   /* "hunspell/hunspell.pyx":2
  * import os
- * from cacheman.cachewrap import NonPersistentCache             # <<<<<<<<<<<<<<
+ * from .platform import detect_cpus             # <<<<<<<<<<<<<<
+ * from cacheman.cachewrap import NonPersistentCache
  * from cacheman.cacher import get_cache_manager
- * from cacheman.autosync import TimeCount, AutoSyncCache
  */
   __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_n_s_NonPersistentCache);
-  __Pyx_GIVEREF(__pyx_n_s_NonPersistentCache);
-  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_NonPersistentCache);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_cacheman_cachewrap, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_INCREF(__pyx_n_s_detect_cpus);
+  __Pyx_GIVEREF(__pyx_n_s_detect_cpus);
+  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_detect_cpus);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_platform, __pyx_t_1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_NonPersistentCache); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_detect_cpus); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_NonPersistentCache, __pyx_t_1) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_detect_cpus, __pyx_t_1) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "hunspell/hunspell.pyx":3
  * import os
- * from cacheman.cachewrap import NonPersistentCache
- * from cacheman.cacher import get_cache_manager             # <<<<<<<<<<<<<<
+ * from .platform import detect_cpus
+ * from cacheman.cachewrap import NonPersistentCache             # <<<<<<<<<<<<<<
+ * from cacheman.cacher import get_cache_manager
  * from cacheman.autosync import TimeCount, AutoSyncCache
- * 
  */
   __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_INCREF(__pyx_n_s_get_cache_manager);
-  __Pyx_GIVEREF(__pyx_n_s_get_cache_manager);
-  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_get_cache_manager);
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_cacheman_cacher, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __Pyx_INCREF(__pyx_n_s_NonPersistentCache);
+  __Pyx_GIVEREF(__pyx_n_s_NonPersistentCache);
+  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_NonPersistentCache);
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_cacheman_cachewrap, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_get_cache_manager); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_NonPersistentCache); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_cache_manager, __pyx_t_2) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_NonPersistentCache, __pyx_t_2) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "hunspell/hunspell.pyx":4
+ * from .platform import detect_cpus
+ * from cacheman.cachewrap import NonPersistentCache
+ * from cacheman.cacher import get_cache_manager             # <<<<<<<<<<<<<<
+ * from cacheman.autosync import TimeCount, AutoSyncCache
+ *
+ */
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_n_s_get_cache_manager);
+  __Pyx_GIVEREF(__pyx_n_s_get_cache_manager);
+  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_get_cache_manager);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_cacheman_cacher, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_cache_manager); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_cache_manager, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "hunspell/hunspell.pyx":5
  * from cacheman.cachewrap import NonPersistentCache
  * from cacheman.cacher import get_cache_manager
  * from cacheman.autosync import TimeCount, AutoSyncCache             # <<<<<<<<<<<<<<
- * 
+ *
  * from libc.stdlib cimport *
  */
-  __pyx_t_1 = PyList_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = PyList_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_n_s_TimeCount);
   __Pyx_GIVEREF(__pyx_n_s_TimeCount);
-  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_TimeCount);
+  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_TimeCount);
   __Pyx_INCREF(__pyx_n_s_AutoSyncCache);
   __Pyx_GIVEREF(__pyx_n_s_AutoSyncCache);
-  PyList_SET_ITEM(__pyx_t_1, 1, __pyx_n_s_AutoSyncCache);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_cacheman_autosync, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_TimeCount); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  PyList_SET_ITEM(__pyx_t_2, 1, __pyx_n_s_AutoSyncCache);
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_cacheman_autosync, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TimeCount, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_AutoSyncCache); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_AutoSyncCache, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_TimeCount); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_TimeCount, __pyx_t_2) < 0) __PYX_ERR(0, 5, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_AutoSyncCache); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_AutoSyncCache, __pyx_t_2) < 0) __PYX_ERR(0, 5, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "hunspell/hunspell.pyx":19
- * 
- * # Detects the number of CPUs on a system. Cribbed from pp.
- * def detectCPUs():             # <<<<<<<<<<<<<<
- *     # Linux, Unix and MacOS:
- *     if hasattr(os, "sysconf"):
+  /* "hunspell/hunspell.pyx":15
+ * from hunspell.thread cimport *
+ *
+ * def valid_encoding(basestring encoding):             # <<<<<<<<<<<<<<
+ *     try:
+ *         "".encode(encoding, 'strict')
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_8hunspell_8hunspell_1detectCPUs, NULL, __pyx_n_s_hunspell_hunspell); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_detectCPUs, __pyx_t_2) < 0) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_8hunspell_8hunspell_1valid_encoding, NULL, __pyx_n_s_hunspell_hunspell); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_valid_encoding, __pyx_t_1) < 0) __PYX_ERR(0, 15, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "hunspell/hunspell.pyx":1
  * import os             # <<<<<<<<<<<<<<
+ * from .platform import detect_cpus, BYTES_TYPE
  * from cacheman.cachewrap import NonPersistentCache
- * from cacheman.cacher import get_cache_manager
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -7950,145 +8301,35 @@ static PyObject *__Pyx_GetBuiltinName(PyObject *name) {
     return result;
 }
 
-/* GetModuleGlobalName */
-static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name) {
-    PyObject *result;
-#if !CYTHON_AVOID_BORROWED_REFS
-    result = PyDict_GetItem(__pyx_d, name);
-    if (likely(result)) {
-        Py_INCREF(result);
-    } else {
-#else
-    result = PyObject_GetItem(__pyx_d, name);
-    if (!result) {
-        PyErr_Clear();
-#endif
-        result = __Pyx_GetBuiltinName(name);
-    }
-    return result;
+/* ArgTypeTest */
+static void __Pyx_RaiseArgumentTypeInvalid(const char* name, PyObject *obj, PyTypeObject *type) {
+    PyErr_Format(PyExc_TypeError,
+        "Argument '%.200s' has incorrect type (expected %.200s, got %.200s)",
+        name, type->tp_name, Py_TYPE(obj)->tp_name);
 }
-
-/* PyObjectCall */
-  #if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
-    PyObject *result;
-    ternaryfunc call = func->ob_type->tp_call;
-    if (unlikely(!call))
-        return PyObject_Call(func, arg, kw);
-    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
-        return NULL;
-    result = (*call)(func, arg, kw);
-    Py_LeaveRecursiveCall();
-    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
-        PyErr_SetString(
-            PyExc_SystemError,
-            "NULL result without error in PyObject_Call");
+static CYTHON_INLINE int __Pyx_ArgTypeTest(PyObject *obj, PyTypeObject *type, int none_allowed,
+    const char *name, int exact)
+{
+    if (unlikely(!type)) {
+        PyErr_SetString(PyExc_SystemError, "Missing type object");
+        return 0;
     }
-    return result;
-}
-#endif
-
-/* GetItemInt */
-  static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
-    PyObject *r;
-    if (!j) return NULL;
-    r = PyObject_GetItem(o, j);
-    Py_DECREF(j);
-    return r;
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              CYTHON_NCP_UNUSED int wraparound,
-                                                              CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    if (wraparound & unlikely(i < 0)) i += PyList_GET_SIZE(o);
-    if ((!boundscheck) || likely((0 <= i) & (i < PyList_GET_SIZE(o)))) {
-        PyObject *r = PyList_GET_ITEM(o, i);
-        Py_INCREF(r);
-        return r;
+    if (none_allowed && obj == Py_None) return 1;
+    else if (exact) {
+        if (likely(Py_TYPE(obj) == type)) return 1;
+        #if PY_MAJOR_VERSION == 2
+        else if ((type == &PyBaseString_Type) && likely(__Pyx_PyBaseString_CheckExact(obj))) return 1;
+        #endif
     }
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-#else
-    return PySequence_GetItem(o, i);
-#endif
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              CYTHON_NCP_UNUSED int wraparound,
-                                                              CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    if (wraparound & unlikely(i < 0)) i += PyTuple_GET_SIZE(o);
-    if ((!boundscheck) || likely((0 <= i) & (i < PyTuple_GET_SIZE(o)))) {
-        PyObject *r = PyTuple_GET_ITEM(o, i);
-        Py_INCREF(r);
-        return r;
+    else {
+        if (likely(PyObject_TypeCheck(obj, type))) return 1;
     }
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-#else
-    return PySequence_GetItem(o, i);
-#endif
+    __Pyx_RaiseArgumentTypeInvalid(name, obj, type);
+    return 0;
 }
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
-                                                     CYTHON_NCP_UNUSED int wraparound,
-                                                     CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
-    if (is_list || PyList_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
-        if ((!boundscheck) || (likely((n >= 0) & (n < PyList_GET_SIZE(o))))) {
-            PyObject *r = PyList_GET_ITEM(o, n);
-            Py_INCREF(r);
-            return r;
-        }
-    }
-    else if (PyTuple_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
-        if ((!boundscheck) || likely((n >= 0) & (n < PyTuple_GET_SIZE(o)))) {
-            PyObject *r = PyTuple_GET_ITEM(o, n);
-            Py_INCREF(r);
-            return r;
-        }
-    } else {
-        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
-        if (likely(m && m->sq_item)) {
-            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
-                Py_ssize_t l = m->sq_length(o);
-                if (likely(l >= 0)) {
-                    i += l;
-                } else {
-                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                        return NULL;
-                    PyErr_Clear();
-                }
-            }
-            return m->sq_item(o, i);
-        }
-    }
-#else
-    if (is_list || PySequence_Check(o)) {
-        return PySequence_GetItem(o, i);
-    }
-#endif
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-}
-
-/* PyCFunctionFastCall */
-  #if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
-    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
-    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
-    PyObject *self = PyCFunction_GET_SELF(func);
-    assert(PyCFunction_Check(func));
-    assert(METH_FASTCALL == (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST)));
-    assert(nargs >= 0);
-    assert(nargs == 0 || args != NULL);
-    /* _PyCFunction_FastCallDict() must not be called with an exception set,
-       because it may clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!PyErr_Occurred());
-    return (*((__Pyx_PyCFunctionFast)meth)) (self, args, nargs, NULL);
-}
-#endif  // CYTHON_FAST_PYCCALL
 
 /* PyFunctionFastCall */
-  #if CYTHON_FAST_PYCALL
+#if CYTHON_FAST_PYCALL
 #include "frameobject.h"
 static PyObject* __Pyx_PyFunction_FastCallNoKw(PyCodeObject *co, PyObject **args, Py_ssize_t na,
                                                PyObject *globals) {
@@ -8207,16 +8448,34 @@ done:
 #endif  // CPython < 3.6
 #endif  // CYTHON_FAST_PYCALL
 
-/* PyObjectCallMethO */
-  #if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg) {
-    PyObject *self, *result;
-    PyCFunction cfunc;
-    cfunc = PyCFunction_GET_FUNCTION(func);
-    self = PyCFunction_GET_SELF(func);
+/* PyCFunctionFastCall */
+#if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
+    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
+    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
+    PyObject *self = PyCFunction_GET_SELF(func);
+    assert(PyCFunction_Check(func));
+    assert(METH_FASTCALL == (PyCFunction_GET_FLAGS(func) & ~(METH_CLASS | METH_STATIC | METH_COEXIST)));
+    assert(nargs >= 0);
+    assert(nargs == 0 || args != NULL);
+    /* _PyCFunction_FastCallDict() must not be called with an exception set,
+       because it may clear it (directly or indirectly) and so the
+       caller loses its exception */
+    assert(!PyErr_Occurred());
+    return (*((__Pyx_PyCFunctionFast)meth)) (self, args, nargs, NULL);
+}
+#endif  // CYTHON_FAST_PYCCALL
+
+/* PyObjectCall */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
+    PyObject *result;
+    ternaryfunc call = func->ob_type->tp_call;
+    if (unlikely(!call))
+        return PyObject_Call(func, arg, kw);
     if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
         return NULL;
-    result = cfunc(self, arg);
+    result = (*call)(func, arg, kw);
     Py_LeaveRecursiveCall();
     if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
         PyErr_SetString(
@@ -8227,106 +8486,8 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject
 }
 #endif
 
-/* PyObjectCallOneArg */
-  #if CYTHON_COMPILING_IN_CPYTHON
-static PyObject* __Pyx__PyObject_CallOneArg(PyObject *func, PyObject *arg) {
-    PyObject *result;
-    PyObject *args = PyTuple_New(1);
-    if (unlikely(!args)) return NULL;
-    Py_INCREF(arg);
-    PyTuple_SET_ITEM(args, 0, arg);
-    result = __Pyx_PyObject_Call(func, args, NULL);
-    Py_DECREF(args);
-    return result;
-}
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg) {
-#if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(func)) {
-        return __Pyx_PyFunction_FastCall(func, &arg, 1);
-    }
-#endif
-#ifdef __Pyx_CyFunction_USED
-    if (likely(PyCFunction_Check(func) || PyObject_TypeCheck(func, __pyx_CyFunctionType))) {
-#else
-    if (likely(PyCFunction_Check(func))) {
-#endif
-        if (likely(PyCFunction_GET_FLAGS(func) & METH_O)) {
-            return __Pyx_PyObject_CallMethO(func, arg);
-#if CYTHON_FAST_PYCCALL
-        } else if (PyCFunction_GET_FLAGS(func) & METH_FASTCALL) {
-            return __Pyx_PyCFunction_FastCall(func, &arg, 1);
-#endif
-        }
-    }
-    return __Pyx__PyObject_CallOneArg(func, arg);
-}
-#else
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg) {
-    PyObject *result;
-    PyObject *args = PyTuple_Pack(1, arg);
-    if (unlikely(!args)) return NULL;
-    result = __Pyx_PyObject_Call(func, args, NULL);
-    Py_DECREF(args);
-    return result;
-}
-#endif
-
-/* PyObjectCallNoArg */
-    #if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
-#if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(func)) {
-        return __Pyx_PyFunction_FastCall(func, NULL, 0);
-    }
-#endif
-#ifdef __Pyx_CyFunction_USED
-    if (likely(PyCFunction_Check(func) || PyObject_TypeCheck(func, __pyx_CyFunctionType))) {
-#else
-    if (likely(PyCFunction_Check(func))) {
-#endif
-        if (likely(PyCFunction_GET_FLAGS(func) & METH_NOARGS)) {
-            return __Pyx_PyObject_CallMethO(func, NULL);
-        }
-    }
-    return __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL);
-}
-#endif
-
-/* decode_c_string */
-      static CYTHON_INLINE PyObject* __Pyx_decode_c_string(
-         const char* cstring, Py_ssize_t start, Py_ssize_t stop,
-         const char* encoding, const char* errors,
-         PyObject* (*decode_func)(const char *s, Py_ssize_t size, const char *errors)) {
-    Py_ssize_t length;
-    if (unlikely((start < 0) | (stop < 0))) {
-        size_t slen = strlen(cstring);
-        if (unlikely(slen > (size_t) PY_SSIZE_T_MAX)) {
-            PyErr_SetString(PyExc_OverflowError,
-                            "c-string too long to convert to Python");
-            return NULL;
-        }
-        length = (Py_ssize_t) slen;
-        if (start < 0) {
-            start += length;
-            if (start < 0)
-                start = 0;
-        }
-        if (stop < 0)
-            stop += length;
-    }
-    length = stop - start;
-    if (unlikely(length <= 0))
-        return PyUnicode_FromUnicode(NULL, 0);
-    cstring += start;
-    if (decode_func) {
-        return decode_func(cstring, length, errors);
-    } else {
-        return PyUnicode_Decode(cstring, length, encoding, errors);
-    }
-}
-
 /* SaveResetException */
-      #if CYTHON_FAST_THREAD_STATE
+#if CYTHON_FAST_THREAD_STATE
 static CYTHON_INLINE void __Pyx__ExceptionSave(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
     *type = tstate->exc_type;
     *value = tstate->exc_value;
@@ -8350,7 +8511,7 @@ static CYTHON_INLINE void __Pyx__ExceptionReset(PyThreadState *tstate, PyObject 
 #endif
 
 /* PyErrExceptionMatches */
-      #if CYTHON_FAST_THREAD_STATE
+#if CYTHON_FAST_THREAD_STATE
 static CYTHON_INLINE int __Pyx_PyErr_ExceptionMatchesInState(PyThreadState* tstate, PyObject* err) {
     PyObject *exc_type = tstate->curexc_type;
     if (exc_type == err) return 1;
@@ -8360,7 +8521,7 @@ static CYTHON_INLINE int __Pyx_PyErr_ExceptionMatchesInState(PyThreadState* tsta
 #endif
 
 /* GetException */
-      #if CYTHON_FAST_THREAD_STATE
+#if CYTHON_FAST_THREAD_STATE
 static int __Pyx__GetException(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
 #else
 static int __Pyx_GetException(PyObject **type, PyObject **value, PyObject **tb) {
@@ -8420,8 +8581,90 @@ bad:
     return -1;
 }
 
+/* GetModuleGlobalName */
+  static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name) {
+    PyObject *result;
+#if !CYTHON_AVOID_BORROWED_REFS
+    result = PyDict_GetItem(__pyx_d, name);
+    if (likely(result)) {
+        Py_INCREF(result);
+    } else {
+#else
+    result = PyObject_GetItem(__pyx_d, name);
+    if (!result) {
+        PyErr_Clear();
+#endif
+        result = __Pyx_GetBuiltinName(name);
+    }
+    return result;
+}
+
+/* PyObjectCallMethO */
+    #if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg) {
+    PyObject *self, *result;
+    PyCFunction cfunc;
+    cfunc = PyCFunction_GET_FUNCTION(func);
+    self = PyCFunction_GET_SELF(func);
+    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
+        return NULL;
+    result = cfunc(self, arg);
+    Py_LeaveRecursiveCall();
+    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
+        PyErr_SetString(
+            PyExc_SystemError,
+            "NULL result without error in PyObject_Call");
+    }
+    return result;
+}
+#endif
+
+/* PyObjectCallOneArg */
+    #if CYTHON_COMPILING_IN_CPYTHON
+static PyObject* __Pyx__PyObject_CallOneArg(PyObject *func, PyObject *arg) {
+    PyObject *result;
+    PyObject *args = PyTuple_New(1);
+    if (unlikely(!args)) return NULL;
+    Py_INCREF(arg);
+    PyTuple_SET_ITEM(args, 0, arg);
+    result = __Pyx_PyObject_Call(func, args, NULL);
+    Py_DECREF(args);
+    return result;
+}
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg) {
+#if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(func)) {
+        return __Pyx_PyFunction_FastCall(func, &arg, 1);
+    }
+#endif
+#ifdef __Pyx_CyFunction_USED
+    if (likely(PyCFunction_Check(func) || PyObject_TypeCheck(func, __pyx_CyFunctionType))) {
+#else
+    if (likely(PyCFunction_Check(func))) {
+#endif
+        if (likely(PyCFunction_GET_FLAGS(func) & METH_O)) {
+            return __Pyx_PyObject_CallMethO(func, arg);
+#if CYTHON_FAST_PYCCALL
+        } else if (PyCFunction_GET_FLAGS(func) & METH_FASTCALL) {
+            return __Pyx_PyCFunction_FastCall(func, &arg, 1);
+#endif
+        }
+    }
+    return __Pyx__PyObject_CallOneArg(func, arg);
+}
+#else
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg) {
+    PyObject *result;
+    PyObject *args = PyTuple_Pack(1, arg);
+    if (unlikely(!args)) return NULL;
+    result = __Pyx_PyObject_Call(func, args, NULL);
+    Py_DECREF(args);
+    return result;
+}
+#endif
+
 /* PyErrFetchRestore */
-        #if CYTHON_FAST_THREAD_STATE
+      #if CYTHON_FAST_THREAD_STATE
 static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
     PyObject *tmp_type, *tmp_value, *tmp_tb;
     tmp_type = tstate->curexc_type;
@@ -8445,7 +8688,7 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
 #endif
 
 /* RaiseException */
-        #if PY_MAJOR_VERSION < 3
+      #if PY_MAJOR_VERSION < 3
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb,
                         CYTHON_UNUSED PyObject *cause) {
     __Pyx_PyThreadState_declare
@@ -8608,7 +8851,7 @@ bad:
 #endif
 
 /* RaiseDoubleKeywords */
-          static void __Pyx_RaiseDoubleKeywordsError(
+        static void __Pyx_RaiseDoubleKeywordsError(
     const char* func_name,
     PyObject* kw_name)
 {
@@ -8622,7 +8865,7 @@ bad:
 }
 
 /* ParseKeywords */
-          static int __Pyx_ParseOptionalKeywords(
+        static int __Pyx_ParseOptionalKeywords(
     PyObject *kwds,
     PyObject **argnames[],
     PyObject *kwds2,
@@ -8724,7 +8967,7 @@ bad:
 }
 
 /* RaiseArgTupleInvalid */
-          static void __Pyx_RaiseArgtupleInvalid(
+        static void __Pyx_RaiseArgtupleInvalid(
     const char* func_name,
     int exact,
     Py_ssize_t num_min,
@@ -8749,32 +8992,26 @@ bad:
                  (num_expected == 1) ? "" : "s", num_found);
 }
 
-/* ArgTypeTest */
-          static void __Pyx_RaiseArgumentTypeInvalid(const char* name, PyObject *obj, PyTypeObject *type) {
-    PyErr_Format(PyExc_TypeError,
-        "Argument '%.200s' has incorrect type (expected %.200s, got %.200s)",
-        name, type->tp_name, Py_TYPE(obj)->tp_name);
+/* PyObjectCallNoArg */
+        #if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
+#if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(func)) {
+        return __Pyx_PyFunction_FastCall(func, NULL, 0);
+    }
+#endif
+#ifdef __Pyx_CyFunction_USED
+    if (likely(PyCFunction_Check(func) || PyObject_TypeCheck(func, __pyx_CyFunctionType))) {
+#else
+    if (likely(PyCFunction_Check(func))) {
+#endif
+        if (likely(PyCFunction_GET_FLAGS(func) & METH_NOARGS)) {
+            return __Pyx_PyObject_CallMethO(func, NULL);
+        }
+    }
+    return __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL);
 }
-static CYTHON_INLINE int __Pyx_ArgTypeTest(PyObject *obj, PyTypeObject *type, int none_allowed,
-    const char *name, int exact)
-{
-    if (unlikely(!type)) {
-        PyErr_SetString(PyExc_SystemError, "Missing type object");
-        return 0;
-    }
-    if (none_allowed && obj == Py_None) return 1;
-    else if (exact) {
-        if (likely(Py_TYPE(obj) == type)) return 1;
-        #if PY_MAJOR_VERSION == 2
-        else if ((type == &PyBaseString_Type) && likely(__Pyx_PyBaseString_CheckExact(obj))) return 1;
-        #endif
-    }
-    else {
-        if (likely(PyObject_TypeCheck(obj, type))) return 1;
-    }
-    __Pyx_RaiseArgumentTypeInvalid(name, obj, type);
-    return 0;
-}
+#endif
 
 /* SwapException */
           #if CYTHON_FAST_THREAD_STATE
@@ -8800,80 +9037,6 @@ static CYTHON_INLINE void __Pyx_ExceptionSwap(PyObject **type, PyObject **value,
     *tb = tmp_tb;
 }
 #endif
-
-/* PyObjectCallMethod1 */
-          static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg) {
-    PyObject *method, *result = NULL;
-    method = __Pyx_PyObject_GetAttrStr(obj, method_name);
-    if (unlikely(!method)) goto done;
-#if CYTHON_UNPACK_METHODS
-    if (likely(PyMethod_Check(method))) {
-        PyObject *self = PyMethod_GET_SELF(method);
-        if (likely(self)) {
-            PyObject *args;
-            PyObject *function = PyMethod_GET_FUNCTION(method);
-            #if CYTHON_FAST_PYCALL
-            if (PyFunction_Check(function)) {
-                PyObject *args[2] = {self, arg};
-                result = __Pyx_PyFunction_FastCall(function, args, 2);
-                goto done;
-            }
-            #endif
-            #if CYTHON_FAST_PYCCALL
-            if (__Pyx_PyFastCFunction_Check(function)) {
-                PyObject *args[2] = {self, arg};
-                result = __Pyx_PyCFunction_FastCall(function, args, 2);
-                goto done;
-            }
-            #endif
-            args = PyTuple_New(2);
-            if (unlikely(!args)) goto done;
-            Py_INCREF(self);
-            PyTuple_SET_ITEM(args, 0, self);
-            Py_INCREF(arg);
-            PyTuple_SET_ITEM(args, 1, arg);
-            Py_INCREF(function);
-            Py_DECREF(method); method = NULL;
-            result = __Pyx_PyObject_Call(function, args, NULL);
-            Py_DECREF(args);
-            Py_DECREF(function);
-            return result;
-        }
-    }
-#endif
-    result = __Pyx_PyObject_CallOneArg(method, arg);
-done:
-    Py_XDECREF(method);
-    return result;
-}
-
-/* append */
-          static CYTHON_INLINE int __Pyx_PyObject_Append(PyObject* L, PyObject* x) {
-    if (likely(PyList_CheckExact(L))) {
-        if (unlikely(__Pyx_PyList_Append(L, x) < 0)) return -1;
-    } else {
-        PyObject* retval = __Pyx_PyObject_CallMethod1(L, __pyx_n_s_append, x);
-        if (unlikely(!retval))
-            return -1;
-        Py_DECREF(retval);
-    }
-    return 0;
-}
-
-/* None */
-          static CYTHON_INLINE int __Pyx_div_int(int a, int b) {
-    int q = a / b;
-    int r = a - q*b;
-    q -= ((r != 0) & ((r ^ b) < 0));
-    return q;
-}
-
-/* None */
-          static CYTHON_INLINE int __Pyx_mod_int(int a, int b) {
-    int r = a % b;
-    r += ((r != 0) & ((r ^ b) < 0)) * b;
-    return r;
-}
 
 /* BytesEquals */
           static CYTHON_INLINE int __Pyx_PyBytes_Equals(PyObject* s1, PyObject* s2, int equals) {
@@ -8998,8 +9161,200 @@ return_ne:
 }
 
 /* None */
-          static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname) {
-    PyErr_Format(PyExc_UnboundLocalError, "local variable '%s' referenced before assignment", varname);
+          static CYTHON_INLINE int __Pyx_div_int(int a, int b) {
+    int q = a / b;
+    int r = a - q*b;
+    q -= ((r != 0) & ((r ^ b) < 0));
+    return q;
+}
+
+/* None */
+          static CYTHON_INLINE int __Pyx_mod_int(int a, int b) {
+    int r = a % b;
+    r += ((r != 0) & ((r ^ b) < 0)) * b;
+    return r;
+}
+
+/* PyObjectCallMethod1 */
+          static PyObject* __Pyx_PyObject_CallMethod1(PyObject* obj, PyObject* method_name, PyObject* arg) {
+    PyObject *method, *result = NULL;
+    method = __Pyx_PyObject_GetAttrStr(obj, method_name);
+    if (unlikely(!method)) goto done;
+#if CYTHON_UNPACK_METHODS
+    if (likely(PyMethod_Check(method))) {
+        PyObject *self = PyMethod_GET_SELF(method);
+        if (likely(self)) {
+            PyObject *args;
+            PyObject *function = PyMethod_GET_FUNCTION(method);
+            #if CYTHON_FAST_PYCALL
+            if (PyFunction_Check(function)) {
+                PyObject *args[2] = {self, arg};
+                result = __Pyx_PyFunction_FastCall(function, args, 2);
+                goto done;
+            }
+            #endif
+            #if CYTHON_FAST_PYCCALL
+            if (__Pyx_PyFastCFunction_Check(function)) {
+                PyObject *args[2] = {self, arg};
+                result = __Pyx_PyCFunction_FastCall(function, args, 2);
+                goto done;
+            }
+            #endif
+            args = PyTuple_New(2);
+            if (unlikely(!args)) goto done;
+            Py_INCREF(self);
+            PyTuple_SET_ITEM(args, 0, self);
+            Py_INCREF(arg);
+            PyTuple_SET_ITEM(args, 1, arg);
+            Py_INCREF(function);
+            Py_DECREF(method); method = NULL;
+            result = __Pyx_PyObject_Call(function, args, NULL);
+            Py_DECREF(args);
+            Py_DECREF(function);
+            return result;
+        }
+    }
+#endif
+    result = __Pyx_PyObject_CallOneArg(method, arg);
+done:
+    Py_XDECREF(method);
+    return result;
+}
+
+/* append */
+          static CYTHON_INLINE int __Pyx_PyObject_Append(PyObject* L, PyObject* x) {
+    if (likely(PyList_CheckExact(L))) {
+        if (unlikely(__Pyx_PyList_Append(L, x) < 0)) return -1;
+    } else {
+        PyObject* retval = __Pyx_PyObject_CallMethod1(L, __pyx_n_s_append, x);
+        if (unlikely(!retval))
+            return -1;
+        Py_DECREF(retval);
+    }
+    return 0;
+}
+
+/* GetItemInt */
+          static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
+    PyObject *r;
+    if (!j) return NULL;
+    r = PyObject_GetItem(o, j);
+    Py_DECREF(j);
+    return r;
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    if (wraparound & unlikely(i < 0)) i += PyList_GET_SIZE(o);
+    if ((!boundscheck) || likely((0 <= i) & (i < PyList_GET_SIZE(o)))) {
+        PyObject *r = PyList_GET_ITEM(o, i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    if (wraparound & unlikely(i < 0)) i += PyTuple_GET_SIZE(o);
+    if ((!boundscheck) || likely((0 <= i) & (i < PyTuple_GET_SIZE(o)))) {
+        PyObject *r = PyTuple_GET_ITEM(o, i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
+                                                     CYTHON_NCP_UNUSED int wraparound,
+                                                     CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
+    if (is_list || PyList_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
+        if ((!boundscheck) || (likely((n >= 0) & (n < PyList_GET_SIZE(o))))) {
+            PyObject *r = PyList_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    }
+    else if (PyTuple_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
+        if ((!boundscheck) || likely((n >= 0) & (n < PyTuple_GET_SIZE(o)))) {
+            PyObject *r = PyTuple_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    } else {
+        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
+        if (likely(m && m->sq_item)) {
+            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
+                Py_ssize_t l = m->sq_length(o);
+                if (likely(l >= 0)) {
+                    i += l;
+                } else {
+                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                        return NULL;
+                    PyErr_Clear();
+                }
+            }
+            return m->sq_item(o, i);
+        }
+    }
+#else
+    if (is_list || PySequence_Check(o)) {
+        return PySequence_GetItem(o, i);
+    }
+#endif
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+}
+
+/* WriteUnraisableException */
+          static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
+                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
+                                  int full_traceback, CYTHON_UNUSED int nogil) {
+    PyObject *old_exc, *old_val, *old_tb;
+    PyObject *ctx;
+    __Pyx_PyThreadState_declare
+#ifdef WITH_THREAD
+    PyGILState_STATE state;
+    if (nogil)
+        state = PyGILState_Ensure();
+#ifdef _MSC_VER
+    else state = (PyGILState_STATE)-1;
+#endif
+#endif
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
+    if (full_traceback) {
+        Py_XINCREF(old_exc);
+        Py_XINCREF(old_val);
+        Py_XINCREF(old_tb);
+        __Pyx_ErrRestore(old_exc, old_val, old_tb);
+        PyErr_PrintEx(1);
+    }
+    #if PY_MAJOR_VERSION < 3
+    ctx = PyString_FromString(name);
+    #else
+    ctx = PyUnicode_FromString(name);
+    #endif
+    __Pyx_ErrRestore(old_exc, old_val, old_tb);
+    if (!ctx) {
+        PyErr_WriteUnraisable(Py_None);
+    } else {
+        PyErr_WriteUnraisable(ctx);
+        Py_DECREF(ctx);
+    }
+#ifdef WITH_THREAD
+    if (nogil)
+        PyGILState_Release(state);
+#endif
 }
 
 /* SetVTable */
@@ -9269,37 +9624,6 @@ bad:
     Py_XDECREF(py_frame);
 }
 
-/* CIntToPy */
-          static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
-    const long neg_one = (long) -1, const_zero = (long) 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(long) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(long) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-#endif
-        }
-    } else {
-        if (sizeof(long) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-#endif
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(long),
-                                     little, !is_unsigned);
-    }
-}
-
 /* CIntFromPyVerify */
           #define __PYX_VERIFY_RETURN_INT(target_type, func_type, func_value)\
     __PYX__VERIFY_RETURN_INT(target_type, func_type, func_value, 0)
@@ -9540,6 +9864,37 @@ raise_neg_overflow:
     PyErr_SetString(PyExc_OverflowError,
         "can't convert negative value to int");
     return (int) -1;
+}
+
+/* CIntToPy */
+          static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
+    const long neg_one = (long) -1, const_zero = (long) 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(long) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(long) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(long) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(long),
+                                     little, !is_unsigned);
+    }
 }
 
 /* CIntFromPy */

@@ -17,7 +17,7 @@ struct WorkerWrapperArgs {
     void *data;
 };
 
-unsigned long __cdecl worker_wrapper(void *args) {
+unsigned long __stdcall worker_wrapper(void *args) {
     void *data = ((WorkerWrapperArgs *)args)->data;
     void *(*worker)(void *) = ((WorkerWrapperArgs *)args)->worker;
     free(args);
