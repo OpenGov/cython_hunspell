@@ -107,9 +107,8 @@ cdef class HunspellWrap(object):
             if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):
                 raise IOError("File '{}' not found or accessible".format(fpath))
 
-        if (copy_to_c_string(pyaffpath, &self.affpath) <= 0 or
-            copy_to_c_string(pydpath, &self.dpath) <= 0):
-                raise MemoryError()
+        copy_to_c_string(pyaffpath, &self.affpath)
+        copy_to_c_string(pydpath, &self.dpath)
         holder = new Hunspell(self.affpath, self.dpath)
         if holder is NULL:
             raise MemoryError()
@@ -157,8 +156,7 @@ cdef class HunspellWrap(object):
     def spell(self, basestring word):
         # Python individual word spellcheck
         cdef char *c_word = NULL
-        if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
-            raise MemoryError()
+        copy_to_c_string(word, &c_word, self._dic_encoding)
         try:
             return self._cxx_hunspell.spell(c_word) != 0
         finally:
@@ -182,8 +180,7 @@ cdef class HunspellWrap(object):
         cdef char *c_word = NULL
         cdef list stem_list
         cdef tuple stem_result
-        if copy_to_c_string(word, &c_word, self._dic_encoding) <= 0:
-            raise MemoryError()
+        copy_to_c_string(word, &c_word, self._dic_encoding)
 
         try:
             if stem_action:
@@ -328,8 +325,7 @@ cdef class HunspellWrap(object):
         if word_array is NULL:
             raise MemoryError()
         for i, unknown_word in enumerate(unknown_words):
-            if copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding) <= 0:
-                raise MemoryError()
+            copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding)
 
         try:
             # Create output arrays
