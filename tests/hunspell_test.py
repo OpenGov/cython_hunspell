@@ -23,39 +23,45 @@ class HunspellTest(unittest.TestCase):
         self.assertTrue(all(x in expected for x in checked),
             u"{} not all found in {}".format(checked, expected))
 
-    def test_hunspell_create_destroy(self):
+    def test_create_destroy(self):
         del self.h
 
     def test_missing_dict(self):
         with self.assertRaises(IOError):
             Hunspell('not_avail', hunspell_data_dir=DICT_DIR)
 
-    def test_hunspell_spell(self):
+    def test_spell(self):
         self.assertFalse(self.h.spell('dpg'))
         self.assertTrue(self.h.spell('dog'))
 
-    def test_hunspell_spell_utf8(self):
+    def test_spell_utf8(self):
         self.assertTrue(self.h.spell(u'café'))
         self.assertFalse(self.h.spell(u'uncafé'))
 
-    def test_hunspell_suggest(self):
+    def test_spell_empty(self):
+        self.assertTrue(self.h.spell(''))
+
+    def test_suggest(self):
         required = ('dog', 'pg', 'deg', 'dig', 'dpt', 'dug', 'mpg', 'd pg')
         suggest = self.h.suggest('dpg')
         self.assertIsInstance(suggest, tuple)
         self.assertAllIn(required, suggest)
 
-    def test_hunspell_suggest_utf8(self):
+    def test_suggest_utf8(self):
         required = (u'café', u'Cerf')
         for variant in ('cefé', u'cefé'):
             suggest = self.h.suggest(variant)
             self.assertIsInstance(suggest, tuple)
             self.assertAllIn(required, suggest)
 
-    def test_hunspell_stem(self):
+    def test_suggest_empty(self):
+        self.assertEqual(self.h.suggest(''), ())
+
+    def test_stem(self):
         self.assertEqual(self.h.stem('dog'), ('dog',))
         self.assertEqual(self.h.stem('permanently'), ('permanent',))
 
-    def test_hunspell_bulk_suggest(self):
+    def test_bulk_suggest(self):
         self.h.set_concurrency(3)
         suggest = self.h.bulk_suggest(['dog', 'dpg'])
         self.assertEqual(sorted(suggest.keys()), ['dog', 'dpg'])
@@ -70,7 +76,7 @@ class HunspellTest(unittest.TestCase):
         suggest = self.h.bulk_suggest(checked)
         self.assertEqual(sorted(suggest.keys()), checked)
 
-    def test_hunspell_bulk_stem(self):
+    def test_bulk_stem(self):
         self.h.set_concurrency(3)
         self.assertDictEqual(self.h.bulk_stem(['dog', 'permanently']), {
             'permanently': ('permanent',),
