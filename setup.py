@@ -4,7 +4,6 @@ from setuptools import setup, find_packages, Extension
 from find_library import pkgconfig
 from collections import defaultdict
 
-VERSION = '1.2.1'
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
 for compiler, args in [
@@ -105,6 +104,8 @@ class build_ext_compiler_check(build_ext):
     def run(self):
         cleanup_pycs()
         build_ext.run(self)
+
+VERSION = read(os.path.join(BASE_DIR, 'VERSION')).strip()
 
 setup(
     name='CyHunspell',
