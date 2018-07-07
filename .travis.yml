@@ -37,6 +37,13 @@ matrix:
       env: PY2=false
       sudo: required
       language: generic
+    - os: linux
+      python: 3.7
+    - os: osx
+      python: 3.7
+      env: PY2=false
+      sudo: required
+      language: generic
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
@@ -51,6 +58,6 @@ script: "python setup.py test"
 notifications:
   email:
     recipients:
-      - alerts+ci@opengov.com
+      - mseal007@gmail.com
     on_success: change
     on_failure: always

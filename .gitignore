@@ -57,3 +57,6 @@ external
 libs/gcc
 libs/unix
 libs/tmp
+
+# Pytest
+.pytest_cache
