@@ -79,11 +79,18 @@ def is_header(filepath):
 def include_dirs(*packages):
     dirs = []
     if 'hunspell' in packages:
-        dirs = [
-            os.path.abspath(os.path.join(BASE_DIR, 'hunspell')),
-            # Download path if missing
-            os.path.abspath(os.path.join(BASE_DIR, 'external', 'hunspell-1.6.2', 'src')),
-        ]
+        if platform.system() == 'Linux':
+            dirs = [
+                os.path.abspath(os.path.join(BASE_DIR, 'hunspell')),
+                # Download path if missing
+                os.path.abspath(os.path.join(BASE_DIR, 'external', 'hunspell-1.6.2', 'src')),
+            ]
+        else:
+            dirs = [
+                os.path.abspath(os.path.join(BASE_DIR, 'hunspell')),
+                # Download path if missing
+                os.path.abspath(os.path.join(BASE_DIR, 'external', 'hunspell-1.3.3', 'src')),
+            ]
     if platform.system() != 'Windows':
         dirs.extend([
             '/usr/local/include',
@@ -207,7 +214,7 @@ def append_links(pkg, kw):
         kw['libraries'].append(linker_name)
     if linker_path:
         kw['library_dirs'].append(linker_path)
-    if linker_path:
+    if linker_path and platform.system() != 'Windows':
         kw['runtime_library_dirs'].append(linker_path)
     return linker_name
 
@@ -236,16 +243,26 @@ def pkgconfig(*packages, **kw):
         if 'hunspell' in packages and not package_found('hunspell', kw['include_dirs']):
             # Prepare for hunspell if it's missing
             if not os.environ.get('SKIP_DOWNLOAD', False):
-                download_and_extract('https://github.com/hunspell/hunspell/archive/v1.6.2.tar.gz',
-                    os.path.join(BASE_DIR, 'external'))
+                if platform.system() == 'Linux':
+                    download_and_extract('https://github.com/hunspell/hunspell/archive/v1.6.2.tar.gz',
+                        os.path.join(BASE_DIR, 'external'))
+                else:
+                    download_and_extract('http://downloads.sourceforge.net/hunspell/hunspell-1.3.3.tar.gz',
+                        os.path.join(BASE_DIR, 'external'))
                 kw['include_dirs'] = include_dirs(*packages)
             else:
                 raise RuntimeError("Could not find hunspell and not allowed to download")
 
         for pkg in packages:
             if not append_links(pkg, kw):
-                if pkg == 'hunspell' and platform.system() != 'Windows':
+                if pkg == 'hunspell' and platform.system() == 'Linux':
                     lib_path = build_hunspell_package(os.path.join(BASE_DIR, 'external', 'hunspell-1.6.2'))
+                    if not append_links(pkg, kw):
+                        raise RuntimeError("Couldn't find lib dependency after building: {}".format(pkg))
+                    else:
+                        kw['extra_link_args'] += ['-Wl,-rpath,"{}"'.format(lib_path)]
+                elif pkg == 'hunspell' and platform.system() != 'Windows':
+                    lib_path = build_hunspell_package(os.path.join(BASE_DIR, 'external', 'hunspell-1.3.3'))
                     if not append_links(pkg, kw):
                         raise RuntimeError("Couldn't find lib dependency after building: {}".format(pkg))
                     else:
