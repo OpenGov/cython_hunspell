@@ -49,7 +49,7 @@ matrix:
       language: generic
     - os: linux
       language: python
-      python: 3.7
+      python: 3.6
       # Don't allow the python library to download (check if it can use an installed hunspell)
       env: SKIP_DOWNLOAD=true
       dist: artful

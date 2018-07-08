@@ -6,10 +6,14 @@ typedef void * thread_t;
 #ifdef _MSC_VER
 #include <windows.h>
 void dealloc_threads(thread_t **threads, int num_threads) {
-    for (int i = 0; i < num_threads; i++) {
-        CloseHandle(threads[i]);
+    if (threads != NULL) {
+        for (int i = 0; i < num_threads; i++) {
+            if (threads[i] != NULL) {
+                CloseHandle(threads[i]);
+            }
+        }
+        free(threads);
     }
-    free(threads);
 }
 
 struct WorkerWrapperArgs {
@@ -40,10 +44,14 @@ int thread_join(thread_t *thread) {
 #else
 #include <pthread.h>
 void dealloc_threads(thread_t **threads, int num_threads) {
-    for (int i = 0; i < num_threads; i++) {
-        free(threads[i]);
+    if (threads != NULL) {
+        for (int i = 0; i < num_threads; i++) {
+            if (threads[i] != NULL) {
+                free(threads[i]);
+            }
+        }
+        free(threads);
     }
-    free(threads);
 }
 
 thread_t *thread_create(void *(*worker)(void *), void *data) {
