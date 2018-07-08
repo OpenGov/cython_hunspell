@@ -16,6 +16,15 @@ in-memory caching.
 ## Dependencies
 cacheman -- for (optionally asynchronous) persistent caching
 
+## Non-Python Dependencies
+
+### hunspell
+If you don't have hunspell installed the library will download it for you.
+
+If you want to use ubuntu's 1.6 installation use the following before installing:
+
+    sudo apt-get install libhunspell-1.6-0 libhunspell-dev
+
 ## Features
 Spell checking & spell suggestions
 * See http://hunspell.sourceforge.net/
