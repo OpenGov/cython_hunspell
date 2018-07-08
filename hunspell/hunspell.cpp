@@ -4,13 +4,13 @@
 {
     "distutils": {
         "depends": [
-            "/home/mseal/Workspace/cython_hunspell/external/hunspell-1.3.3/src/hunspell/hunspell.hxx",
+            "/home/mseal/Workspace/cython_hunspell/external/hunspell-1.6.2/src/hunspell/hunspell.hxx",
             "hunspell/thread.hpp"
         ],
         "include_dirs": [
             "./hunspell",
             "/home/mseal/Workspace/cython_hunspell/hunspell",
-            "/home/mseal/Workspace/cython_hunspell/external/hunspell-1.3.3/src",
+            "/home/mseal/Workspace/cython_hunspell/external/hunspell-1.6.2/src",
             "/usr/local/include",
             "/usr/include"
         ],
@@ -19,11 +19,11 @@
             "hunspell"
         ],
         "library_dirs": [
-            "/home/mseal/Workspace/cython_hunspell/libs/unix"
+            "/home/mseal/.py3local/lib/python3.6/site-packages/libs/unix"
         ],
         "name": "hunspell.hunspell",
         "runtime_library_dirs": [
-            "/home/mseal/Workspace/cython_hunspell/libs/unix"
+            "/home/mseal/.py3local/lib/python3.6/site-packages/libs/unix"
         ],
         "sources": [
             "hunspell/hunspell.pyx"
@@ -1219,11 +1219,6 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
 #define __Pyx_PyDict_GetItem(d, key) PyObject_GetItem(d, key)
 #define __Pyx_PyObject_Dict_GetItem(obj, name)  PyObject_GetItem(obj, name)
 #endif
-
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
 
 /* PyObject_GenericGetAttrNoDict.proto */
 #if CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP && PY_VERSION_HEX < 0x03070000
@@ -5442,7 +5437,7 @@ static PyObject *__pyx_pf_8hunspell_8hunspell_12HunspellWrap_16bulk_action(struc
  *
  *         return ret_dict
  */
-    ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_bulk_unknown_words(__pyx_v_self, __pyx_v_unknown_words, __pyx_v_stem_action, __pyx_v_ret_dict);
+    ((struct __pyx_vtabstruct_8hunspell_8hunspell_HunspellWrap *)__pyx_v_self->__pyx_vtab)->_bulk_unknown_words(__pyx_v_self, __pyx_v_unknown_words, __pyx_v_stem_action, __pyx_v_ret_dict); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L1_error)
 
     /* "hunspell/hunspell.pyx":230
  *                 unknown_words.append(word)
@@ -6391,7 +6386,7 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struc
  *                 # Free each suggestion list
  *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])             # <<<<<<<<<<<<<<
  *
- *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:
  */
         __pyx_v_self->_cxx_hunspell->free_list((__pyx_v_output_array + __pyx_v_i), (__pyx_v_output_counts[__pyx_v_i]));
       }
@@ -6431,7 +6426,7 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struc
  *                 # Free each suggestion list
  *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])             # <<<<<<<<<<<<<<
  *
- *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:
  */
           __pyx_v_self->_cxx_hunspell->free_list((__pyx_v_output_array + __pyx_v_i), (__pyx_v_output_counts[__pyx_v_i]));
         }
@@ -6475,7 +6470,7 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__parse_bulk_results(struc
 /* "hunspell/hunspell.pyx":318
  *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
  *
- *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):             # <<<<<<<<<<<<<<
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:             # <<<<<<<<<<<<<<
  *         cdef int unknown_len = len(unknown_words)
  *         # C version of: ["foo", "bar", "baz"]
  */
@@ -6510,7 +6505,7 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__bulk_unknown_words(struc
 
   /* "hunspell/hunspell.pyx":319
  *
- *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:
  *         cdef int unknown_len = len(unknown_words)             # <<<<<<<<<<<<<<
  *         # C version of: ["foo", "bar", "baz"]
  *         cdef char ***output_array = NULL
@@ -6897,7 +6892,7 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__bulk_unknown_words(struc
   /* "hunspell/hunspell.pyx":318
  *                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
  *
- *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):             # <<<<<<<<<<<<<<
+ *     cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:             # <<<<<<<<<<<<<<
  *         cdef int unknown_len = len(unknown_words)
  *         # C version of: ["foo", "bar", "baz"]
  */
@@ -6907,7 +6902,7 @@ static void __pyx_f_8hunspell_8hunspell_12HunspellWrap__bulk_unknown_words(struc
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_WriteUnraisable("hunspell.hunspell.HunspellWrap._bulk_unknown_words", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __Pyx_AddTraceback("hunspell.hunspell.HunspellWrap._bulk_unknown_words", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_cache);
   __Pyx_XDECREF(__pyx_v_unknown_word);
@@ -9891,48 +9886,6 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
     return value;
 }
 #endif
-
-/* WriteUnraisableException */
-        static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
-}
 
 /* PyObject_GenericGetAttrNoDict */
         #if CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP && PY_VERSION_HEX < 0x03070000

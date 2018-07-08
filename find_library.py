@@ -10,6 +10,7 @@ import sys
 import shutil
 from subprocess import check_call
 from tar_download import download_and_extract
+from distutils.sysconfig import get_python_lib
 try:
     from subprocess import getstatusoutput
 except ImportError:
@@ -107,7 +108,7 @@ def library_dirs(check_local=False):
         dirs = [os.path.abspath(path) for path in dirs]
     else:
         dirs.extend([
-            os.path.join(os.path.dirname(__file__), 'libs', 'unix'),
+            os.path.abspath(os.path.join(get_python_lib(), 'libs', 'unix')),
             '/usr/local/lib64',
             '/usr/local/lib',
             '/usr/local/libdata',
@@ -169,7 +170,7 @@ def package_found(package, include_dirs):
             return True
     return False
 
-def build_package(package, directory, force_build=False):
+def build_hunspell_package(directory, force_build=False):
     tmp_lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'libs', 'tmp'))
     if not os.path.exists(tmp_lib_path):
         os.makedirs(tmp_lib_path)
@@ -185,19 +186,18 @@ def build_package(package, directory, force_build=False):
         finally:
             os.chdir(olddir)
 
-    lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'libs', 'unix'))
+    lib_path = os.path.abspath(os.path.join(get_python_lib(), 'libs', 'unix'))
     if os.path.exists(lib_path):
         shutil.rmtree(lib_path)
     os.makedirs(lib_path)
 
-    if package == 'hunspell':
-        shutil.copyfile(
-            os.path.join(tmp_lib_path, 'lib', 'libhunspell-1.6.so.0.0.1'),
-            os.path.join(lib_path, 'libhunspell-1.6.so.0'))
-        os.symlink(
-            os.path.join(lib_path, 'libhunspell-1.6.so.0'),
-            os.path.join(lib_path, 'libhunspell.so'))
-        shutil.rmtree(tmp_lib_path)
+    shutil.copyfile(
+        os.path.join(tmp_lib_path, 'lib', 'libhunspell-1.6.so.0.0.1'),
+        os.path.join(lib_path, 'libhunspell-1.6.so.0'))
+    os.symlink(
+        os.path.join(lib_path, 'libhunspell-1.6.so.0'),
+        os.path.join(lib_path, 'libhunspell.so'))
+    shutil.rmtree(tmp_lib_path)
 
     return lib_path
 
@@ -245,7 +245,7 @@ def pkgconfig(*packages, **kw):
         for pkg in packages:
             if not append_links(pkg, kw):
                 if pkg == 'hunspell' and platform.system() != 'Windows':
-                    lib_path = build_package(pkg, os.path.join(BASE_DIR, 'external', 'hunspell-1.6.2'))
+                    lib_path = build_hunspell_package(os.path.join(BASE_DIR, 'external', 'hunspell-1.6.2'))
                     if not append_links(pkg, kw):
                         raise RuntimeError("Couldn't find lib dependency after building: {}".format(pkg))
                     else:

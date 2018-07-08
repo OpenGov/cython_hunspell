@@ -25,6 +25,8 @@ If you want to use ubuntu's 1.6 installation use the following before installing
 
     sudo apt-get install libhunspell-1.6-0 libhunspell-dev
 
+This is a faster install than the built-in download and compile.
+
 ## Features
 Spell checking & spell suggestions
 * See http://hunspell.sourceforge.net/

@@ -315,7 +315,7 @@ cdef class HunspellWrap(object):
                 # Free each suggestion list
                 self._cxx_hunspell.free_list(output_array + i, output_counts[i])
 
-    cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+    cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:
         cdef int unknown_len = len(unknown_words)
         # C version of: ["foo", "bar", "baz"]
         cdef char ***output_array = NULL

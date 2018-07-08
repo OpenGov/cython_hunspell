@@ -52,7 +52,7 @@ matrix:
       python: 3.7
       # Don't allow the python library to download (check if it can use an installed hunspell)
       env: SKIP_DOWNLOAD=true
-      dist: xenial
+      dist: artful
       sudo: true
 
 before_install:
@@ -63,7 +63,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv version; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv virtualenv testenv; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv activate testenv; fi
-  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl https://bootstrap.pypa.io/get-pip.py | python; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python -m pip install -U pip setuptools; fi
   - if [[ "$SKIP_DOWNLOAD" == "true" ]]; then sudo apt-get install libhunspell-1.6-0 libhunspell-dev; fi
   - python --version

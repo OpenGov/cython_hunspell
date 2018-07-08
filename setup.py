@@ -1,5 +1,6 @@
 import os
 import sys
+from warnings import warn
 from setuptools import setup, find_packages, Extension
 from find_library import pkgconfig
 from collections import defaultdict
@@ -12,7 +13,7 @@ for compiler, args in [
     BUILD_ARGS[compiler] = args
 
 def cleanup_pycs():
-    file_tree = os.walk(os.path.join(BASE_DIR, 'hunspell'))
+    file_tree = os.walk(os.path.join(BASE_DIR, 'cyhunspell'))
     to_delete = []
     for root, directory, file_list in file_tree:
         if len(file_list):
@@ -72,7 +73,7 @@ hunspell_config = pkgconfig('hunspell', language='c++')
 
 if building:
     if (profiling or linetrace) and not force_rebuild:
-        print("WARNING: profiling or linetracing specified without forced rebuild")
+        warn("WARNING: profiling or linetracing specified without forced rebuild")
     from Cython.Build import cythonize
     from Cython.Distutils import build_ext
 
