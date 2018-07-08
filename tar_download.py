@@ -12,7 +12,19 @@ def file_name_from_url(url, directory=None):
         file_name = os.path.join(directory, file_name)
     return file_name
 
-def download_tar(url, directory=None):
+def check_file_exists(url, directory=None, skipFound=True):
+    file_name = file_name_from_url(url, directory)
+    if os.path.exists(file_name):
+        if skipFound:
+            print("File already found: {}, skipping download of {}".format(
+                file_name, url))
+        return True
+    return False
+
+def download_tar(url, directory=None, skipFound=True):
+    if skipFound and check_file_exists(url, directory, skipFound):
+        return
+
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -31,6 +43,9 @@ def extract_contents(file_name, destination='.'):
     tar.extractall(destination)
     tar.close()
 
-def download_and_extract(url, directory=None):
+def download_and_extract(url, directory=None, skipFound=True):
+    if skipFound and check_file_exists(url, directory, skipFound):
+        return
+
     download_tar(url, directory)
     extract_contents(file_name_from_url(url, directory), directory)

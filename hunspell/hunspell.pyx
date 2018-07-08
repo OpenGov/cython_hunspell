@@ -150,8 +150,10 @@ cdef class HunspellWrap(object):
 
     def __dealloc__(self):
         del self._cxx_hunspell
-        free(self.affpath)
-        free(self.dpath)
+        if self.affpath is not NULL:
+            free(self.affpath)
+        if self.dpath is not NULL:
+            free(self.dpath)
 
     def spell(self, basestring word):
         # Python individual word spellcheck
@@ -160,7 +162,8 @@ cdef class HunspellWrap(object):
         try:
             return self._cxx_hunspell.spell(c_word) != 0
         finally:
-            free(c_word)
+            if c_word is not NULL:
+                free(c_word)
 
     def suggest(self, basestring word):
         # Python individual word suggestions
@@ -188,18 +191,17 @@ cdef class HunspellWrap(object):
             else:
                 count = self._cxx_hunspell.suggest(&s_list, c_word)
 
-            try:
-                stem_list = []
-                for i from 0 <= i < count:
-                    stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))
+            stem_list = []
+            for i from 0 <= i < count:
+                stem_list.append(c_string_to_unicode_no_except(s_list[i], self._dic_encoding))
+            self._cxx_hunspell.free_list(&s_list, count)
 
-                stem_result = tuple(stem_list)
-                cache[word] = stem_result
-                return stem_result
-            finally:
-                self._cxx_hunspell.free_list(&s_list, count)
+            stem_result = tuple(stem_list)
+            cache[word] = stem_result
+            return stem_result
         finally:
-            free(c_word)
+            if c_word is not NULL:
+                free(c_word)
 
     def bulk_suggest(self, words):
         return self.bulk_action('suggest', words)
@@ -242,7 +244,7 @@ cdef class HunspellWrap(object):
     # C-Operations
     ###################
 
-    cdef int _c_bulk_action(self, char **word_array, char ***output_array, int n_words, bint stem_action, int *output_counts) except -1:
+    cdef void _c_bulk_action(self, char **word_array, char ***output_array, int n_words, bint stem_action, int *output_counts) except *:
         '''C realm thread dispatcher'''
         # Allocate all memory per thread
         cdef thread_t **threads = <thread_t **>calloc(self.max_threads, sizeof(thread_t *))
@@ -294,27 +296,25 @@ cdef class HunspellWrap(object):
 
                 # Free Hunspell Dict
                 del thread_args[i].hspell
-            return 1
         finally:
             # Free top level stuff
-            free(thread_args)
+            if thread_args is not NULL:
+                free(thread_args)
             dealloc_threads(threads, self.max_threads)
 
     cdef void _parse_bulk_results(self, dict ret_dict, list unknown_words, int *output_counts, char ***output_array) except *:
         '''Parse the return of a bulk action'''
         cdef int unknown_len = len(unknown_words)
         cdef int i, j
-        try:
-            for i from 0 <= i < unknown_len:
-                for j from 0 <= j < output_counts[i]:
-                    ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j], self._dic_encoding))
-                ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])
-        finally:
-            for i from 0 <= i < unknown_len:
-                # Free each suggestion list
-                self._cxx_hunspell.free_list(output_array + i, output_counts[i])
+        for i from 0 <= i < unknown_len:
+            for j from 0 <= j < output_counts[i]:
+                ret_dict[unknown_words[i]].append(c_string_to_unicode_no_except(output_array[i][j], self._dic_encoding))
+            ret_dict[unknown_words[i]] = tuple(ret_dict[unknown_words[i]])
+        for i from 0 <= i < unknown_len:
+            # Free each suggestion list
+            self._cxx_hunspell.free_list(output_array + i, output_counts[i])
 
-    cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict):
+    cdef void _bulk_unknown_words(self, list unknown_words, bint stem_action, dict ret_dict) except *:
         cdef int unknown_len = len(unknown_words)
         # C version of: ["foo", "bar", "baz"]
         cdef char ***output_array = NULL
@@ -327,33 +327,34 @@ cdef class HunspellWrap(object):
         for i, unknown_word in enumerate(unknown_words):
             copy_to_c_string(unknown_word, &word_array[i], self._dic_encoding)
 
+        # Create output arrays
+        # Array of arrays of C strings (e.g. [["food", ...], ["bar"], ["bad", ...]])
+        # This array will be divided evenly amongst the threads for the return values
+        # of Hunspell.suggest(), each call returns an array of C strings
+        output_array = <char ***>calloc(unknown_len, sizeof(char **))
+
+        # Array of integers, each the length of the corresponding C string array
+        # This array will be divided evenly amongst the threads for the length of the
+        # arrays returned by each call to Hunspell.suggest()
+        output_counts = <int *>calloc(unknown_len, sizeof(int))
+        if output_counts is NULL or output_array is NULL:
+            raise MemoryError()
+
         try:
-            # Create output arrays
-            # Array of arrays of C strings (e.g. [["food", ...], ["bar"], ["bad", ...]])
-            # This array will be divided evenly amongst the threads for the return values
-            # of Hunspell.suggest(), each call returns an array of C strings
-            output_array = <char ***>calloc(unknown_len, sizeof(char **))
+            # Schedule bulk job
+            self._c_bulk_action(word_array, output_array, unknown_len, stem_action, output_counts)
 
-            # Array of integers, each the length of the corresponding C string array
-            # This array will be divided evenly amongst the threads for the length of the
-            # arrays returned by each call to Hunspell.suggest()
-            output_counts = <int *>calloc(unknown_len, sizeof(int))
-            if output_counts is NULL or output_array is NULL:
-                raise MemoryError()
+            # Parse the return
+            self._parse_bulk_results(ret_dict, unknown_words, output_counts, output_array)
 
-            try:
-                # Schedule bulk job
-                self._c_bulk_action(word_array, output_array, unknown_len, stem_action, output_counts)
-
-                # Parse the return
-                self._parse_bulk_results(ret_dict, unknown_words, output_counts, output_array)
-
-                # Add ret_dict words to cache
-                for i from 0 <= i < unknown_len:
-                    cache[unknown_words[i]] = ret_dict[unknown_words[i]]
-            finally:
-                # Free top level stuff
-                free(output_array)
-                free(output_counts)
-        finally:
+            # Add ret_dict words to cache
+            for i from 0 <= i < unknown_len:
+                cache[unknown_words[i]] = ret_dict[unknown_words[i]]
             self._cxx_hunspell.free_list(&word_array, unknown_len)
+        finally:
+            # Free top level stuff
+            if output_array is not NULL:
+                free(output_array)
+            if output_counts is not NULL:
+                free(output_counts)
+

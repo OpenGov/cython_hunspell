@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/OpenGov/cython_hunspell.svg?branch=master)](https://travis-ci.org/OpenGov/cython_hunspell)
+[![Build Status](https://travis-ci.org/MSeal/cython_hunspell.svg?branch=master)](https://travis-ci.org/MSeal/cython_hunspell)
 
 # CyHunspell
 Cython wrapper on Hunspell Dictionary
@@ -16,6 +16,17 @@ in-memory caching.
 ## Dependencies
 cacheman -- for (optionally asynchronous) persistent caching
 
+## Non-Python Dependencies
+
+### hunspell
+If you don't have hunspell installed the library will download it for you.
+
+If you want to use ubuntu's 1.6 installation use the following before installing:
+
+    sudo apt-get install libhunspell-1.6-0 libhunspell-dev
+
+This is a faster install than the built-in download and compile.
+
 ## Features
 Spell checking & spell suggestions
 * See http://hunspell.sourceforge.net/
@@ -25,7 +36,7 @@ Below are some simple examples for how to use the repository.
 
 ### Creating a Hunspell object
     from hunspell import Hunspell
-    h = Hunspell();
+    h = Hunspell()
 
 You now have a usable hunspell object that can make basic queries for you.
 
@@ -153,5 +164,3 @@ Author(s): Tim Rodriguez and Matthew Seal
 
 ## License
 MIT
-
-&copy; Copyright 2015, [OpenGov](http://opengov.com)

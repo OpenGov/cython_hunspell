@@ -21,6 +21,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*.eggs
 
 # Installer logs
 pip-log.txt
@@ -57,3 +58,6 @@ external
 libs/gcc
 libs/unix
 libs/tmp
+
+# Pytest
+.pytest_cache

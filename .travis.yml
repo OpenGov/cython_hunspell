@@ -6,51 +6,76 @@ matrix:
       python: 2.7
     - os: osx
       python: 2.7
-      env: PY2=true
+      env: PYENV_VERSION=2.7
       sudo: required
       language: generic
     - os: linux
       python: 3.3
     - os: osx
       python: 3.3
-      env: PY2=false
+      env: PYENV_VERSION=3.3.7
       sudo: required
       language: generic
     - os: linux
       python: 3.4
     - os: osx
       python: 3.4
-      env: PY2=false
+      env: PYENV_VERSION=3.4.8
       sudo: required
       language: generic
     - os: linux
       python: 3.5
     - os: osx
       python: 3.5
-      env: PY2=false
+      env: PYENV_VERSION=3.5.5
       sudo: required
       language: generic
     - os: linux
       python: 3.6
     - os: osx
       python: 3.6
-      env: PY2=false
+      env: PYENV_VERSION=3.6.5
       sudo: required
       language: generic
+    - os: linux
+      language: python
+      python: 3.7
+      dist: xenial
+      sudo: true
+    - os: osx
+      python: 3.7
+      env: PYENV_VERSION=3.7.0
+      sudo: required
+      language: generic
+    - os: linux
+      language: python
+      python: 3.6
+      # Don't allow the python library to download (check if it can use an installed hunspell)
+      env: SKIP_DOWNLOAD=true
+      dist: artful
+      sudo: true
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "true" ]]; then brew upgrade python; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "true"  ]]; then virtualenv venv -p python; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "false" ]]; then brew install python3; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$PY2" == "false"  ]]; then virtualenv venv -p python3; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew upgrade pyenv && brew install pyenv-virtualenv; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval "$(pyenv init -)"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval "$(pyenv virtualenv-init -)"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv install $PYENV_VERSION; fi
+  # For debug purposes
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv version; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv virtualenv testenv; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv activate testenv; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python -m pip install -U pip setuptools; fi
+  # For debug purposes
+  - if [[ "$SKIP_DOWNLOAD" == "true" ]]; then sudo apt-cache search hunspell; fi
+  - if [[ "$SKIP_DOWNLOAD" == "true" ]]; then sudo apt-get install libhunspell-1.3-0 libhunspell-dev; fi
+  # For debug purposes
+  - python --version
 install: "python setup.py install"
 script: "python setup.py test"
 
 notifications:
   email:
     recipients:
-      - alerts+ci@opengov.com
+      - mseal007@gmail.com
     on_success: change
     on_failure: always

@@ -1,10 +1,10 @@
 import os
 import sys
+from warnings import warn
 from setuptools import setup, find_packages, Extension
 from find_library import pkgconfig
 from collections import defaultdict
 
-VERSION = '1.2.1'
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 BUILD_ARGS = defaultdict(lambda: ['-O3', '-g0'])
 for compiler, args in [
@@ -13,7 +13,7 @@ for compiler, args in [
     BUILD_ARGS[compiler] = args
 
 def cleanup_pycs():
-    file_tree = os.walk(os.path.join(BASE_DIR, 'hunspell'))
+    file_tree = os.walk(os.path.join(BASE_DIR, 'cyhunspell'))
     to_delete = []
     for root, directory, file_list in file_tree:
         if len(file_list):
@@ -69,10 +69,11 @@ packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.extend(['dictionaries', 'libs.msvc'])
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
 package_data = {'' : datatypes}
+hunspell_config = pkgconfig('hunspell', language='c++')
 
 if building:
     if (profiling or linetrace) and not force_rebuild:
-        print("WARNING: profiling or linetracing specified without forced rebuild")
+        warn("WARNING: profiling or linetracing specified without forced rebuild")
     from Cython.Build import cythonize
     from Cython.Distutils import build_ext
 
@@ -80,7 +81,7 @@ if building:
         Extension(
             'hunspell.hunspell',
             [os.path.join('hunspell', 'hunspell.pyx')],
-            **pkgconfig('hunspell', language='c++')
+            **hunspell_config
         )
     ], force=force_rebuild)
 else:
@@ -89,7 +90,7 @@ else:
         Extension(
             'hunspell.hunspell',
             [os.path.join('hunspell', 'hunspell.cpp')],
-            **pkgconfig('hunspell', language='c++')
+            **hunspell_config
         )
     ]
     package_data["hunspell"] = ["*.pxd"]
@@ -105,6 +106,8 @@ class build_ext_compiler_check(build_ext):
     def run(self):
         cleanup_pycs()
         build_ext.run(self)
+
+VERSION = read(os.path.join(BASE_DIR, 'VERSION')).strip()
 
 setup(
     name='CyHunspell',
