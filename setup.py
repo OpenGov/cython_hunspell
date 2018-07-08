@@ -68,6 +68,7 @@ packages = find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests'])
 packages.extend(['dictionaries', 'libs.msvc'])
 required = [req.strip() for req in read('requirements.txt').splitlines() if req.strip()]
 package_data = {'' : datatypes}
+hunspell_config = pkgconfig('hunspell', language='c++')
 
 if building:
     if (profiling or linetrace) and not force_rebuild:
@@ -79,7 +80,7 @@ if building:
         Extension(
             'hunspell.hunspell',
             [os.path.join('hunspell', 'hunspell.pyx')],
-            **pkgconfig('hunspell', language='c++')
+            **hunspell_config
         )
     ], force=force_rebuild)
 else:
@@ -88,7 +89,7 @@ else:
         Extension(
             'hunspell.hunspell',
             [os.path.join('hunspell', 'hunspell.cpp')],
-            **pkgconfig('hunspell', language='c++')
+            **hunspell_config
         )
     ]
     package_data["hunspell"] = ["*.pxd"]

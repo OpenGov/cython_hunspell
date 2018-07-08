@@ -116,19 +116,6 @@ cdef class HunspellWrap(object):
 
         return holder
 
-    # Redundant error checker for issue in Cython 0.27 not propagating exceptions in Python 3.7
-    def check_raise_null_hunspell(self):
-        if self._cxx_hunspell is not NULL:
-            return True
-
-        pyaffpath = os.path.join(self._hunspell_dir, '{}.aff'.format(self.lang))
-        pydpath = os.path.join(self._hunspell_dir, '{}.dic'.format(self.lang))
-        for fpath in (pyaffpath, pydpath):
-            if not os.path.isfile(fpath) or not os.access(fpath, os.R_OK):
-                raise IOError("File '{}' not found or accessible".format(fpath))
-
-        raise MemoryError("Failed to allocate hunspell object")
-
     def __init__(self, basestring lang='en_US', basestring cache_manager="hunspell",
             basestring disk_cache_dir=None, basestring hunspell_data_dir=None):
         # TODO - make these LRU caches so that you don't destroy your memory!
@@ -140,7 +127,6 @@ cdef class HunspellWrap(object):
 
         self.lang = lang
         self._cxx_hunspell = self._create_hspell_inst(lang)
-        self.check_raise_null_hunspell()
         self._dic_encoding = valid_encoding(c_string_to_unicode_no_except(self._cxx_hunspell.get_dic_encoding()))
         self.max_threads = detect_cpus()
 

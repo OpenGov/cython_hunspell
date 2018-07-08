@@ -25,7 +25,7 @@ Below are some simple examples for how to use the repository.
 
 ### Creating a Hunspell object
     from hunspell import Hunspell
-    h = Hunspell();
+    h = Hunspell()
 
 You now have a usable hunspell object that can make basic queries for you.
 
@@ -153,5 +153,3 @@ Author(s): Tim Rodriguez and Matthew Seal
 
 ## License
 MIT
-
-&copy; Copyright 2015, [OpenGov](http://opengov.com)

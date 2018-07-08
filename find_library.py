@@ -199,12 +199,16 @@ def build_package(package, directory):
             os.path.join(lib_path, 'libhunspell.so'))
         shutil.rmtree(tmp_lib_path)
 
+    return lib_path
+
 def append_links(pkg, kw):
     linker_name, linker_path = get_library_linker_name(pkg)
     if linker_name:
         kw['libraries'].append(linker_name)
     if linker_path:
         kw['library_dirs'].append(linker_path)
+    if linker_path:
+        kw['runtime_library_dirs'].append(linker_path)
     return linker_name
 
 def pkgconfig(*packages, **kw):
@@ -225,7 +229,9 @@ def pkgconfig(*packages, **kw):
     except:
         kw['include_dirs'] = include_dirs(*packages)
         kw['library_dirs'] = []
+        kw['runtime_library_dirs'] = []
         kw['libraries'] = []
+        kw['extra_link_args'] = []
 
         if 'hunspell' in packages and not package_found('hunspell', kw['include_dirs']):
             # Prepare for hunspell if it's missing
@@ -235,9 +241,12 @@ def pkgconfig(*packages, **kw):
         for pkg in packages:
             if not append_links(pkg, kw):
                 if pkg == 'hunspell' and platform.system() != 'Windows':
-                    build_package(pkg, os.path.join('external', 'hunspell-1.3.3'))
+                    lib_path = build_package(pkg, os.path.join('external', 'hunspell-1.3.3'))
                     if not append_links(pkg, kw):
                         print("Couldn't find lib dependency after building: {}".format(pkg))
+                    else:
+                        kw['extra_link_args'] += ['-Wl,-rpath,"{}"'.format(lib_path)]
                 else:
                     print("Couldn't find lib dependency: {}".format(pkg))
+
     return kw
