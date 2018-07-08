@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/OpenGov/cython_hunspell.svg?branch=master)](https://travis-ci.org/OpenGov/cython_hunspell)
+[![Build Status](https://travis-ci.org/MSeal/cython_hunspell.svg?branch=master)](https://travis-ci.org/MSeal/cython_hunspell)
 
 # CyHunspell
 Cython wrapper on Hunspell Dictionary
