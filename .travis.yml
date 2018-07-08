@@ -60,11 +60,15 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval "$(pyenv init -)"; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval "$(pyenv virtualenv-init -)"; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv install $PYENV_VERSION; fi
+  # For debug purposes
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv version; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv virtualenv testenv; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv activate testenv; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python -m pip install -U pip setuptools; fi
-  - if [[ "$SKIP_DOWNLOAD" == "true" ]]; then sudo apt-get install libhunspell-1.6-0 libhunspell-dev; fi
+  # For debug purposes
+  - if [[ "$SKIP_DOWNLOAD" == "true" ]]; then sudo apt-cache search hunspell; fi
+  - if [[ "$SKIP_DOWNLOAD" == "true" ]]; then sudo apt-get install libhunspell-1.3-0 libhunspell-dev; fi
+  # For debug purposes
   - python --version
 install: "python setup.py install"
 script: "python setup.py test"
